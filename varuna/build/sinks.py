@@ -15,6 +15,10 @@ from ..ee_auth import download_ee_image, init_ee, region
 
 log = logging.getLogger("varuna.build.sinks")
 
+# pysheds still calls np.in1d, removed in numpy 2.0 — alias to the supported np.isin.
+if not hasattr(np, "in1d"):
+    np.in1d = np.isin
+
 
 def download_layers(work=None, aoi=None, scale=None):
     """DEM (FABDEM -> Copernicus fallback), ESA WorldCover, JRC permanent water."""
