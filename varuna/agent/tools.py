@@ -78,6 +78,24 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "plan_canals",
+            "description": ("Plan drainage canals: route channels from the worst-flooded areas to "
+                            "storage pits to cut net flood volume. Returns routes + before/after "
+                            "flooded volume + % reduction. Slow (GPU); use when asked where/how to "
+                            "dig canals or channels."),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "rain_mm": {"type": "number", "description": "Design storm total (mm)."},
+                    "n_canals": {"type": "integer", "description": "How many canals to route (default 3)."},
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "recharge_sites",
             "description": "Top aquifer-recharge candidate sites (flood water -> groundwater), ranked.",
             "parameters": {
@@ -129,6 +147,11 @@ def _optimize_design(design_rain_mm=None, budget_m3=None, **_):
     return optimize_design(design_rain=design_rain_mm, budget_m3=budget_m3)
 
 
+def _plan_canals(rain_mm=None, n_canals=3, **_):
+    from ..serve.canals import plan_canals
+    return plan_canals(rain_mm=rain_mm, n_canals=int(n_canals))
+
+
 def _recharge_sites(top_n=10, **_):
     import pandas as pd
     path = CFG.path("recharge_sites.csv")
@@ -155,6 +178,7 @@ _HANDLERS = {
     "get_outlook": _get_outlook,
     "whatif": _whatif,
     "optimize_design": _optimize_design,
+    "plan_canals": _plan_canals,
     "recharge_sites": _recharge_sites,
     "validation_scores": _validation_scores,
 }

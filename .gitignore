@@ -7,8 +7,13 @@ floodtwin/
 alerts_today.csv
 recharge_sites.csv
 dig_plan.json
+canal_plan.json
 validation_scores.json
 gw_levels.csv
+
+# transient viz arrays
+_*.npy
+_*.npz
 
 # Local config (keep config.example.yaml)
 config.yaml

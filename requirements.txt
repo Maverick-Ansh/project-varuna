@@ -19,6 +19,9 @@ torch
 # Ward boundaries (nb04); optional, falls back to a grid if unavailable
 osmnx
 
+# Canal routing (least-cost paths over the DEM)
+scikit-image
+
 # Local LLM agent (GPU). Pin transformers >=4.43 for Qwen2.5 tool-calling chat template.
 transformers>=4.43
 accelerate

@@ -7,3 +7,4 @@ from .weather import forecast_rain_mm, aoi_max_rain  # noqa: F401
 from .alerts import run_alerts  # noqa: F401
 from .emulator import whatif, load_emulator  # noqa: F401
 from .optimize import optimize_design  # noqa: F401
+from .canals import plan_canals  # noqa: F401
