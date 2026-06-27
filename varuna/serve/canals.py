@@ -40,7 +40,6 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
     with torch.no_grad():
         hmax0 = dom.simulate(dom.z0, rain_mm=rain_mm)
     flood0 = torch.relu(hmax0 - 0.15) * dom.built
-    base_vol = float(flood0.sum() * DX * DX)
 
     # sources = distinct worst-flooded built cells
     fl = flood0.cpu().numpy().copy()
@@ -55,6 +54,7 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
     z_np = dom.z0.cpu().numpy()
     z_carved = dom.z0.clone()
     mann_carved = dom.mann.clone()
+    canal_mask = torch.zeros_like(dom.z0)
     canals = []
     if sources:
         from skimage.graph import MCP_Geometric
@@ -72,15 +72,23 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
             for (rr, cc) in path:
                 z_carved[rr, cc] = z_carved[rr, cc] - channel_depth
                 mann_carved[rr, cc] = channel_mann
+                canal_mask[rr, cc] = 1.0
             canals.append({"source": (sr, sc), "target": list(tgt), "path": path,
                            "length_m": len(path) * DX})
 
     # dig the storage pits too, then re-simulate the carved terrain
+    pit_any = masks.sum(0).clamp(max=1.0)
     D_pit = (pit_depth * masks).sum(0)
     dom.mann = mann_carved
     with torch.no_grad():
         hmax1 = dom.simulate(z_carved - D_pit, rain_mm=rain_mm)
-    new_vol = float((torch.relu(hmax1 - 0.15) * dom.built).sum() * DX * DX)
+    flood1 = torch.relu(hmax1 - 0.15) * dom.built
+
+    # net flood = water on streets EXCLUDING the engineered drainage (canals + pits hold water
+    # by design — that's relocation, not flooding). Same accounting on before/after for fairness.
+    streets = dom.built * (1.0 - (canal_mask + pit_any).clamp(max=1.0))
+    base_vol = float((flood0 * streets).sum() * DX * DX)
+    new_vol = float((flood1 * streets).sum() * DX * DX)
 
     # map domain cells -> lat/lon
     import rasterio
@@ -107,7 +115,7 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
     save_json(f"{work}/canal_plan.json", result)
     # arrays for the map renderer
     np.save(f"{work}/_flood_before.npy", flood0.cpu().numpy())
-    np.save(f"{work}/_flood_after.npy", (torch.relu(hmax1 - 0.15) * dom.built).cpu().numpy())
+    np.save(f"{work}/_flood_after.npy", flood1.cpu().numpy())
     np.savez(f"{work}/_canal_geom.npz",
              z=z_np, row0=dom.row0, col0=dom.col0,
              sites=np.array(sites) if sites else np.zeros((0, 2)),

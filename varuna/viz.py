@@ -118,10 +118,8 @@ def map_canal_plan(work=None, out=None):
     g = np.load(f"{work}/_canal_geom.npz", allow_pickle=True)
     res = load_json(f"{work}/canal_plan.json", {})
 
-    z = g["z"]; row0 = int(g["row0"]); col0 = int(g["col0"]); N = fb.shape[0]
-    zc = z[row0:row0 + N * 2:2, col0:col0 + N * 2:2]
-    if zc.shape != (N, N):
-        zc = np.pad(zc, ((0, max(0, N - zc.shape[0])), (0, max(0, N - zc.shape[1]))), mode="edge")[:N, :N]
+    z = g["z"]; N = fb.shape[0]
+    zc = z if z.shape == (N, N) else z[:N, :N]   # saved z is already the 128^2 domain
     hs = _hillshade(zc)
 
     fig, ax = plt.subplots(1, 2, figsize=(15, 7))
