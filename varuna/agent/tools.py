@@ -26,12 +26,14 @@ TOOLS = [
         "function": {
             "name": "get_outlook",
             "description": ("Today's flood outlook: per-sink and per-ward GREEN/AMBER/RED alert "
-                            "levels from rainfall. Omit rain_mm to use the live forecast, or pass "
-                            "a hypothetical 24-h total in mm."),
+                            "levels from rainfall. If the user names a rainfall amount, pass it as "
+                            "rain_mm; omit rain_mm ONLY to use the live forecast."),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "rain_mm": {"type": "number", "description": "Optional 24-h rainfall total (mm)."},
+                    "rain_mm": {"type": "number",
+                                "description": "24-h rainfall total in mm. Pass the amount the user "
+                                               "states (e.g. 30 for 'what if 30 mm'); omit for live forecast."},
                 },
                 "required": [],
             },
@@ -112,6 +114,8 @@ def _get_outlook(rain_mm=None, top=10, **_):
     r = dict(r)
     r["sinks"] = r["sinks"][:top]
     r["sinks_total"] = r["summary"]["red"] + r["summary"]["amber"] + r["summary"]["green"]
+    r["fill_ratio_meaning"] = ("inflow/capacity ratio (NOT a percentage): 1.0 = full, "
+                               "0.5 = half-full, 18.9 = 18.9x over capacity")
     return r
 
 

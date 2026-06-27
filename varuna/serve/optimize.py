@@ -48,7 +48,7 @@ def optimize_design(design_rain=None, budget_m3=None, iters=50, lam=5.0,
         optt.zero_grad()
         loss.backward()
         optt.step()
-        hist.append((float(flood), float(cost)))
+        hist.append((float(flood.detach()), float(cost.detach())))
         if it % 5 == 0:
             log.info("iter %3d flooded %12.0f m3  excavation %10.0f m3", it, float(flood), float(cost))
 
