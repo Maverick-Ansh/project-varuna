@@ -1,15 +1,26 @@
-"""Canal / drainage-channel planning — extends the dig optimiser from storage pits to routing.
+"""Canal / drainage-channel planning — redesigned for *appropriate water flow*.
 
-Pipeline: simulate the design storm -> find the worst-flooded built-up cells (sources) -> route a
-least-cost channel from each to its nearest candidate storage pit over the DEM (water follows low
-ground) -> carve the channels (lower the bed, smooth the roughness) and dig the pits -> re-simulate
--> report the net flood-volume reduction and the canal geometry (lat/lon paths) for mapping.
+The v1 engine routed 3 least-cost paths from the worst-flooded cells to the nearest storage pit and
+carved a flat 2 m trench. It cut ~16% but had no guarantee water actually flows (least-cost over
+elevation can climb), drained only 3 points, and ignored the river as an outfall.
 
-Routing is heuristic (least-cost path over elevation) verified by the physics simulator — the path
-geometry is not differentiable, but the flood-reduction it produces is measured, not assumed.
+v2 fixes the hydraulics:
+  * BASINS, not points — cluster the flooded built-up area (scipy connected components) and drain
+    each basin from its deepest cell, so whole ponds empty, not single pixels.
+  * DOWNHILL-GUARANTEED routing — Dijkstra over the DEM with an uphill penalty (pure Python, no
+    skimage dependency), then carve a strictly *descending* bed from source to outfall so the
+    channel actually conveys water by gravity.
+  * RIVER + boundary OUTFALLS — a canal may discharge to the Ganga / permanent water (jrc>50) or the
+    lowest domain edge, whichever is cheapest to reach downhill — not just a storage pit.
+  * OPTIONAL learnable depth — Adam through the differentiable sim tunes per-canal depth against a
+    budget (optimize_depths=True).
+
+Routing geometry is heuristic; the flood reduction it produces is MEASURED by re-simulating the
+carved terrain (same do-nothing/after accounting, excluding canal+pit cells = relocation not flood).
 """
 from __future__ import annotations
 
+import heapq
 import logging
 
 import numpy as np
@@ -20,11 +31,137 @@ from ..io import save_json
 
 log = logging.getLogger("varuna.serve.canals")
 
+_NEI = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 
-def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
-                pit_depth=None, work=None, device=None):
-    """Plan up to n_canals draining the worst flooding into storage pits. Returns a plan dict
-    and writes canal_plan.json + viz arrays into work."""
+
+# --------------------------------------------------------------------------- pure routing core (testable)
+
+
+def basin_sources(flood, min_cells=4, max_basins=6):
+    """Deepest cell of each connected flooded region, ranked by basin flood volume."""
+    from scipy import ndimage
+    lab, n = ndimage.label(np.asarray(flood) > 0)
+    out = []
+    for i in range(1, n + 1):
+        m = lab == i
+        if int(m.sum()) < min_cells:
+            continue
+        masked = np.where(m, flood, 0.0)
+        rr, cc = np.unravel_index(int(np.argmax(masked)), flood.shape)
+        out.append((int(rr), int(cc), float(masked.sum())))
+    out.sort(key=lambda b: -b[2])
+    return out[:max_basins]
+
+
+def dijkstra(z, src, outfalls, dx=60.0, uphill_penalty=40.0):
+    """Least-cost path from src to the cheapest of `outfalls` over the DEM, penalising ascent.
+
+    Cost to enter cell j from i = dx*(1 + uphill_penalty*max(0, z[j]-z[i])). Heavily penalising
+    uphill moves makes the chosen corridor follow the natural downhill drainage line. Returns
+    (path src->target as [(r,c)...], target) or (None, None) if unreachable.
+    """
+    z = np.asarray(z, dtype="float64")
+    H, W = z.shape
+    goals = set((int(r), int(c)) for (r, c) in outfalls)
+    dist = np.full((H, W), np.inf)
+    came = {}
+    sr, sc = src
+    dist[sr, sc] = 0.0
+    pq = [(0.0, sr, sc)]
+    target = None
+    while pq:
+        d, r, c = heapq.heappop(pq)
+        if d > dist[r, c]:
+            continue
+        if (r, c) in goals:
+            target = (r, c)
+            break
+        for dr, dc in _NEI:
+            nr, nc = r + dr, c + dc
+            if not (0 <= nr < H and 0 <= nc < W):
+                continue
+            step = dx * (1.0 + uphill_penalty * max(0.0, z[nr, nc] - z[r, c]))
+            nd = d + step * (1.41421 if dr and dc else 1.0)
+            if nd < dist[nr, nc]:
+                dist[nr, nc] = nd
+                came[(nr, nc)] = (r, c)
+                heapq.heappush(pq, (nd, nr, nc))
+    if target is None:
+        return None, None
+    path = [target]
+    while path[-1] != (sr, sc):
+        path.append(came[path[-1]])
+    path.reverse()
+    return path, target
+
+
+def descending_bed(z, path, channel_depth, dx=60.0, min_slope=2e-3):
+    """A strictly descending channel bed along `path` (source->outfall).
+
+    bed[k] = min(ground - channel_depth, running_descent). The running descent falls at >= min_slope
+    so water always flows toward the outfall; we never raise ground (carve only). Returns array of
+    bed elevations aligned with path.
+    """
+    z = np.asarray(z, dtype="float64")
+    n = len(path)
+    ground = np.array([z[r, c] for (r, c) in path])
+    bed = np.empty(n)
+    cur = ground[0] - channel_depth
+    for k in range(n):
+        cur = min(ground[k] - channel_depth, cur - min_slope * dx) if k else ground[0] - channel_depth
+        bed[k] = cur
+    return bed
+
+
+def route_canals(z_np, flood_np, outfalls, n_canals=3, channel_depth=2.0, dx=60.0):
+    """Plan up to n_canals draining the worst basins to the cheapest reachable outfall.
+
+    Pure (numpy) — returns a list of {source, target, path, bed} dicts. Tested offline.
+    """
+    sources = basin_sources(flood_np, max_basins=n_canals)
+    canals = []
+    for (sr, sc, vol) in sources:
+        path, tgt = dijkstra(z_np, (sr, sc), outfalls, dx=dx)
+        if path is None or len(path) < 2:
+            continue
+        bed = descending_bed(z_np, path, channel_depth, dx=dx)
+        canals.append({"source": (sr, sc), "target": list(tgt), "path": path,
+                       "bed": bed, "basin_volume": vol, "length_m": len(path) * dx})
+    return canals
+
+
+# --------------------------------------------------------------------------- bundle driver
+
+
+def _outfall_cells(dom, work):
+    """River (jrc>50) cells + the lowest domain-edge cell, as canal discharge points."""
+    import os
+    import rasterio
+    cells = []
+    path = f"{work}/jrc_occurrence.tif"
+    if os.path.exists(path):
+        from ..build.calibrate import _crop_to_domain
+        with rasterio.open(path) as s:
+            jrc = s.read(1)
+        occ = _crop_to_domain(jrc, dom, agg="mean").cpu().numpy()
+        rr, cc = np.where(occ > 50)
+        cells += list(zip(rr.tolist(), cc.tolist()))
+    z = dom.z0.cpu().numpy()
+    N = dom.N
+    edge = [(0, j) for j in range(N)] + [(N - 1, j) for j in range(N)] + \
+           [(i, 0) for i in range(N)] + [(i, N - 1) for i in range(N)]
+    edge.sort(key=lambda rc: z[rc])
+    cells.append(edge[0])                                   # lowest boundary outlet
+    return cells
+
+
+def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02, pit_depth=None,
+                use_river=True, optimize_depths=False, iters=30, work=None, device=None):
+    """Plan canals draining the worst flood basins to storage pits / the river, then measure the cut.
+
+    Same return schema as v1 (rain_mm, n_canals, flooded_volume_m3 before/after, reduction_pct,
+    canals, storage_sites) + writes canal_plan.json and the viz arrays map_canal_plan reads.
+    """
     from ..build.twin import build_domain, candidate_sites
 
     work = work or CFG.work
@@ -36,61 +173,42 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
     sites, masks, site_area, eval_mask = candidate_sites(dom, work)
     N, DX = dom.N, dom.dx
 
-    # baseline flooding on built-up land
     with torch.no_grad():
         hmax0 = dom.simulate(dom.z0, rain_mm=rain_mm)
     flood0 = torch.relu(hmax0 - 0.15) * dom.built
 
-    # sources = distinct worst-flooded built cells
-    fl = flood0.cpu().numpy().copy()
-    sources = []
-    for _ in range(n_canals):
-        rr, cc = np.unravel_index(np.argmax(fl), fl.shape)
-        if fl[rr, cc] <= 0:
-            break
-        sources.append((int(rr), int(cc)))
-        fl[max(0, rr - 10):rr + 10, max(0, cc - 10):cc + 10] = 0
+    # outfalls = storage pits (+ river/boundary if enabled)
+    outfalls = list(sites)
+    if use_river:
+        outfalls = outfalls + _outfall_cells(dom, work)
 
     z_np = dom.z0.cpu().numpy()
+    canals = route_canals(z_np, flood0.cpu().numpy(), outfalls, n_canals, channel_depth, DX)
+
     z_carved = dom.z0.clone()
     mann_carved = dom.mann.clone()
     canal_mask = torch.zeros_like(dom.z0)
-    canals = []
-    if sources:
-        from skimage.graph import MCP_Geometric
-        # cost to traverse a cell = its elevation (water prefers the lowest corridor)
-        cost = (z_np - z_np.min() + 1.0).astype("float64")
-        for (sr, sc) in sources:
-            tgt = min(sites, key=lambda p: (p[0] - sr) ** 2 + (p[1] - sc) ** 2)
-            mcp = MCP_Geometric(cost)
-            mcp.find_costs([list(tgt)])
-            try:
-                path = mcp.traceback([sr, sc])      # list of (row, col) from source to target
-            except Exception as e:  # noqa: BLE001
-                log.warning("canal routing failed for %s: %s", (sr, sc), e)
-                continue
-            for (rr, cc) in path:
-                z_carved[rr, cc] = z_carved[rr, cc] - channel_depth
-                mann_carved[rr, cc] = channel_mann
-                canal_mask[rr, cc] = 1.0
-            canals.append({"source": (sr, sc), "target": list(tgt), "path": path,
-                           "length_m": len(path) * DX})
+    for c in canals:
+        for k, (rr, cc) in enumerate(c["path"]):
+            z_carved[rr, cc] = min(float(z_carved[rr, cc]), float(c["bed"][k]))
+            mann_carved[rr, cc] = channel_mann
+            canal_mask[rr, cc] = 1.0
 
-    # dig the storage pits too, then re-simulate the carved terrain
     pit_any = masks.sum(0).clamp(max=1.0)
     D_pit = (pit_depth * masks).sum(0)
     dom.mann = mann_carved
+
+    if optimize_depths and canals:
+        _optimize_canal_depths(dom, canals, z_carved, D_pit, eval_mask, rain_mm, iters)
+
     with torch.no_grad():
         hmax1 = dom.simulate(z_carved - D_pit, rain_mm=rain_mm)
     flood1 = torch.relu(hmax1 - 0.15) * dom.built
 
-    # net flood = water on streets EXCLUDING the engineered drainage (canals + pits hold water
-    # by design — that's relocation, not flooding). Same accounting on before/after for fairness.
     streets = dom.built * (1.0 - (canal_mask + pit_any).clamp(max=1.0))
     base_vol = float((flood0 * streets).sum() * DX * DX)
     new_vol = float((flood1 * streets).sum() * DX * DX)
 
-    # map domain cells -> lat/lon
     import rasterio
     with rasterio.open(f"{work}/dem.tif") as src:
         T = src.transform
@@ -99,9 +217,8 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
         lon, lat = T * (dom.col0 + cc * 2, dom.row0 + rr * 2)
         return [round(lat, 5), round(lon, 5)]
 
-    canal_out = [{"length_m": round(c["length_m"]),
-                  "from_latlon": latlon(*c["source"]),
-                  "to_latlon": latlon(*c["target"]),
+    canal_out = [{"length_m": round(c["length_m"]), "basin_volume_m3": round(c["basin_volume"] * DX * DX),
+                  "from_latlon": latlon(*c["source"]), "to_latlon": latlon(*c["target"]),
                   "path_latlon": [latlon(*p) for p in c["path"][::3]]} for c in canals]
     storage = [{"site": i, "latlon": latlon(*rc),
                 "excavation_m3": round(pit_depth * float(site_area[i]))} for i, rc in enumerate(sites)]
@@ -110,16 +227,40 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02,
         "rain_mm": rain_mm, "n_canals": len(canal_out),
         "flooded_volume_m3": {"before": round(base_vol), "after": round(new_vol)},
         "reduction_pct": round(100 * (1 - new_vol / max(base_vol, 1)), 1),
-        "canals": canal_out, "storage_sites": storage,
+        "outfalls": "pits+river" if use_river else "pits", "canals": canal_out, "storage_sites": storage,
     }
     save_json(f"{work}/canal_plan.json", result)
-    # arrays for the map renderer
     np.save(f"{work}/_flood_before.npy", flood0.cpu().numpy())
     np.save(f"{work}/_flood_after.npy", flood1.cpu().numpy())
-    np.savez(f"{work}/_canal_geom.npz",
-             z=z_np, row0=dom.row0, col0=dom.col0,
+    np.savez(f"{work}/_canal_geom.npz", z=z_np, row0=dom.row0, col0=dom.col0,
              sites=np.array(sites) if sites else np.zeros((0, 2)),
              paths=np.array([np.array(c["path"]) for c in canals], dtype=object))
-    log.info("canals+pits cut flooding %.1f%% (%.0f -> %.0f m3)",
-             result["reduction_pct"], base_vol, new_vol)
+    log.info("v2 canals+pits cut flooding %.1f%% (%.0f -> %.0f m3) via %d basins",
+             result["reduction_pct"], base_vol, new_vol, len(canals))
     return result
+
+
+def _optimize_canal_depths(dom, canals, z_carved, D_pit, eval_mask, rain_mm, iters, lam=2.0):
+    """Adam through the differentiable sim tuning a per-canal depth multiplier vs excavation cost."""
+    K = len(canals)
+    base = z_carved.detach().clone()
+    masks = torch.zeros(K, dom.N, dom.N, device=dom.device)
+    extra = torch.zeros(K, dom.N, dom.N, device=dom.device)
+    for i, c in enumerate(canals):
+        for (rr, cc) in c["path"]:
+            masks[i, rr, cc] = 1.0
+    theta = torch.zeros(K, device=dom.device, requires_grad=True)   # 0 -> mult 1
+    opt = torch.optim.Adam([theta], lr=0.1)
+    for it in range(iters):
+        mult = (0.5 + 1.5 * torch.sigmoid(theta)).view(K, 1, 1)     # depth scale in [0.5, 2.0]
+        z_try = base - ((mult - 1.0) * masks).sum(0)                 # deepen/shallow each canal
+        hmax = dom.simulate(z_try - D_pit, rain_mm=rain_mm, grad=True)
+        flood = (torch.relu(hmax - 0.15) * eval_mask).sum() * dom.dx * dom.dx
+        excav = ((mult.view(K) - 0.5) * masks.sum((1, 2))).sum() * dom.dx * dom.dx
+        loss = flood + lam * excav
+        opt.zero_grad(); loss.backward(); opt.step()
+        if it % 10 == 0:
+            log.info("  canal-depth opt it %d flooded %.0f", it, float(flood))
+    with torch.no_grad():
+        mult = (0.5 + 1.5 * torch.sigmoid(theta)).view(K, 1, 1)
+        z_carved.copy_(base - ((mult - 1.0) * masks).sum(0))
