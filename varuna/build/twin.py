@@ -125,11 +125,35 @@ def build_domain(work=None, center=None, device=None):
     z_np = dem_c.reshape(N, 2, N, 2).mean(axis=(1, 3))
     wc_np = wc_c[::2, ::2]
     mann_np = np.vectorize(lambda v: N_TABLE.get(int(v), 0.035))(wc_np)
-    infil_np = np.vectorize(lambda v: F_TABLE.get(int(v), 5.0))(wc_np) / 1000.0 / 3600.0
+    infil_mm_hr = np.vectorize(lambda v: F_TABLE.get(int(v), 5.0))(wc_np)   # by land cover
+
+    # Soil modulation: scale land-cover infiltration by the soil's absorbability. If nb02's
+    # clay.tif exists, clayey ground soaks slower, sandy ground faster (factor ~[0.3, 1.5]).
+    # Concrete (built-up) stays ~impervious regardless because its base rate is already ~1 mm/hr.
+    soil_factor = _soil_infil_factor(work, row0, col0, N30, N)
+    infil_np = (infil_mm_hr * soil_factor) / 1000.0 / 3600.0                # m/s
+
     built_np = (wc_np == 50).astype("float32")
     dom = Domain(z_np, mann_np, infil_np, built_np, device=device)
     dom.row0, dom.col0 = row0, col0
     return dom
+
+
+def _soil_infil_factor(work, row0, col0, N30, N):
+    """Per-cell infiltration multiplier from soil clay %. 1.0 (neutral) if clay.tif absent."""
+    import os
+    import rasterio
+    path = f"{work}/clay.tif"
+    if not os.path.exists(path):
+        return 1.0
+    with rasterio.open(path) as src:
+        clay = src.read(1).astype("float64")
+    clay = clay[row0:row0 + N30, col0:col0 + N30][::2, ::2] / 10.0          # SoilGrids g/kg -> %
+    if clay.shape != (N, N):                                                # defensive (edge crops)
+        clay = np.pad(clay, ((0, max(0, N - clay.shape[0])), (0, max(0, N - clay.shape[1]))),
+                      mode="edge")[:N, :N]
+    # clay 10% -> 1.0x, 30% -> 0.6x, >=50% -> 0.3x (floor); sandier than 10% speeds up to 1.5x
+    return np.clip(1.2 - 0.02 * clay, 0.3, 1.5)
 
 
 def candidate_sites(dom, work=None, k=None, radius=None):
