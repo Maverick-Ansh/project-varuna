@@ -136,6 +136,7 @@ def build_domain(work=None, center=None, device=None):
     built_np = (wc_np == 50).astype("float32")
     dom = Domain(z_np, mann_np, infil_np, built_np, device=device)
     dom.row0, dom.col0 = row0, col0
+    dom.wc = wc_np.astype(np.int32)        # WorldCover class per cell -> calibrate.py learnable physics
     return dom
 
 
