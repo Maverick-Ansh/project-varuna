@@ -1,0 +1,6 @@
+# Dashboard backend. Install on top of the varuna package + its build/serve deps
+# (torch, rasterio, numpy, pandas, matplotlib are needed for the live emulator/canal endpoints).
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2
+pillow>=10

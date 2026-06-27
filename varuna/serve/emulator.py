@@ -56,12 +56,9 @@ def _dig_to_map(dig_sites, masks, device):
     return (depths.view(K, 1, 1) * masks).sum(0), depths
 
 
-def whatif(rain_mm, dig_sites=None, work=None, device="cpu"):
-    """Predict the max-depth grid for a storm (+ optional dig plan) via the emulator.
-
-    Returns a compact summary: flooded area/volume on built-up land, peak depth, and the
-    per-site dig depths applied. depth>0.15 m counts as flooded.
-    """
+def whatif_grid(rain_mm, dig_sites=None, work=None, device="cpu"):
+    """Like whatif but also returns the full max-depth grid (numpy) + dig map, for the dashboard's
+    live flood overlay. Returns (hmax_np, dig_map_np, summary)."""
     b = load_emulator(work, device)
     emu, dom, masks, meta = b["emu"], b["dom"], b["masks"], b["meta"]
     zmean, zstd = meta["zmean"], meta["zstd"]
@@ -72,7 +69,7 @@ def whatif(rain_mm, dig_sites=None, work=None, device="cpu"):
         hmax = emu(x)[0, 0]
     cell = dom.dx * dom.dx
     flooded = torch.relu(hmax - 0.15) * dom.built
-    return dict(
+    summary = dict(
         rain_mm=float(rain_mm),
         dig_depths_m=[round(float(d), 2) for d in depths],
         flooded_area_m2=round(float((flooded > 0).sum()) * cell),
@@ -80,3 +77,14 @@ def whatif(rain_mm, dig_sites=None, work=None, device="cpu"):
         peak_depth_m=round(float(hmax.max()), 2),
         note="Emulated (U-Net surrogate); see optimize_design for physics-grade dig planning.",
     )
+    return hmax.cpu().numpy(), D.cpu().numpy(), summary
+
+
+def whatif(rain_mm, dig_sites=None, work=None, device="cpu"):
+    """Predict the max-depth grid for a storm (+ optional dig plan) via the emulator.
+
+    Returns a compact summary: flooded area/volume on built-up land, peak depth, and the
+    per-site dig depths applied. depth>0.15 m counts as flooded.
+    """
+    _, _, summary = whatif_grid(rain_mm, dig_sites, work, device)
+    return summary
