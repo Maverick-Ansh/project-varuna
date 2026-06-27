@@ -1,0 +1,27 @@
+# Artifact bundle / outputs
+floodtwin/
+*.tif
+*.pt
+*.html
+*.png
+alerts_today.csv
+recharge_sites.csv
+dig_plan.json
+validation_scores.json
+gw_levels.csv
+
+# Local config (keep config.example.yaml)
+config.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

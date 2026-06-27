@@ -1,0 +1,32 @@
+# Copy to config.yaml and edit. Anything omitted falls back to the defaults in varuna/config.py.
+# Environment variables (VARUNA_PROJECT_ID, VARUNA_WORK, VARUNA_LLM_MODEL, VARUNA_LLM_4BIT)
+# override these.
+
+project_id: your-cloud-project-id          # <-- your Earth Engine / Google Cloud project
+aoi: [85.02, 25.54, 85.30, 25.68]          # lon_min, lat_min, lon_max, lat_max (greater Patna)
+center: [25.605, 85.140]                   # lat, lon of the differentiable-twin crop centre
+scale: 30
+# work: /content/drive/MyDrive/floodtwin   # default: Drive if mounted, else ./floodtwin
+
+# sink detection (nb01)
+min_depth_m: 0.15
+min_cells: 10
+top_n: 25
+
+# recharge weights (nb02): gw_depth, ksat, pervious, availability
+rsi_weights: [0.35, 0.30, 0.20, 0.15]
+
+# alert thresholds (nb04) — PLACEHOLDERS; calibrate against nb03 before acting on alerts
+amber_ratio: 0.5
+red_ratio: 1.0
+
+# differentiable twin (nb05)
+design_rain_mm: 100.0
+budget_m3: 150000.0
+n_sites: 8
+n_samples: 220
+seed: 0
+
+# local LLM
+llm_model: Qwen/Qwen2.5-7B-Instruct
+llm_4bit: false                            # set true on a 16 GB T4 sharing VRAM with the simulator

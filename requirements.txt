@@ -1,0 +1,29 @@
+# Core geospatial / numeric (build + serve)
+numpy
+pandas
+scipy
+rasterio
+geopandas
+shapely
+pysheds
+folium
+matplotlib
+Pillow
+requests
+PyYAML
+earthengine-api
+
+# Differentiable twin + emulator (nb05) — GPU recommended for build/optimize
+torch
+
+# Ward boundaries (nb04); optional, falls back to a grid if unavailable
+osmnx
+
+# Local LLM agent (GPU). Pin transformers >=4.43 for Qwen2.5 tool-calling chat template.
+transformers>=4.43
+accelerate
+bitsandbytes        # only needed when llm_4bit: true
+sentencepiece
+
+# Tests
+pytest
