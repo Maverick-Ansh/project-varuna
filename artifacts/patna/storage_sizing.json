@@ -1,0 +1,68 @@
+{
+  "rain_mm": 100.0,
+  "total_flood_m3": 1438983,
+  "max_sites": 2775,
+  "unit_m3": 50.0,
+  "curve": [
+    {
+      "sites": 50,
+      "reduction_pct": 3.2,
+      "storage_m3": 95046,
+      "median_site_m3": 1736
+    },
+    {
+      "sites": 100,
+      "reduction_pct": 5.8,
+      "storage_m3": 169980,
+      "median_site_m3": 1601
+    },
+    {
+      "sites": 200,
+      "reduction_pct": 10.2,
+      "storage_m3": 296548,
+      "median_site_m3": 1376
+    },
+    {
+      "sites": 500,
+      "reduction_pct": 21.4,
+      "storage_m3": 603011,
+      "median_site_m3": 1130
+    },
+    {
+      "sites": 1000,
+      "reduction_pct": 40.3,
+      "storage_m3": 962820,
+      "median_site_m3": 872
+    },
+    {
+      "sites": 2000,
+      "reduction_pct": 67.3,
+      "storage_m3": 1354224,
+      "median_site_m3": 591
+    },
+    {
+      "sites": 2775,
+      "reduction_pct": 100.0,
+      "storage_m3": 1438983,
+      "median_site_m3": 421
+    }
+  ],
+  "targets": {
+    "30%": {
+      "sites": 727,
+      "storage_m3": 766364,
+      "equiv_units": 15327
+    },
+    "50%": {
+      "sites": 1359,
+      "storage_m3": 1103334,
+      "equiv_units": 22067
+    },
+    "70%": {
+      "sites": 2063,
+      "storage_m3": 1361114,
+      "equiv_units": 27222
+    }
+  },
+  "note": "Each storage site sized to its local pooled depth (dynamic, non-linear by geography); sites ranked by gradient-pooled depth = local minima, deepest first."
+}
