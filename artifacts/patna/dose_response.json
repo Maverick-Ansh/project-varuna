@@ -1,0 +1,38 @@
+[
+  {
+    "rain_mm": 25.0,
+    "flooded_area_m2": 1094400,
+    "flooded_volume_m3": 48110,
+    "peak_depth_m": 0.993
+  },
+  {
+    "rain_mm": 50.0,
+    "flooded_area_m2": 4410000,
+    "flooded_volume_m3": 375845,
+    "peak_depth_m": 2.263
+  },
+  {
+    "rain_mm": 75.0,
+    "flooded_area_m2": 7585200,
+    "flooded_volume_m3": 868161,
+    "peak_depth_m": 2.402
+  },
+  {
+    "rain_mm": 100.0,
+    "flooded_area_m2": 9990000,
+    "flooded_volume_m3": 1438983,
+    "peak_depth_m": 2.461
+  },
+  {
+    "rain_mm": 150.0,
+    "flooded_area_m2": 13608000,
+    "flooded_volume_m3": 2835110,
+    "peak_depth_m": 4.604
+  },
+  {
+    "rain_mm": 200.0,
+    "flooded_area_m2": 16344000,
+    "flooded_volume_m3": 4494266,
+    "peak_depth_m": 5.356
+  }
+]
