@@ -1,0 +1,10 @@
+{
+  "strategy_sweep": {
+    "rain_mm": 100.0,
+    "do_nothing_m3": 1408075,
+    "with_pits_m3": 1297672,
+    "reduction_pct": 7.8
+  },
+  "canals_plus_pits_after_m3": 1104464,
+  "canals_plus_pits_reduction_pct": 20.2
+}

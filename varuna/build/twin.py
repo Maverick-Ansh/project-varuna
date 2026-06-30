@@ -70,6 +70,36 @@ class Domain:
         h = torch.clamp(h + dh + rain_ms * dt - infil * dt, min=0.0)
         return h, qx, qy
 
+    def rollout(self, z, rain_mm, storm_hr=1.5, total_hr=3.0, dt=10.0, every=30, probes=None):
+        """No-grad storm rollout that RECORDS dynamics (for animation / hydrographs / mass curves).
+
+        Returns dict: frames (T,N,N depth snapshots every `every` steps), times (hours), volume
+        (total water m^3 per frame), hmax, and probe depth time-series at `probes` [(row,col),...].
+        """
+        with torch.no_grad():
+            h = torch.zeros_like(z)
+            qx = torch.zeros(z.shape[0], z.shape[1] - 1, device=z.device)
+            qy = torch.zeros(z.shape[0] - 1, z.shape[1], device=z.device)
+            hmax = torch.zeros_like(z)
+            nsteps = int(total_hr * 3600 / dt)
+            rain_steps = int(storm_hr * 3600 / dt)
+            rain_rate = rain_mm / 1000.0 / (storm_hr * 3600.0)
+            cell = self.dx * self.dx
+            frames, times, volume, probe_ts = [], [], [], []
+            for k in range(nsteps):
+                r = rain_rate if k < rain_steps else 0.0
+                h, qx, qy = self.step(h, qx, qy, z, r, dt)
+                hmax = torch.maximum(hmax, h)
+                if k % every == 0 or k == nsteps - 1:
+                    frames.append(h.cpu().numpy().copy())
+                    times.append(k * dt / 3600.0)
+                    volume.append(float(h.sum()) * cell)
+                    if probes:
+                        probe_ts.append([float(h[r0, c0]) for (r0, c0) in probes])
+        return dict(frames=np.stack(frames), times=np.asarray(times),
+                    volume=np.asarray(volume), hmax=hmax,
+                    probes=np.asarray(probe_ts) if probes else None)
+
     def simulate(self, z, rain_mm, storm_hr=1.5, total_hr=3.0, dt=10.0, chunk=60,
                  grad=False, return_final=False):
         """Run a storm; return max water depth grid (`hmax`). rain_mm falls uniformly over storm_hr.
@@ -136,6 +166,7 @@ def build_domain(work=None, center=None, device=None):
     built_np = (wc_np == 50).astype("float32")
     dom = Domain(z_np, mann_np, infil_np, built_np, device=device)
     dom.row0, dom.col0 = row0, col0
+    dom.wc = wc_np.astype(np.int32)        # WorldCover class per cell -> calibrate.py learnable physics
     return dom
 
 

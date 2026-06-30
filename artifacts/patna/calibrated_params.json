@@ -1,0 +1,40 @@
+{
+  "multipliers_by_worldcover_class": {
+    "10": {
+      "n_mult": 0.9725,
+      "infil_mult": 1.0393
+    },
+    "20": {
+      "n_mult": 1.024,
+      "infil_mult": 1.025
+    },
+    "30": {
+      "n_mult": 1.0391,
+      "infil_mult": 0.9611
+    },
+    "40": {
+      "n_mult": 1.0867,
+      "infil_mult": 0.9596
+    },
+    "50": {
+      "n_mult": 0.9383,
+      "infil_mult": 1.0389
+    },
+    "60": {
+      "n_mult": 1.0705,
+      "infil_mult": 0.9621
+    },
+    "80": {
+      "n_mult": 1.1365,
+      "infil_mult": 1.0
+    },
+    "90": {
+      "n_mult": 0.9769,
+      "infil_mult": 1.0
+    }
+  },
+  "tau_m": 0.15,
+  "storm_hr": 2.0,
+  "total_hr": 4.0,
+  "window_days": 2
+}

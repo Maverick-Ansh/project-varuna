@@ -31,6 +31,15 @@ def _cmd_chat(args):
     repl(four_bit=args.four_bit)
 
 
+def _cmd_calibrate(args):
+    from .build.calibrate import run
+    rep = run(dates=args.dates, n_test=args.n_test, project_id=args.project_id,
+              iters=args.iters, lr=args.lr, window_days=args.window_days)
+    print(json.dumps({"baseline_test_csi": rep["baseline"]["mean_csi_test"],
+                      "calibrated_test_csi": rep["calibrated"]["mean_csi_test"],
+                      "multipliers": rep["multipliers"]}, indent=2, default=float))
+
+
 def main(argv=None):
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
     p = argparse.ArgumentParser(prog="varuna", description="FloodTwin Patna")
@@ -54,6 +63,16 @@ def main(argv=None):
     c = sub.add_parser("chat", help="talk to the flood model (local LLM, GPU)")
     c.add_argument("--four-bit", action="store_true", help="load the LLM in 4-bit (16 GB GPUs)")
     c.set_defaults(func=_cmd_chat)
+
+    cal = sub.add_parser("calibrate", help="SAR-calibrate the twin's Manning/infiltration (GEE; GPU)")
+    cal.add_argument("--dates", nargs="+", required=True,
+                     help="Sentinel-1 overpass dates with antecedent rain, YYYY-MM-DD (last n held out)")
+    cal.add_argument("--n-test", type=int, default=1, help="dates to hold out for validation")
+    cal.add_argument("--iters", type=int, default=40)
+    cal.add_argument("--lr", type=float, default=0.05)
+    cal.add_argument("--window-days", type=int, default=2, help="antecedent-rain accumulation window")
+    cal.add_argument("--project-id", default=None, help="Earth Engine project id")
+    cal.set_defaults(func=_cmd_calibrate)
 
     args = p.parse_args(argv)
     if args.work:
