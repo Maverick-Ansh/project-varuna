@@ -5,6 +5,25 @@ streets, verify everything against satellite radar, warn wards a day ahead, and 
 descent design the interventions. Everything runs on Google Colab's free tier (GPU only for
 notebook 05) using free public data.
 
+## Results on real Patna data (honest)
+
+Measured on the differentiable twin (128×128 @ 60 m) against free public data — reported as-is, including a negative result.
+
+- **SAR validation (the honest core):** scoring the *dynamic* twin against Sentinel-1 water masks
+  (consistent `jrc<50` permanent-water mask on both sides) gives **mean CSI ≈ 0.033** across 8 storms
+  (best 2025-08-02 = 0.112). Per-WorldCover-class Manning/infiltration calibration is a **near-null**
+  (held-out 0.048→0.049): at 60 m, topographic-sink routing has limited co-location skill, and physics
+  constants move water *level*, not *location*. See [`VALIDATION.md`](VALIDATION.md). The committed
+  `validation_scores.json` 0.045 scored the *static* `depth.tif`, not the twin — superseded.
+- **Canal / drainage optimizer:** the v2 router (basin sources, downhill-guaranteed Dijkstra,
+  descending carved bed, river outfalls) cuts **20.2%** of built-land flood volume on a 100 mm storm
+  (vs the v1 least-cost router's 16.1%). Strategy ladder: pits-only 7.8% → canals+pits 20.2%. See
+  [`artifacts/patna/CANAL_RESULTS.md`](artifacts/patna/CANAL_RESULTS.md).
+- **Adaptive distributed storage:** each storage site is sized to its own local depression (dynamic,
+  non-linear by geography); the model reports *how many* sites a target cut needs — **727 → 30%,
+  1359 → 50%, 2063 → 70%** (measured by re-simulating). See
+  [`artifacts/patna/STORAGE_RESULTS.md`](artifacts/patna/STORAGE_RESULTS.md) and `varuna/serve/containers.py`.
+
 ## Notebooks (run in this order)
 
 | Notebook | Idea | What it produces |
