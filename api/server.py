@@ -225,14 +225,29 @@ class ChatReq(BaseModel):
 
 @app.post("/api/chat")
 def chat(req: ChatReq):
-    """Optional: proxy to the local LLM agent. 503 if transformers/model not available."""
+    """Chat about the twin. Prefers a free hosted LLM API (set LLM_API_KEY); falls back to the local
+    Qwen agent if installed; else 503."""
+    # 1) free hosted OpenAI-compatible API (Groq by default) — no GPU needed
+    try:
+        from api.chat_hosted import available, chat_once as hosted_chat
+    except Exception:  # noqa: BLE001
+        available = lambda: False  # noqa: E731
+        hosted_chat = None
+    if available():
+        try:
+            return {"reply": hosted_chat(req.message, history=req.history or [], work=WORK),
+                    "backend": "hosted"}
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(502, f"hosted LLM failed: {e}")
+    # 2) local agent (only where transformers + model are present)
     try:
         from varuna.agent.tools import dispatch  # noqa: F401
         from varuna.agent.llm import chat_once
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(503, f"LLM agent unavailable on this host: {e}")
+        raise HTTPException(503, f"chat unavailable: set LLM_API_KEY for the free hosted API, "
+                                 f"or install the local agent ({e}).")
     try:
-        reply = chat_once(req.message, history=req.history or [], work=WORK)
-        return {"reply": reply}
+        return {"reply": chat_once(req.message, history=req.history or [], work=WORK),
+                "backend": "local"}
     except Exception as e:  # noqa: BLE001
         raise HTTPException(500, f"chat failed: {e}")

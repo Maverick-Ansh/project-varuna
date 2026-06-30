@@ -1,0 +1,12 @@
+# Keep the Space image lean — only the backend + bundle are COPYed explicitly anyway.
+.git
+web/
+notebooks/
+tests/
+**/__pycache__/
+*.pyc
+artifacts/**/twin_dataset.pt
+artifacts/patna/observed_water_*.tif
+*.ipynb
+.venv/
+venv/
