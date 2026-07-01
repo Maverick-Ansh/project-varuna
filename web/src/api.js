@@ -1,6 +1,8 @@
 // Thin client for the Varuna FastAPI backend. Base is same-origin (Vite proxies /api in dev).
 const BASE = import.meta.env.VITE_API_BASE || "";
 
+const q = (area) => (area ? `?area=${encodeURIComponent(area)}` : "");
+
 async function get(path) {
   const r = await fetch(`${BASE}${path}`);
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
@@ -17,14 +19,19 @@ async function post(path, body) {
 }
 
 export const api = {
-  meta: () => get("/api/meta"),
-  sinks: () => get("/api/sinks"),
-  recharge: () => get("/api/recharge"),
-  alerts: () => get("/api/alerts"),
-  validation: () => get("/api/validation"),
-  canalPlan: () => get("/api/canal_plan"),
-  whatif: (rain_mm, dig_sites) => post("/api/whatif", { rain_mm, dig_sites }),
-  canals: (rain_mm, n_canals) => post("/api/canals", { rain_mm, n_canals }),
-  optimize: (design_rain, budget_m3) => post("/api/optimize", { design_rain, budget_m3 }),
-  chat: (message, history) => post("/api/chat", { message, history }),
+  areas: () => get("/api/areas"),
+  meta: (area) => get(`/api/meta${q(area)}`),
+  sinks: (area) => get(`/api/sinks${q(area)}`),
+  recharge: (area) => get(`/api/recharge${q(area)}`),
+  alerts: (area) => get(`/api/alerts${q(area)}`),
+  validation: (area) => get(`/api/validation${q(area)}`),
+  canalPlan: (area) => get(`/api/canal_plan${q(area)}`),
+  whatif: (rain_mm, dig_sites, area) => post("/api/whatif", { rain_mm, dig_sites, area }),
+  canals: (rain_mm, n_canals, area) => post("/api/canals", { rain_mm, n_canals, area }),
+  storage: (rain_mm, area) => post("/api/storage", { rain_mm, area }),
+  optimize: (design_rain, budget_m3, area) => post("/api/optimize", { design_rain, budget_m3, area }),
+  costbenefit: (rain_mm, area) => post("/api/costbenefit", { rain_mm, area }),
+  exposure: (rain_mm, area) => post("/api/exposure", { rain_mm, area }),
+  report: (rain_mm, area) => post("/api/report", { rain_mm, area }),
+  chat: (message, history, area) => post("/api/chat", { message, history, area }),
 };
