@@ -78,14 +78,23 @@ def plan_storage(rain_mm=None, work=None, device=None, site_counts=None,
     V0 = float(f.sum()) * cell
 
     curve = [_cut_for_sites(dom, ys, xs, depths, f, K, rain_mm) for K in counts]
+    # Carving thousands of pits can destabilise the explicit solver (depth blows up and the
+    # "cut" goes absurdly negative). Flag those points and keep them out of target sizing.
     for c in curve:
-        log.info("storage %5d sites -> cut %5.1f%% | %d m3", c["sites"], c["reduction_pct"], c["storage_m3"])
+        c["unstable"] = bool(not np.isfinite(c["reduction_pct"]) or c["reduction_pct"] < -50)
+        log.info("storage %5d sites -> cut %5.1f%% | %d m3%s", c["sites"], c["reduction_pct"],
+                 c["storage_m3"], "  [UNSTABLE — excluded from targets]" if c["unstable"] else "")
+    stable = [c for c in curve if not c["unstable"]]
 
-    S = np.array([c["sites"] for c in curve], dtype="float64")
-    R = np.array([c["reduction_pct"] for c in curve], dtype="float64")
-    SV = np.array([c["storage_m3"] for c in curve], dtype="float64")
+    S = np.array([c["sites"] for c in stable], dtype="float64")
+    R = np.maximum.accumulate(np.array([c["reduction_pct"] for c in stable], dtype="float64"))
+    SV = np.array([c["storage_m3"] for c in stable], dtype="float64")
     tgt = {}
     for t in targets:
+        if len(S) == 0 or t > R.max():
+            tgt[f"{int(t)}%"] = dict(sites=None, storage_m3=None, equiv_units=None,
+                                     note="target beyond the stable part of the curve")
+            continue
         n = int(np.interp(t, R, S))
         sv = float(np.interp(n, S, SV))
         tgt[f"{int(t)}%"] = dict(sites=n, storage_m3=round(sv), equiv_units=round(sv / unit_m3))
