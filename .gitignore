@@ -3,6 +3,7 @@ floodtwin/
 *.tif
 *.pt
 *.html
+!web/index.html
 *.png
 alerts_today.csv
 recharge_sites.csv
