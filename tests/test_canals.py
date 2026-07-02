@@ -63,3 +63,45 @@ def test_route_canals_reduces_flooding():
     v0 = float((torch.relu(h0 - 0.15) * streets).sum())
     v1 = float((torch.relu(h1 - 0.15) * streets).sum())
     assert v1 < v0                                                          # canals drained the pond
+
+
+def test_dijkstra_avoids_buildings():
+    # flat plain: straight line would cross a building wall at col 10; router must detour
+    z = np.zeros((21, 21), dtype="float64")
+    mult = np.ones((21, 21))
+    mult[3:18, 10] = 30.0                       # building wall with gaps at rows <3 and >17
+    path, _ = K.dijkstra(z, (10, 2), [(10, 18)], cost_mult=mult)
+    assert path is not None
+    crossed = [(r, c) for (r, c) in path if 3 <= r < 18 and c == 10]
+    assert crossed == []                        # went around, not through
+
+
+def test_dijkstra_prefers_road_corridor():
+    # flat plain: a long cheap road along row 1 should pull the path off the direct line
+    # (the corridor must be long enough that its saving beats the detour cost)
+    z = np.zeros((10, 40), dtype="float64")
+    mult = np.ones((10, 40))
+    mult[1, :] = 0.3
+    path, _ = K.dijkstra(z, (8, 0), [(8, 39)], cost_mult=mult)
+    assert any(r == 1 for (r, c) in path)       # detours via the road row
+
+
+def test_basin_weighting_reorders():
+    flood = np.zeros((20, 20))
+    flood[2:5, 2:5] = 1.0                       # basin A: volume 9
+    flood[12:16, 12:16] = 0.7                   # basin B: volume 11.2 (bigger unweighted)
+    unweighted = K.basin_sources(flood, min_cells=4)
+    w = np.ones_like(flood)
+    w[2:5, 2:5] = 5.0                           # A is chronically waterlogged
+    weighted = K.basin_sources(flood, min_cells=4, weight=w)
+    assert unweighted[0][0] >= 12               # B first without weighting
+    assert weighted[0][0] < 12                  # A first with weighting
+
+
+def test_load_urban_mult_roundtrip(tmp_path):
+    b = np.zeros((8, 8), bool); b[4, 4] = True
+    r = np.zeros((8, 8), bool); r[0, :] = True
+    np.savez(tmp_path / "urban_grid.npz", buildings=b, roads=r)
+    mult = K.load_urban_mult(str(tmp_path))
+    assert mult[4, 4] == 30.0 and mult[0, 3] == 0.5 and mult[5, 5] == 1.0
+    assert K.load_urban_mult(str(tmp_path / "nope")) is None

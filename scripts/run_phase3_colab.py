@@ -61,6 +61,11 @@ def do_exposure(area_ids, rain_mm):
                              roads_total=out["roads"]["total"])
         except Exception as e:  # noqa: BLE001
             log.error("exposure for '%s' failed: %s", aid, e)
+        try:
+            from varuna.serve.exposure import save_urban_grid
+            done.setdefault(aid, {}).update(save_urban_grid(work=work))
+        except Exception as e:  # noqa: BLE001
+            log.error("urban grid for '%s' failed: %s", aid, e)
     return done
 
 
