@@ -1,0 +1,41 @@
+{
+  "rain_mm": 100.0,
+  "costs_assumed_inr": {
+    "excavation_inr_per_m3": 300.0,
+    "canal_inr_per_m": 9000.0,
+    "storage_inr_per_m3": 6000.0
+  },
+  "interventions": [
+    {
+      "name": "Optimised excavation",
+      "detail": "131637 m\u00b3 across 8 sites",
+      "flood_m3_reduced": 18651,
+      "reduction_pct": 1.5,
+      "cost_inr": 39491100,
+      "cost_crore_inr": 3.95,
+      "cost_per_m3_reduced_inr": 2117.4,
+      "rank": 1
+    },
+    {
+      "name": "Distributed storage (~50% cut)",
+      "detail": "1053 sites, 1366007 m\u00b3 capacity",
+      "flood_m3_reduced": 683004,
+      "reduction_pct": 50.0,
+      "cost_inr": 8196042000,
+      "cost_crore_inr": 819.6,
+      "cost_per_m3_reduced_inr": 12000.0,
+      "rank": 2
+    },
+    {
+      "name": "Canals + storage pits",
+      "detail": "1 canals (4200 m) to pits+river",
+      "flood_m3_reduced": 0,
+      "reduction_pct": -0.9,
+      "cost_inr": 374760000,
+      "cost_crore_inr": 37.48,
+      "cost_per_m3_reduced_inr": null,
+      "rank": 3
+    }
+  ],
+  "note": "Indicative unit rates; ranking is relative flood-reduction ROI, not a bid estimate. Flood volume is measured on built-up land by re-simulation."
+}
