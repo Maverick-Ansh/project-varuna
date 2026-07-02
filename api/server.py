@@ -153,7 +153,9 @@ def validation(area: str | None = None):
     work = _work(area)
     out = {"static_depth_vs_sar": _load_json(work, "validation_scores.json"),
            "calibration_report": _load_json(work, "calibration_report.json"),
-           "calibrated_params": _load_json(work, "calibrated_params.json")}
+           "calibrated_params": _load_json(work, "calibrated_params.json"),
+           "baseline_comparison": _load_json(work, "baseline_comparison.json"),
+           "flood_uncertainty": _load_json(work, "flood_uncertainty.json")}
     twin = {f[len("twin_scores_"):-5]: _load_json(work, f)
             for f in (os.listdir(work) if os.path.isdir(work) else [])
             if f.startswith("twin_scores_") and f.endswith(".json")}

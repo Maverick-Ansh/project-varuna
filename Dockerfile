@@ -3,9 +3,10 @@
 # HF Spaces inject PORT and expect the app on 0.0.0.0:7860.
 FROM python:3.11-slim
 
-# rasterio wheels bundle libgdal; we only need a compiler fallback for any sdist deps.
+# rasterio wheels bundle libgdal but still dlopen system libexpat at runtime;
+# build-essential is a compiler fallback for any sdist deps.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential \
+        build-essential libexpat1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
