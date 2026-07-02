@@ -1,0 +1,24 @@
+{
+  "rain_mm": 100.0,
+  "n_members": 10,
+  "dem_sigma_m": 1.0,
+  "corr_len_cells": 5,
+  "tau_m": 0.15,
+  "flooded_km2_members": [
+    8.59,
+    8.59,
+    8.97,
+    8.59,
+    9.26,
+    9.17,
+    8.41,
+    8.76,
+    9.03,
+    8.86
+  ],
+  "flooded_km2_mean": 8.82,
+  "flooded_km2_std": 0.27,
+  "km2_prob_ge_50pct": 9.45,
+  "km2_prob_ge_90pct": 4.56,
+  "note": "ensemble of twin sims under spatially-correlated DEM perturbations; robust flood zones = cells flooding in >=90% of members"
+}

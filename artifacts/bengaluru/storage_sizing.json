@@ -1,0 +1,70 @@
+{
+  "rain_mm": 100.0,
+  "total_flood_m3": 1366007,
+  "max_sites": 1053,
+  "unit_m3": 50.0,
+  "curve": [
+    {
+      "sites": 50,
+      "reduction_pct": -0.7,
+      "storage_m3": 296464,
+      "median_site_m3": 4425,
+      "unstable": false
+    },
+    {
+      "sites": 100,
+      "reduction_pct": 8.7,
+      "storage_m3": 460323,
+      "median_site_m3": 3734,
+      "unstable": false
+    },
+    {
+      "sites": 200,
+      "reduction_pct": 14.6,
+      "storage_m3": 708483,
+      "median_site_m3": 2953,
+      "unstable": false
+    },
+    {
+      "sites": 500,
+      "reduction_pct": 34.6,
+      "storage_m3": 1141256,
+      "median_site_m3": 1832,
+      "unstable": false
+    },
+    {
+      "sites": 1000,
+      "reduction_pct": 0.5,
+      "storage_m3": 1364295,
+      "median_site_m3": 965,
+      "unstable": false
+    },
+    {
+      "sites": 1053,
+      "reduction_pct": -86633.9,
+      "storage_m3": 1366007,
+      "median_site_m3": 897,
+      "unstable": true
+    }
+  ],
+  "targets": {
+    "30%": {
+      "sites": 431,
+      "storage_m3": 1041718,
+      "equiv_units": 20834
+    },
+    "50%": {
+      "sites": null,
+      "storage_m3": null,
+      "equiv_units": null,
+      "note": "target beyond the stable part of the curve"
+    },
+    "70%": {
+      "sites": null,
+      "storage_m3": null,
+      "equiv_units": null,
+      "note": "target beyond the stable part of the curve"
+    }
+  },
+  "note": "Each storage site sized to its local pooled depth (dynamic, non-linear by geography); sites ranked by gradient-pooled depth = local minima, deepest first."
+}
