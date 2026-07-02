@@ -134,12 +134,32 @@ class Domain:
         return (hmax, h) if return_final else hmax
 
 
+def _bundle_meta(work):
+    """Load twin_meta.pt (crop centre, grid, dx) from a bundle; {} if absent/unreadable."""
+    import os
+    path = f"{work}/twin_meta.pt"
+    if not os.path.exists(path):
+        return {}
+    try:
+        return torch.load(path, map_location="cpu", weights_only=False)
+    except Exception as e:  # noqa: BLE001
+        log.warning("could not read %s: %s", path, e)
+        return {}
+
+
 def build_domain(work=None, center=None, device=None):
-    """Crop a 128x128 / 60 m domain over `center` from nb01's dem.tif + worldcover.tif."""
+    """Crop an N x N / dx-m domain over `center` from nb01's dem.tif + worldcover.tif.
+
+    Area-correct from the bundle: when `center` is not given explicitly, the crop centre, grid
+    size and cell size are read from the bundle's twin_meta.pt (so a non-Patna bundle crops at
+    its own location), falling back to CFG for a not-yet-trained bundle.
+    """
     import rasterio
     work = work or CFG.work
-    center = center or CFG.center
-    N = CFG.n_grid
+    meta = {} if center is not None else _bundle_meta(work)
+    center = center or tuple(meta.get("center", CFG.center))
+    N = int(meta.get("n_grid", CFG.n_grid))
+    dx = float(meta.get("dx", CFG.dx))
     N30 = N * 2
     with rasterio.open(f"{work}/dem.tif") as src:
         dem30 = src.read(1).astype("float64")
@@ -164,7 +184,7 @@ def build_domain(work=None, center=None, device=None):
     infil_np = (infil_mm_hr * soil_factor) / 1000.0 / 3600.0                # m/s
 
     built_np = (wc_np == 50).astype("float32")
-    dom = Domain(z_np, mann_np, infil_np, built_np, device=device)
+    dom = Domain(z_np, mann_np, infil_np, built_np, dx=dx, device=device)
     dom.row0, dom.col0 = row0, col0
     dom.wc = wc_np.astype(np.int32)        # WorldCover class per cell -> calibrate.py learnable physics
     return dom
@@ -286,8 +306,15 @@ def gen_dataset(dom, masks, n_samples=None, seed=None):
     return torch.stack(X), torch.stack(Y)
 
 
-def train_emulator(X, Y, epochs=40, device=None, save_path=None):
-    """Train the U-Net; returns (model, final_val_rmse_m)."""
+def train_emulator(X, Y, epochs=40, device=None, save_path=None, flood_weight=20.0, tau=0.05):
+    """Train the U-Net; returns (model, final_val_rmse_m).
+
+    Flooding is sparse (most cells stay dry), so a plain full-grid MSE is minimised by predicting
+    ~0 everywhere — the emulator collapses to "no flood" while the val RMSE still looks small. We
+    therefore up-weight wet cells (weight 1 + flood_weight where target > tau) and clip gradients
+    so the net actually fits the flood signal. We also report a flooded-cell RMSE, which exposes the
+    collapse the whole-grid RMSE hides.
+    """
     device = _device(device)
     emu = UNet().to(device)
     opt = torch.optim.Adam(emu.parameters(), lr=1e-3)
@@ -299,14 +326,21 @@ def train_emulator(X, Y, epochs=40, device=None, save_path=None):
         perm = torch.randperm(ntr)
         for b in range(0, ntr, 8):
             idx = perm[b:b + 8]
-            loss = ((emu(Xtr[idx]) - Ytr[idx]) ** 2).mean()
+            pred, tgt = emu(Xtr[idx]), Ytr[idx]
+            w = 1.0 + flood_weight * (tgt > tau).float()          # emphasise the sparse wet cells
+            loss = (w * (pred - tgt) ** 2).mean()
             opt.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(emu.parameters(), 5.0)
             opt.step()
         with torch.no_grad():
-            vl = ((emu(Xv) - Yv) ** 2).mean().sqrt()
+            pv = emu(Xv)
+            vl = ((pv - Yv) ** 2).mean().sqrt()
+            wet = Yv > 0.15
+            vwet = ((pv - Yv) ** 2)[wet].mean().sqrt() if bool(wet.any()) else torch.zeros(())
         if ep % 5 == 0:
-            log.info("epoch %d: val RMSE %.1f cm", ep, float(vl) * 100)
+            log.info("epoch %d: val RMSE %.1f cm (flooded-cell RMSE %.1f cm)",
+                     ep, float(vl) * 100, float(vwet) * 100)
     if save_path:
         torch.save(emu.state_dict(), save_path)
         log.info("saved emulator -> %s", save_path)

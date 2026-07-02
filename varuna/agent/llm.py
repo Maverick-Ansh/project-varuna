@@ -101,3 +101,21 @@ class Agent:
 
     def reset(self):
         self.messages = [{"role": "system", "content": SYSTEM}]
+
+
+_AGENT = None
+
+
+def chat_once(message, history=None, work=None, four_bit=None):
+    """Dashboard fallback entry point for the local Qwen agent (see api/server.py::chat).
+
+    Lazily loads and caches ONE Agent (a 7B model is heavy). `history` is accepted for API parity
+    with api/chat_hosted.chat_once but ignored — the cached agent keeps its own conversation. `work`
+    is likewise accepted for parity; the agent's tools read the active bundle via CFG. Prefer the
+    hosted path (set LLM_API_KEY) for the deployed dashboard; this exists so a local-GPU deploy has
+    a working chat instead of the previous dead import.
+    """
+    global _AGENT
+    if _AGENT is None:
+        _AGENT = Agent(four_bit=four_bit)
+    return _AGENT.chat(message)

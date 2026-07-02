@@ -9,6 +9,12 @@ from .config import CFG
 
 
 def _cmd_build(args):
+    if args.area:
+        from .build.areas_build import build_area
+        steps = [s for s in args.steps if s in ("sinks", "recharge", "twin")]
+        build_area(args.area, project_id=args.project_id, n_samples=args.n_samples,
+                   epochs=args.epochs, steps=steps or None)
+        return
     from .build import sinks, recharge, validate, twin
     if "sinks" in args.steps:
         sinks.run(project_id=args.project_id)
@@ -53,6 +59,9 @@ def main(argv=None):
     b.add_argument("--project-id", default=None, help="Earth Engine project id")
     b.add_argument("--event-date", default=None, help="Sentinel-1 pass date for validation, YYYY-MM-DD")
     b.add_argument("--n-samples", type=int, default=CFG.n_samples)
+    b.add_argument("--area", default=None,
+                   help="build a registered area by id (see varuna.areas); sub-crops need no Earth Engine")
+    b.add_argument("--epochs", type=int, default=40, help="twin emulator training epochs")
     b.set_defaults(func=_cmd_build)
 
     a = sub.add_parser("alert", help="run the daily ward alert (CPU)")
