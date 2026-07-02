@@ -112,19 +112,22 @@ def plot_storage_dose(report, out="storage_dose.png"):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    S = [c["sites"] for c in report["curve"]]
-    R = [c["reduction_pct"] for c in report["curve"]]
+    good = [c for c in report["curve"] if not c.get("unstable")]
+    S = [c["sites"] for c in good]
+    R = [c["reduction_pct"] for c in good]
     fig, ax = plt.subplots(figsize=(7.5, 5))
     ax.plot(S, R, "o-", color="#2a7f62", lw=2)
     for (lbl, v), col in zip(report["targets"].items(), ["#888", "#c0504d", "#3a6ea5"]):
         n = v["sites"]
+        if n is None:                 # target beyond the stable part of the curve
+            continue
         ax.axhline(float(lbl[:-1]), ls="--", color=col, alpha=.5)
         ax.axvline(n, ls="--", color=col, alpha=.5)
         ax.annotate(f"{lbl} cut\n{n} sites", (n, float(lbl[:-1])),
                     textcoords="offset points", xytext=(8, -28), color=col, fontsize=9)
     ax.set_xlabel("number of distributed storage sites (geography-sized)")
     ax.set_ylabel("flood-volume cut on built land (%)")
-    ax.set_title(f"Patna adaptive storage — flood cut vs # sites ({report['rain_mm']:.0f} mm storm)")
+    ax.set_title(f"Adaptive storage — flood cut vs # sites ({report['rain_mm']:.0f} mm storm)")
     ax.grid(alpha=.3)
     fig.tight_layout()
     fig.savefig(out, dpi=120)
