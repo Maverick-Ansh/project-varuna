@@ -209,6 +209,7 @@ export default function App() {
               <div>At-risk buildings</div>
               <div>{exposure.buildings.at_risk} / {exposure.buildings.total_in_domain} ({exposure.buildings.at_risk_pct}%)</div>
               <div>Flooded roads</div><div>{exposure.roads.flooded} / {exposure.roads.total}</div>
+              {exposure.cached && (<><div>Source</div><div>cached @ {exposure.rain_mm} mm</div></>)}
             </div>
           )}
         </Panel>

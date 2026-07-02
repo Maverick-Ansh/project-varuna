@@ -10,6 +10,7 @@ absent, so the rest of the dashboard is unaffected. Flood depth comes from the p
 from __future__ import annotations
 
 import logging
+import os
 
 import numpy as np
 
@@ -19,6 +20,7 @@ log = logging.getLogger("varuna.serve.exposure")
 
 TAU = 0.15               # m; depth above which a cell counts as flooded
 MAX_FEATURES = 1500      # cap returned geometries so the payload stays light
+CACHE_FILE = "exposure.json"   # per-bundle cache; lets osmnx-less deploys serve exposure
 
 
 def _flood_grid(rain_mm, work, device="cpu"):
@@ -142,3 +144,25 @@ def _line_coords(geom):
     except Exception:  # noqa: BLE001
         pass
     return []
+
+
+def save_exposure(rain_mm=None, work=None, device="cpu"):
+    """Compute exposure and cache it in the bundle as exposure.json.
+
+    Run this where osmnx exists (Colab); the deployed API then serves the cached copy on
+    hosts without osmnx / Overpass access instead of a 503.
+    """
+    from ..io import save_json
+    work = work or CFG.work
+    out = assess_exposure(rain_mm=rain_mm, work=work, device=device)
+    path = save_json(os.path.join(work, CACHE_FILE), out)
+    log.info("exposure cached -> %s (buildings at risk: %s)",
+             path, out["buildings"]["at_risk"])
+    return out
+
+
+def load_cached(work=None):
+    """The bundle's cached exposure.json, or None if it was never computed."""
+    from ..io import load_json
+    work = work or CFG.work
+    return load_json(os.path.join(work, CACHE_FILE))

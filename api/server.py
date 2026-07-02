@@ -306,17 +306,37 @@ class ExposureReq(BaseModel):
     area: str | None = None
 
 
+def _osmnx_present() -> bool:
+    import importlib.util
+    return importlib.util.find_spec("osmnx") is not None
+
+
 @app.post("/api/exposure")
 def exposure(req: ExposureReq):
-    """At-risk buildings + roads that stay dry (evacuation routes) for the storm."""
+    """At-risk buildings + roads that stay dry (evacuation routes) for the storm.
+
+    Computes live where osmnx is installed; otherwise serves the bundle's cached
+    exposure.json (written by `save_exposure` on Colab), so deploys without osmnx
+    still get the exposure view (at its cached rainfall, flagged `cached`)."""
+    work = _work(req.area)
+    from varuna.serve.exposure import load_cached
+    if not _osmnx_present():
+        cached = load_cached(work)
+        if cached is not None:
+            cached["cached"] = True
+            return cached
+        raise HTTPException(503, "exposure unavailable: osmnx not installed and no "
+                                 "cached exposure.json in the bundle")
     try:
         from varuna.serve.exposure import assess_exposure
+        return assess_exposure(rain_mm=req.rain_mm, work=work, center=_center(req.area))
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(503, f"exposure unavailable (need osmnx): {e}")
-    try:
-        return assess_exposure(rain_mm=req.rain_mm, work=_work(req.area),
-                               center=_center(req.area))
-    except Exception as e:  # noqa: BLE001
+        cached = load_cached(work)
+        if cached is not None:
+            cached["cached"] = True
+            cached["note"] = f"live exposure failed ({e}); serving cached copy. " \
+                             + str(cached.get("note", ""))
+            return cached
         raise HTTPException(500, f"exposure failed: {e}")
 
 
