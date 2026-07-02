@@ -1,9 +1,15 @@
 # Launch runbook — Phase 3 (Colab) + deploy
 
-Everything below is copy-paste ready. State at time of writing: `main` has the full
-multi-area dashboard (Patna + 2 sub-crops built and committed; Bengaluru registered but
-unbuilt), the calibrated/honest validation story (twin CSI 0.033), the canal optimizer
-(20.2% cut) and storage sizing. Offline test suite: green.
+Everything below is copy-paste ready. State at time of writing: the multi-area dashboard
+(Patna + 2 sub-crops built and committed; Bengaluru registered but unbuilt), the
+calibrated/honest validation story (twin CSI 0.033), the canal optimizer (20.2% cut) and
+storage sizing. Offline test suite: green (27 passed).
+
+## Step 0 — merge PR #4
+
+Merge https://github.com/Maverick-Ansh/project-varuna/pull/4 (`feature/multi-area` → `main`)
+first — the Colab cells below clone `main` and need `scripts/run_phase3_colab.py` from it.
+(Until it's merged, substitute `git clone -b feature/multi-area ...` in Cell 1.)
 
 ## A. Colab session — exposure caches + Bengaluru build
 
