@@ -146,6 +146,60 @@ def _line_coords(geom):
     return []
 
 
+def save_urban_grid(work=None):
+    """Rasterize OSM buildings + roads onto the twin's domain grid -> urban_grid.npz.
+
+    The canal router uses this to avoid houses (near-forbidden cells) and prefer road
+    corridors (where storm drains are actually dug). Buildings are marked by centroid,
+    roads by densified polyline samples — adequate at 60 m cells. Needs osmnx; run on
+    Colab/Kaggle alongside save_exposure.
+    """
+    import torch
+    import rasterio
+    work = work or CFG.work
+    meta = torch.load(f"{work}/twin_meta.pt", map_location="cpu", weights_only=False)
+    row0, col0, N = meta["row0"], meta["col0"], meta["n_grid"]
+    with rasterio.open(f"{work}/dem.tif") as s:
+        T = s.transform
+    inv = ~T
+
+    def cell(lat, lon):
+        col30, row30 = inv * (lon, lat)
+        dr, dc = int((row30 - row0) // 2), int((col30 - col0) // 2)
+        return (dr, dc) if (0 <= dr < N and 0 <= dc < N) else None
+
+    lon0, lat_top = T * (col0, row0)
+    lon1, lat_bot = T * (col0 + N * 2, row0 + N * 2)
+    north, south = max(lat_top, lat_bot), min(lat_top, lat_bot)
+    east, west = max(lon0, lon1), min(lon0, lon1)
+
+    buildings = np.zeros((N, N), dtype=bool)
+    roads = np.zeros((N, N), dtype=bool)
+    b = _osm_features(north, south, east, west, {"building": True})
+    for geom in b.geometry:
+        try:
+            c = geom.centroid
+            at = cell(c.y, c.x)
+        except Exception:  # noqa: BLE001
+            continue
+        if at:
+            buildings[at] = True
+    r = _osm_features(north, south, east, west, {"highway": True})
+    step = 0.00027                                     # ~30 m in degrees: half a domain cell
+    for geom in r.geometry:
+        pts = _line_coords(geom)
+        for (la1, lo1), (la2, lo2) in zip(pts, pts[1:]):
+            k = max(2, int(max(abs(la2 - la1), abs(lo2 - lo1)) / step) + 1)
+            for f in np.linspace(0.0, 1.0, k):
+                at = cell(la1 + f * (la2 - la1), lo1 + f * (lo2 - lo1))
+                if at:
+                    roads[at] = True
+    np.savez(f"{work}/urban_grid.npz", buildings=buildings, roads=roads)
+    log.info("urban grid cached -> %s/urban_grid.npz (building cells %d, road cells %d)",
+             work, int(buildings.sum()), int(roads.sum()))
+    return dict(building_cells=int(buildings.sum()), road_cells=int(roads.sum()))
+
+
 def save_exposure(rain_mm=None, work=None, device="cpu"):
     """Compute exposure and cache it in the bundle as exposure.json.
 
