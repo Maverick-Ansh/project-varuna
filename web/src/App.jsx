@@ -177,7 +177,12 @@ export default function App() {
             <button onClick={runStorage} disabled={busy}>Storage</button>
             <button onClick={runDig} disabled={busy}>Excavate</button>
           </div>
-          {canal && <p>Canals: net cut <b>{canal.reduction_pct}%</b> · {canal.n_canals} to {canal.outfalls}</p>}
+          {canal && (
+            <p>
+              Drains: net cut <b>{canal.reduction_pct}%</b> · {canal.n_canals} to {canal.outfalls}
+              {canal.network && <> · <b>{canal.network.n_inlets}</b> street inlets ({(canal.network.total_length_m / 1000).toFixed(1)} km)</>}
+            </p>
+          )}
           {storage && storage.targets && (
             <p>Storage: {Object.entries(storage.targets).map(([k, v]) => `${k}≈${v.sites} sites`).join(", ")}</p>
           )}
@@ -285,8 +290,30 @@ export default function App() {
             </CircleMarker>
           ))}
 
-          {show.canal && canal && canal.canals && canal.canals.map((c, i) => (
-            <Polyline key={i} positions={c.path_latlon} pathOptions={{ color: "#e23", weight: 3 }}>
+          {/* storm-drain spiderweb along real streets: trunk thick, branches thin (flow-weighted) */}
+          {show.canal && canal && canal.network && canal.network.edges.map((e, i) => (
+            <Polyline key={`net${i}`} positions={e.path_latlon}
+                      pathOptions={{ color: "#7b2fbe", weight: 2 + 5 * e.weight, opacity: 0.9 }}>
+              <Tooltip>storm drain · carries {e.drained_m3.toLocaleString()} m³</Tooltip>
+            </Polyline>
+          ))}
+          {show.canal && canal && canal.network && canal.network.inlets.map((p, i) => (
+            <CircleMarker key={`in${i}`} center={p.latlon} radius={4}
+                          pathOptions={{ color: "#4a1580", fillColor: "#9b59d0", fillOpacity: 0.9, weight: 1.5 }}>
+              <Tooltip>drain inlet · collects {p.drained_m3.toLocaleString()} m³</Tooltip>
+            </CircleMarker>
+          ))}
+          {show.canal && canal && canal.network && canal.network.outfall_points.map((o, i) => (
+            <CircleMarker key={`of${i}`} center={o.latlon} radius={7}
+                          pathOptions={{ color: { lowland: "#0d7a6b", pit: "#093", boundary: "#555" }[o.kind] || "#555",
+                                         fillColor: { lowland: "#2dd4bf", pit: "#3e6", boundary: "#999" }[o.kind] || "#999",
+                                         fillOpacity: 0.95, weight: 2 }}>
+              <Tooltip>outfall → {o.kind === "lowland" ? "safe low ground" : o.kind}</Tooltip>
+            </CircleMarker>
+          ))}
+          {/* legacy single-line canals (bundles without a road graph) */}
+          {show.canal && canal && !canal.network && canal.canals && canal.canals.map((c, i) => (
+            <Polyline key={i} positions={c.path_latlon} pathOptions={{ color: "#7b2fbe", weight: 3 }}>
               <Tooltip>canal {Math.round(c.length_m)} m → outfall</Tooltip>
             </Polyline>
           ))}

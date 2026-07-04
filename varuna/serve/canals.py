@@ -159,37 +159,235 @@ def route_canals(z_np, flood_np, outfalls, n_canals=3, channel_depth=2.0, dx=60.
     return canals
 
 
+def inlet_cells(flood, weight=None, n_inlets=40, max_basins=8, min_cells=4, suppress_radius=3):
+    """Many collection points per flood basin — the dense spiderweb's drain inlets.
+
+    Inlet count is apportioned across basins proportional to weighted flood volume (every served
+    basin gets at least one); within a basin, inlets are picked greedily at the deepest remaining
+    cell with a suppression disc so they spread over the pond instead of clustering. Each basin's
+    (unweighted) flood volume is split across its inlets proportional to inlet-local depth.
+    Returns [(r, c, volume_share_cell_units, basin_index), ...] — multiply shares by dx² for m³.
+    """
+    from scipy import ndimage
+    flood = np.asarray(flood, dtype="float64")
+    lab, n = ndimage.label(flood > 0)
+    w = np.ones_like(flood) if weight is None else np.asarray(weight, dtype="float64")
+    basins = []
+    for i in range(1, n + 1):
+        m = lab == i
+        if int(m.sum()) < min_cells:
+            continue
+        masked = np.where(m, flood, 0.0)
+        basins.append((float((masked * w).sum()), float(masked.sum()), masked))
+    basins.sort(key=lambda b: -b[0])
+    basins = basins[:max_basins]
+    if not basins:
+        return []
+    wtotal = sum(b[0] for b in basins)
+    out = []
+    for bi, (wvol, vol, masked) in enumerate(basins):
+        k = max(1, int(round(n_inlets * wvol / max(wtotal, 1e-12))))
+        rem = masked.copy()
+        picks = []
+        for _ in range(k):
+            if rem.max() <= 0.0:
+                break
+            rr, cc = np.unravel_index(int(np.argmax(rem)), rem.shape)
+            picks.append((int(rr), int(cc), float(masked[rr, cc])))
+            rem[max(0, rr - suppress_radius):rr + suppress_radius + 1,
+                max(0, cc - suppress_radius):cc + suppress_radius + 1] = 0.0
+        depth_sum = sum(p[2] for p in picks) or 1.0
+        out += [(rr, cc, vol * d / depth_sum, bi) for (rr, cc, d) in picks]
+    return out
+
+
+def route_network(z_np, flood_np, graph, cell_of, lowland_cells, boundary_cells, pit_cells,
+                  n_inlets=40, max_basins=8, weight=None, channel_depth=2.0, dx=60.0,
+                  pit_handicap_m=2000.0):
+    """Spiderweb storm-drain network over the real OSM street graph.
+
+    Routes every inlet along actual streets to its gravity-cheapest outfall (one reverse
+    Dijkstra from all outfalls), then converts each street path to domain cells for carving.
+    Outfalls are safe LOWLANDS (low non-built ground — during floods the river runs high, so
+    it is never a discharge target), downhill domain-boundary exits, and detention pits; pits
+    carry a start handicap so conveying water away wins unless a pit is genuinely closer.
+    Returns (canals, network): `canals` uses the same {source, target, path, bed, ...} shape
+    the carve loop consumes (one per inlet); `network` carries the street-true geometry and
+    per-segment accumulated flow for rendering. Returns None if the graph can't serve this
+    domain (no outfall on a street, <2 routable inlets) — caller falls back to grid routing.
+    """
+    from . import roadnet as R
+    net = R.prepare(graph, z_np, cell_of)
+
+    def nodes_at(cells, radius):
+        found = set()
+        for rc in cells:
+            i = R.snap(net, rc, max_cells=radius)
+            if i is not None:
+                found.add(i)
+        return found
+
+    low_map = {}                                             # street node -> its safe-low cell
+    for rc in lowland_cells:
+        i = R.snap(net, rc, max_cells=4)
+        if i is not None and i not in low_map:
+            low_map[i] = (int(rc[0]), int(rc[1]))
+    bound_n = nodes_at(boundary_cells, 2)
+    pit_n = nodes_at(pit_cells, 3)
+    kind = {**{i: "pit" for i in pit_n}, **{i: "boundary" for i in bound_n},
+            **{i: "lowland" for i in low_map}}               # lowland wins ties
+    if not kind:
+        log.warning("road net: no outfall reachable from any street — grid fallback")
+        return None
+
+    start_cost = {i: pit_handicap_m for i, k in kind.items() if k == "pit"}
+    dist, succ = R.reverse_dijkstra(net, list(kind), start_cost=start_cost)
+
+    inlets = []
+    for (rr, cc, share, bi) in inlet_cells(flood_np, weight=weight, n_inlets=n_inlets,
+                                           max_basins=max_basins):
+        node = R.snap(net, (rr, cc), max_cells=3)
+        if node is None or not np.isfinite(dist[node]):
+            log.info("inlet (%d,%d) has no street within reach — dropped", rr, cc)
+            continue
+        inlets.append({"node": int(node), "cell": (rr, cc),
+                       "drained_m3": share * dx * dx, "basin": bi})
+    if len(inlets) < 2:
+        log.warning("road net: only %d routable inlet(s) — grid fallback", len(inlets))
+        return None
+
+    netw = R.build_network(net, inlets, succ, dist)
+
+    canals = []
+    for inlet in inlets:
+        p = netw["paths"][inlet["node"]]
+        cells = R.nodes_to_cells(net, p, inlet_cell=inlet["cell"], z_np=z_np)
+        if len(cells) < 2:
+            continue
+        term = p[-1]
+        target, low_cell = list(net.cell[term]), None
+        if kind.get(term) == "lowland":                      # carve the last off-street reach
+            low_cell = low_map[term]                         # so water truly gets to low ground
+            for rc in R.bridge_cells(net.cell[term], low_cell, z_np=z_np)[1:]:
+                if cells[-1] != rc:
+                    cells.append(rc)
+            target = list(low_cell)
+        bed = descending_bed(z_np, cells, channel_depth, dx=dx)
+        street_len = sum(R.haversine_m(net.lat[a], net.lon[a], net.lat[b], net.lon[b])
+                         for a, b in zip(p, p[1:]))
+        first = net.cell[p[0]]                               # inlet->street snap bridge
+        bridge_len = dx * max(abs(first[0] - inlet["cell"][0]), abs(first[1] - inlet["cell"][1]))
+        if low_cell is not None:
+            bridge_len += dx * max(abs(low_cell[0] - net.cell[term][0]),
+                                   abs(low_cell[1] - net.cell[term][1]))
+        canals.append({"source": inlet["cell"], "target": target,
+                       "path": cells, "bed": bed, "node_path": p, "lowland_cell": low_cell,
+                       "basin_volume": inlet["drained_m3"] / (dx * dx), "basin": inlet["basin"],
+                       "drained_m3": inlet["drained_m3"], "outfall_kind": kind.get(term, "street"),
+                       "length_m": street_len + bridge_len,
+                       "street_latlon": [[round(float(net.lat[i]), 6), round(float(net.lon[i]), 6)]
+                                         for i in p]})
+
+    if len(canals) < 2:
+        return None
+    max_d = max(s["drained_m3"] for s in netw["segments"]) if netw["segments"] else 1.0
+    outfalls = {}                                            # (lat, lon, kind) -> lowland cell|None
+    for c in canals:
+        term = c["node_path"][-1]
+        key = (round(float(net.lat[term]), 6), round(float(net.lon[term]), 6), c["outfall_kind"])
+        outfalls[key] = c["lowland_cell"] or outfalls.get(key)
+    network = {
+        "source": "osm_road_graph", "n_inlets": len(canals),
+        "total_length_m": round(netw["total_length_m"]),
+        "edges": [{"path_latlon": s["path_latlon"], "drained_m3": round(s["drained_m3"]),
+                   "weight": round(float(np.log1p(s["drained_m3"]) / np.log1p(max_d)), 3)}
+                  for s in netw["segments"]],
+        "outfall_points": [{"latlon": [la, lo], "kind": k,
+                            **({"cell": list(cell)} if cell else {})}
+                           for (la, lo, k), cell in sorted(outfalls.items())],
+    }
+    return canals, network
+
+
 # --------------------------------------------------------------------------- bundle driver
 
 
-def _outfall_cells(dom, work):
-    """River (jrc>50) cells + the lowest domain-edge cell, as canal discharge points."""
+def _river_cells(dom, work):
+    """Permanent-water (jrc>50) cells — the river as a canal discharge target."""
     import os
     import rasterio
-    cells = []
     path = f"{work}/jrc_occurrence.tif"
-    if os.path.exists(path):
-        from ..build.calibrate import _crop_to_domain
-        with rasterio.open(path) as s:
-            jrc = s.read(1)
-        occ = _crop_to_domain(jrc, dom, agg="mean").cpu().numpy()
-        rr, cc = np.where(occ > 50)
-        cells += list(zip(rr.tolist(), cc.tolist()))
+    if not os.path.exists(path):
+        return []
+    from ..build.calibrate import _crop_to_domain
+    with rasterio.open(path) as s:
+        jrc = s.read(1)
+    occ = _crop_to_domain(jrc, dom, agg="mean").cpu().numpy()
+    rr, cc = np.where(occ > 50)
+    return list(zip(rr.tolist(), cc.tolist()))
+
+
+def _lowest_boundary_cells(dom, k=1):
+    """The k lowest domain-edge cells — where water can leave the modelled window."""
     z = dom.z0.cpu().numpy()
     N = dom.N
     edge = [(0, j) for j in range(N)] + [(N - 1, j) for j in range(N)] + \
            [(i, 0) for i in range(N)] + [(i, N - 1) for i in range(N)]
     edge.sort(key=lambda rc: z[rc])
-    cells.append(edge[0])                                   # lowest boundary outlet
+    return edge[:k]
+
+
+def _outfall_cells(dom, work):
+    """River (jrc>50) cells + the lowest domain-edge cell, as canal discharge points."""
+    return _river_cells(dom, work) + _lowest_boundary_cells(dom, k=1)
+
+
+def _lowland_cells(dom, work, n=12, suppress_radius=8, building_margin=2):
+    """The n lowest SAFE dispersal cells — non-built, buffered off buildings, off the river.
+
+    During a flood the river itself runs high, so discharging to it brings no relief — the
+    point of the network is to convey water to low ground where pooling harms nobody. Cells
+    are spread with a suppression disc so the web gets several distinct dispersal targets.
+    """
+    import os
+    from scipy import ndimage
+    z = dom.z0.cpu().numpy().astype("float64").copy()
+    bad = dom.built.cpu().numpy() > 0
+    try:
+        g_path = f"{work}/urban_grid.npz"
+        if os.path.exists(g_path):
+            g = np.load(g_path)
+            bad |= ndimage.binary_dilation(g["buildings"], iterations=building_margin)
+    except Exception as e:  # noqa: BLE001
+        log.warning("lowland building buffer unavailable: %s", e)
+    river = _river_cells(dom, work)
+    if river:
+        rmask = np.zeros_like(bad)
+        rr, cc = zip(*river)
+        rmask[list(rr), list(cc)] = True
+        bad |= ndimage.binary_dilation(rmask, iterations=1)   # next to a spated river = in it
+    z[bad] = np.inf
+    cells = []
+    for _ in range(n):
+        if not np.isfinite(z).any():
+            break
+        r, c = np.unravel_index(int(np.argmin(z)), z.shape)
+        cells.append((int(r), int(c)))
+        z[max(0, r - suppress_radius):r + suppress_radius + 1,
+          max(0, c - suppress_radius):c + suppress_radius + 1] = np.inf
     return cells
 
 
 def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02, pit_depth=None,
-                use_river=True, optimize_depths=False, iters=30, work=None, device=None):
-    """Plan canals draining the worst flood basins to storage pits / the river, then measure the cut.
+                use_river=True, optimize_depths=False, iters=30, work=None, device=None,
+                n_inlets=40):
+    """Plan storm drains draining the flood basins to pits / the river, then measure the cut.
 
-    Same return schema as v1 (rain_mm, n_canals, flooded_volume_m3 before/after, reduction_pct,
-    canals, storage_sites) + writes canal_plan.json and the viz arrays map_canal_plan reads.
+    With a cached road graph (`roadnet.build_road_graph`) the plan is a dense spiderweb of drains
+    along real OSM streets — many inlets, shared flow-weighted trunks, street-true geometry in
+    `network`. Without one it falls back to the v2 grid corridors. Same return schema as v1
+    (rain_mm, n_canals, flooded_volume_m3 before/after, reduction_pct, canals, storage_sites)
+    + `network` when street-routed; writes canal_plan.json and the viz arrays map_canal_plan reads.
     """
     from ..build.twin import build_domain, candidate_sites
 
@@ -206,13 +404,6 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02, 
         hmax0 = dom.simulate(dom.z0, rain_mm=rain_mm)
     flood0 = torch.relu(hmax0 - 0.15) * dom.built
 
-    # outfalls = storage pits (+ river/boundary if enabled)
-    outfalls = list(sites)
-    if use_river:
-        outfalls = outfalls + _outfall_cells(dom, work)
-
-    # land-use routing costs (OSM: avoid houses, prefer road corridors) if cached in the bundle
-    cost_mult = load_urban_mult(work)
     # chronic-waterlogging priority: weight basins by observed SAR wet-frequency where built
     weight = None
     try:
@@ -227,9 +418,57 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02, 
     except Exception as e:  # noqa: BLE001
         log.warning("frequency weighting unavailable: %s", e)
 
+    import rasterio
+    with rasterio.open(f"{work}/dem.tif") as src:
+        T = src.transform
+    inv = ~T
+
+    def latlon(rr, cc):
+        lon, lat = T * (dom.col0 + cc * 2, dom.row0 + rr * 2)
+        return [round(lat, 5), round(lon, 5)]
+
+    def cell_of(lat, lon):
+        col30, row30 = inv * (lon, lat)
+        dr, dc = int((row30 - dom.row0) // 2), int((col30 - dom.col0) // 2)
+        return (dr, dc) if (0 <= dr < N and 0 <= dc < N) else None
+
     z_np = dom.z0.cpu().numpy()
-    canals = route_canals(z_np, flood0.cpu().numpy(), outfalls, n_canals, channel_depth, DX,
-                          cost_mult=cost_mult, weight=weight)
+    flood_np = flood0.cpu().numpy()
+
+    # street-true spiderweb if the bundle has a road graph; v2 grid corridors otherwise
+    canals, network = None, None
+    from . import roadnet
+    graph = roadnet.load_road_graph(work)
+    if graph:
+        try:
+            routed = route_network(
+                z_np, flood_np, graph, cell_of,
+                lowland_cells=_lowland_cells(dom, work) if use_river else [],
+                boundary_cells=_lowest_boundary_cells(dom, k=5) if use_river else [],
+                pit_cells=list(sites),
+                n_inlets=n_inlets, weight=weight, channel_depth=channel_depth, dx=DX)
+            if routed:
+                canals, network = routed
+        except Exception as e:  # noqa: BLE001
+            log.warning("road-network routing failed (%s) — grid fallback", e)
+    if canals is None:
+        outfalls = list(sites)
+        if use_river:
+            outfalls = outfalls + _outfall_cells(dom, work)
+        cost_mult = load_urban_mult(work)
+        canals = route_canals(z_np, flood_np, outfalls, n_canals, channel_depth, DX,
+                              cost_mult=cost_mult, weight=weight)
+        routing_note = ("urban-aware (OSM roads preferred, buildings avoided)"
+                        if cost_mult is not None else "terrain-only")
+        outfalls_desc = "pits+river" if use_river else "pits"
+    else:
+        routing_note = ("storm-drain spiderweb along real OSM streets (%d inlets, %d segments) "
+                        "to safe lowlands / boundary exits / detention pits — river discharge "
+                        "OFF (rivers run high in floods); hydraulics on the 60 m twin grid"
+                        % (network["n_inlets"], len(network["edges"])))
+        outfalls_desc = "lowlands+pits" if use_river else "pits"
+    if weight is not None:
+        routing_note += "; basins weighted by observed waterlogging frequency"
 
     z_carved = dom.z0.clone()
     mann_carved = dom.mann.clone()
@@ -246,6 +485,7 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02, 
 
     if optimize_depths and canals:
         _optimize_canal_depths(dom, canals, z_carved, D_pit, eval_mask, rain_mm, iters)
+    excavation_m3 = float(torch.relu(dom.z0 - z_carved).sum() * DX * DX)
 
     with torch.no_grad():
         hmax1 = dom.simulate(z_carved - D_pit, rain_mm=rain_mm)
@@ -255,17 +495,30 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02, 
     base_vol = float((flood0 * streets).sum() * DX * DX)
     new_vol = float((flood1 * streets).sum() * DX * DX)
 
-    import rasterio
-    with rasterio.open(f"{work}/dem.tif") as src:
-        T = src.transform
-
-    def latlon(rr, cc):
-        lon, lat = T * (dom.col0 + cc * 2, dom.row0 + rr * 2)
-        return [round(lat, 5), round(lon, 5)]
-
-    canal_out = [{"length_m": round(c["length_m"]), "basin_volume_m3": round(c["basin_volume"] * DX * DX),
-                  "from_latlon": latlon(*c["source"]), "to_latlon": latlon(*c["target"]),
-                  "path_latlon": [latlon(*p) for p in c["path"][::3]]} for c in canals]
+    if network:
+        # v1-compatible `canals` = one trunk per basin (its biggest inlet's street path)
+        by_basin = {}
+        for c in canals:
+            if c["basin"] not in by_basin or c["drained_m3"] > by_basin[c["basin"]]["drained_m3"]:
+                by_basin[c["basin"]] = c
+        canal_out = [{"length_m": round(c["length_m"]),
+                      "basin_volume_m3": round(sum(x["drained_m3"] for x in canals
+                                                   if x["basin"] == b)),
+                      "from_latlon": latlon(*c["source"]), "to_latlon": c["street_latlon"][-1],
+                      "path_latlon": [latlon(*c["source"])] + c["street_latlon"]}
+                     for b, c in sorted(by_basin.items())]
+        network["inlets"] = [{"latlon": latlon(*c["source"]), "basin": c["basin"],
+                              "drained_m3": round(c["drained_m3"])} for c in canals]
+        for o in network["outfall_points"]:
+            if "cell" in o:                                  # mark the low field itself,
+                o["latlon"] = latlon(*o.pop("cell"))         # not the street it hangs off
+        network["excavation_m3"] = round(excavation_m3)
+        network["eval_excluded_cells"] = int(
+            (dom.built * (canal_mask + pit_any).clamp(max=1.0)).sum().item())
+    else:
+        canal_out = [{"length_m": round(c["length_m"]), "basin_volume_m3": round(c["basin_volume"] * DX * DX),
+                      "from_latlon": latlon(*c["source"]), "to_latlon": latlon(*c["target"]),
+                      "path_latlon": [latlon(*p) for p in c["path"][::3]]} for c in canals]
     storage = [{"site": i, "latlon": latlon(*rc),
                 "excavation_m3": round(pit_depth * float(site_area[i]))} for i, rc in enumerate(sites)]
 
@@ -273,11 +526,11 @@ def plan_canals(rain_mm=None, n_canals=3, channel_depth=2.0, channel_mann=0.02, 
         "rain_mm": rain_mm, "n_canals": len(canal_out),
         "flooded_volume_m3": {"before": round(base_vol), "after": round(new_vol)},
         "reduction_pct": round(100 * (1 - new_vol / max(base_vol, 1)), 1),
-        "outfalls": "pits+river" if use_river else "pits", "canals": canal_out, "storage_sites": storage,
-        "routing": ("urban-aware (OSM roads preferred, buildings avoided)" if cost_mult is not None
-                    else "terrain-only") + ("; basins weighted by observed waterlogging frequency"
-                                            if weight is not None else ""),
+        "outfalls": outfalls_desc, "canals": canal_out, "storage_sites": storage,
+        "routing": routing_note,
     }
+    if network:
+        result["network"] = network
     save_json(f"{work}/canal_plan.json", result)
     np.save(f"{work}/_flood_before.npy", flood0.cpu().numpy())
     np.save(f"{work}/_flood_after.npy", flood1.cpu().numpy())
