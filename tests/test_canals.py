@@ -157,7 +157,7 @@ def test_route_network_spiderweb_on_synthetic_streets():
         [(r, 24) for r in range(60)],                         # avenue through the pond, downhill
         [(24, c) for c in range(60)],                         # cross street through the pond
     ])
-    routed = K.route_network(z, flood, graph, _cell_of(z.shape), river_cells=[],
+    routed = K.route_network(z, flood, graph, _cell_of(z.shape), lowland_cells=[],
                              boundary_cells=[(59, 24)], pit_cells=[], n_inlets=8, dx=60.0)
     assert routed is not None
     canals, network = routed
@@ -192,6 +192,40 @@ def test_route_network_falls_back_without_reachable_outfall():
         h0 = dom.simulate(dom.z0, rain_mm=120.0)
     flood = (torch.relu(h0 - 0.15) * dom.built).cpu().numpy()
     graph = _street_graph([[(r, 5) for r in range(12)]])      # short street far from any outfall
-    routed = K.route_network(z, flood, graph, _cell_of(z.shape), river_cells=[],
+    routed = K.route_network(z, flood, graph, _cell_of(z.shape), lowland_cells=[],
                              boundary_cells=[(59, 59)], pit_cells=[], n_inlets=8, dx=60.0)
     assert routed is None                                     # plan_canals then uses grid routing
+
+
+def test_lowland_cells_avoid_built_and_spread(tmp_path):
+    N = 60
+    yy, xx = np.meshgrid(np.arange(N), np.arange(N), indexing="ij")
+    z = (0.05 * (N - yy) + 0.05 * (N - xx)).astype("float32")   # lowest corner at (59,59)
+    built = np.ones((N, N), "float32")
+    built[40:, 40:] = 0.0                                       # open land at the low corner
+    mann = np.full((N, N), 0.04, "float32")
+    infil = np.full((N, N), 1e-7, "float32")
+    dom = Domain(z, mann, infil, built, dx=60.0, device="cpu")
+    cells = K._lowland_cells(dom, str(tmp_path), n=3, suppress_radius=5)
+    assert cells and cells[0] == (59, 59)                       # lowest safe ground first
+    for (r, c) in cells:
+        assert r >= 40 and c >= 40                              # never on built land
+    for i, (r1, c1) in enumerate(cells):
+        for (r2, c2) in cells[i + 1:]:
+            assert max(abs(r1 - r2), abs(c1 - c2)) > 5          # dispersal targets spread out
+
+
+def test_route_network_prefers_lowland_over_handicapped_pit():
+    # a pit sits mid-street; the safe lowland is farther but pits carry a start handicap
+    z = np.zeros((40, 40), dtype="float64")
+    flood = np.zeros((40, 40))
+    flood[2:7, 18:23] = 0.5                                     # basin at the top of the street
+    graph = _street_graph([[(r, 20) for r in range(40)]])
+    routed = K.route_network(z, flood, graph, _cell_of(z.shape),
+                             lowland_cells=[(39, 20)],          # 2.1 km away
+                             boundary_cells=[], pit_cells=[(20, 20)],   # 0.9 km away
+                             n_inlets=4, dx=60.0)
+    assert routed is not None
+    canals, network = routed
+    kinds = {o["kind"] for o in network["outfall_points"]}
+    assert kinds == {"lowland"}                                 # 2000 m handicap outweighs 1.2 km

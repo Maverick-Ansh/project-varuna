@@ -158,6 +158,25 @@ def _bresenham(a, b):
             c += sc
 
 
+def bridge_cells(a, b, z_np=None):
+    """4-connected cell run a->b (Bresenham + lower-corner diagonal fill) for off-street stubs,
+    e.g. the last reach from a street end to the safe low ground it discharges onto."""
+    out = []
+    for rc in _bresenham((int(a[0]), int(a[1])), (int(b[0]), int(b[1]))):
+        if out and out[-1] == rc:
+            continue
+        if out:
+            r0, c0 = out[-1]
+            r1, c1 = rc
+            if abs(r1 - r0) == 1 and abs(c1 - c0) == 1:
+                via = ((r0, c1), (r1, c0))
+                if z_np is not None:
+                    via = sorted(via, key=lambda x: float(z_np[x]))
+                out.append(via[0])
+        out.append(rc)
+    return out
+
+
 # --------------------------------------------------------------------------- routable street net
 
 
@@ -251,20 +270,22 @@ def snap(net, cell, max_cells=3):
     return best
 
 
-def reverse_dijkstra(net, outfall_nodes, uphill_penalty_m=2400.0):
+def reverse_dijkstra(net, outfall_nodes, uphill_penalty_m=2400.0, start_cost=None):
     """One multi-source pass from all outfalls: per-node cost + next hop toward the cheapest one.
 
     Flow-direction cost of draining y through x (x one hop nearer the outfall):
     length + uphill_penalty_m * max(0, z[x] - z[y]) — i.e. the grid router's
     dx*(1+40*climb) per metre, so ~2.4 km of flat street trades against 1 m of climb.
+    start_cost (node -> metres) handicaps an outfall so less-preferred kinds (e.g. in-city
+    detention pits) only win when genuinely closer than conveying the water away.
     """
     dist = np.full(net.n, np.inf)
     succ = np.full(net.n, -1, dtype="int64")
     pq = []
     for o in set(int(i) for i in outfall_nodes):
         if net.alive[o]:
-            dist[o] = 0.0
-            heapq.heappush(pq, (0.0, o))
+            dist[o] = float((start_cost or {}).get(o, 0.0))
+            heapq.heappush(pq, (dist[o], o))
     while pq:
         d, x = heapq.heappop(pq)
         if d > dist[x]:

@@ -6,18 +6,18 @@
     "after": 209365
   },
   "reduction_pct": 72.6,
-  "outfalls": "pits+river",
+  "outfalls": "lowlands+pits",
   "canals": [
     {
-      "length_m": 5422,
+      "length_m": 5659,
       "basin_volume_m3": 284144,
       "from_latlon": [
         12.94975,
         77.61552
       ],
       "to_latlon": [
-        12.923691,
-        77.640344
+        12.923339,
+        77.641351
       ],
       "path_latlon": [
         [
@@ -711,6 +711,22 @@
         [
           12.923691,
           77.640344
+        ],
+        [
+          12.923364,
+          77.641175
+        ],
+        [
+          12.92335,
+          77.641233
+        ],
+        [
+          12.923338,
+          77.641293
+        ],
+        [
+          12.923339,
+          77.641351
         ]
       ]
     },
@@ -759,15 +775,15 @@
       ]
     },
     {
-      "length_m": 3193,
+      "length_m": 3430,
       "basin_volume_m3": 158144,
       "from_latlon": [
         12.93736,
         77.62845
       ],
       "to_latlon": [
-        12.923691,
-        77.640344
+        12.923339,
+        77.641351
       ],
       "path_latlon": [
         [
@@ -1237,6 +1253,22 @@
         [
           12.923691,
           77.640344
+        ],
+        [
+          12.923364,
+          77.641175
+        ],
+        [
+          12.92335,
+          77.641233
+        ],
+        [
+          12.923338,
+          77.641293
+        ],
+        [
+          12.923339,
+          77.641351
         ]
       ]
     },
@@ -1991,7 +2023,7 @@
       ]
     },
     {
-      "length_m": 82,
+      "length_m": 202,
       "basin_volume_m3": 46564,
       "from_latlon": [
         12.92334,
@@ -2711,11 +2743,11 @@
       "excavation_m3": 140400
     }
   ],
-  "routing": "storm-drain spiderweb along real OSM streets (38 inlets, 62 segments; hydraulics on the 60 m twin grid)",
+  "routing": "storm-drain spiderweb along real OSM streets (38 inlets, 62 segments) to safe lowlands / boundary exits / detention pits \u2014 river discharge OFF (rivers run high in floods); hydraulics on the 60 m twin grid",
   "network": {
     "source": "osm_road_graph",
     "n_inlets": 38,
-    "total_length_m": 31634,
+    "total_length_m": 31750,
     "edges": [
       {
         "path_latlon": [
@@ -3156,6 +3188,22 @@
           [
             12.923691,
             77.640344
+          ],
+          [
+            12.923364,
+            77.641175
+          ],
+          [
+            12.92335,
+            77.641233
+          ],
+          [
+            12.923338,
+            77.641293
+          ],
+          [
+            12.923339,
+            77.641351
           ]
         ],
         "drained_m3": 506059,
@@ -7115,17 +7163,10 @@
       },
       {
         "latlon": [
-          12.923339,
-          77.641351
+          12.92227,
+          77.64031
         ],
-        "kind": "pit"
-      },
-      {
-        "latlon": [
-          12.923691,
-          77.640344
-        ],
-        "kind": "pit"
+        "kind": "lowland"
       },
       {
         "latlon": [
@@ -7441,7 +7482,7 @@
         "drained_m3": 31116
       }
     ],
-    "excavation_m3": 23170868,
+    "excavation_m3": 23354982,
     "eval_excluded_cells": 520
   }
 }

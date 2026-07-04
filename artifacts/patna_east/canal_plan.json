@@ -6,7 +6,7 @@
     "after": 14107
   },
   "reduction_pct": 89.4,
-  "outfalls": "pits+river",
+  "outfalls": "lowlands+pits",
   "canals": [
     {
       "length_m": 3391,
@@ -3315,7 +3315,7 @@
       "excavation_m3": 140400
     }
   ],
-  "routing": "storm-drain spiderweb along real OSM streets (27 inlets, 45 segments; hydraulics on the 60 m twin grid)",
+  "routing": "storm-drain spiderweb along real OSM streets (27 inlets, 45 segments) to safe lowlands / boundary exits / detention pits \u2014 river discharge OFF (rivers run high in floods); hydraulics on the 60 m twin grid",
   "network": {
     "source": "osm_road_graph",
     "n_inlets": 27,

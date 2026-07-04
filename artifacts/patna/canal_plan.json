@@ -6,7 +6,7 @@
     "after": 204538
   },
   "reduction_pct": 80.9,
-  "outfalls": "pits+river",
+  "outfalls": "lowlands+pits",
   "canals": [
     {
       "length_m": 3721,
@@ -3485,7 +3485,7 @@
       ]
     },
     {
-      "length_m": 1938,
+      "length_m": 1998,
       "basin_volume_m3": 39129,
       "from_latlon": [
         25.63163,
@@ -3975,7 +3975,7 @@
       "excavation_m3": 140400
     }
   ],
-  "routing": "storm-drain spiderweb along real OSM streets (40 inlets, 70 segments; hydraulics on the 60 m twin grid); basins weighted by observed waterlogging frequency",
+  "routing": "storm-drain spiderweb along real OSM streets (40 inlets, 70 segments) to safe lowlands / boundary exits / detention pits \u2014 river discharge OFF (rivers run high in floods); hydraulics on the 60 m twin grid; basins weighted by observed waterlogging frequency",
   "network": {
     "source": "osm_road_graph",
     "n_inlets": 40,
@@ -12583,10 +12583,10 @@
       },
       {
         "latlon": [
-          25.632849,
-          85.116104
+          25.63379,
+          85.11609
         ],
-        "kind": "pit"
+        "kind": "lowland"
       }
     ],
     "inlets": [
@@ -12911,7 +12911,7 @@
         "drained_m3": 23413
       }
     ],
-    "excavation_m3": 19782938,
+    "excavation_m3": 19793546,
     "eval_excluded_cells": 844
   }
 }

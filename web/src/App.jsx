@@ -305,10 +305,10 @@ export default function App() {
           ))}
           {show.canal && canal && canal.network && canal.network.outfall_points.map((o, i) => (
             <CircleMarker key={`of${i}`} center={o.latlon} radius={7}
-                          pathOptions={{ color: o.kind === "river" ? "#1450a0" : o.kind === "pit" ? "#093" : "#555",
-                                         fillColor: o.kind === "river" ? "#36c" : o.kind === "pit" ? "#3e6" : "#999",
+                          pathOptions={{ color: { lowland: "#0d7a6b", pit: "#093", boundary: "#555" }[o.kind] || "#555",
+                                         fillColor: { lowland: "#2dd4bf", pit: "#3e6", boundary: "#999" }[o.kind] || "#999",
                                          fillOpacity: 0.95, weight: 2 }}>
-              <Tooltip>outfall → {o.kind}</Tooltip>
+              <Tooltip>outfall → {o.kind === "lowland" ? "safe low ground" : o.kind}</Tooltip>
             </CircleMarker>
           ))}
           {/* legacy single-line canals (bundles without a road graph) */}
