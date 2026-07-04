@@ -50,11 +50,14 @@ def rank_interventions(rain_mm=None, work=None, costs=None, device=None, iters=4
         cp = plan_canals(rain_mm=rain_mm, work=work, device=device)
         v = cp["flooded_volume_m3"]
         reduced = max(v["before"] - v["after"], 0)
-        canal_len = sum(x["length_m"] for x in cp["canals"])
+        net = cp.get("network") or {}
+        canal_len = net.get("total_length_m") or sum(x["length_m"] for x in cp["canals"])
         pit_excav = sum(x.get("excavation_m3", 0) for x in cp["storage_sites"])
         cost = canal_len * c["canal_inr_per_m"] + pit_excav * c["excavation_inr_per_m3"]
+        detail = (f"street spiderweb: {net['n_inlets']} inlets ({round(canal_len)} m) to {cp['outfalls']}"
+                  if net else f"{cp['n_canals']} canals ({round(canal_len)} m) to {cp['outfalls']}")
         items.append(_item("Canals + storage pits", reduced, cost, cp["reduction_pct"],
-                           detail=f"{cp['n_canals']} canals ({round(canal_len)} m) to {cp['outfalls']}"))
+                           detail=detail))
     except Exception as e:  # noqa: BLE001
         log.warning("canals cost-benefit failed: %s", e)
 

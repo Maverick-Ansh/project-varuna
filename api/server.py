@@ -230,6 +230,7 @@ class CanalReq(BaseModel):
     n_canals: int = 3
     use_river: bool = True
     optimize_depths: bool = False
+    n_inlets: int = 40          # spiderweb density when the bundle has a road graph
     area: str | None = None
 
 
@@ -241,7 +242,8 @@ def canals(req: CanalReq):
         raise HTTPException(503, f"canals unavailable: {e}")
     try:
         return plan_canals(rain_mm=req.rain_mm, n_canals=req.n_canals, use_river=req.use_river,
-                           optimize_depths=req.optimize_depths, work=_work(req.area))
+                           optimize_depths=req.optimize_depths, n_inlets=req.n_inlets,
+                           work=_work(req.area))
     except Exception as e:  # noqa: BLE001
         raise HTTPException(500, f"plan_canals failed: {e}")
 
