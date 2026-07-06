@@ -1,11 +1,64 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  MapContainer, TileLayer, GeoJSON, CircleMarker, Polyline, ImageOverlay, Rectangle, Tooltip, useMap,
+  MapContainer, TileLayer, GeoJSON, CircleMarker, Polyline, ImageOverlay, Rectangle, Tooltip, useMap, useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
 import { api } from "./api.js";
 
 const LEVEL_COLOR = { RED: "#e23", AMBER: "#f90", GREEN: "#2a4" };
+
+// Marker palette — one hue per physical thing, CVD-validated. Drain LINES stay the
+// project purple; inlets (water enters) are amber; dug storage is pink; safe low
+// ground teal. Never reuse a family across meanings.
+const C = {
+  drain: "#7b2fbe",
+  inlet: { color: "#92400e", fillColor: "#d97706" },
+  pit: { color: "#9d174d", fillColor: "#ec4899" },
+  lowland: { color: "#115e59", fillColor: "#0d9488" },
+  boundary: { color: "#555", fillColor: "#999" },
+  route: "#1d4ed8", routeCasing: "#ffffff", shortest: "#64748b",
+};
+const OUTFALL_STYLE = { lowland: C.lowland, pit: C.pit, boundary: C.boundary };
+
+function Dot({ c }) {
+  return <span className="lg-dot" style={{ background: c.fillColor || c, borderColor: c.color || c }} />;
+}
+function Line({ c, dash }) {
+  return <span className="lg-line" style={{ background: dash ? "none" : c, borderTop: dash ? `2px dashed ${c}` : "none" }} />;
+}
+
+function Legend({ show, canal, alerts, exposure, dig, route }) {
+  const rows = [];
+  if (show.flood) rows.push([<span className="lg-flood" key="s" />, "flood depth"]);
+  if (show.canal && canal) {
+    rows.push([<Line c={C.drain} key="s" />, "storm drain (flow-weighted)"]);
+    if (canal.network) rows.push([<Dot c={C.inlet} key="s" />, "drain inlet"]);
+    rows.push([<Dot c={C.pit} key="s" />, "storage pit"]);
+    if (canal.network) rows.push([<Dot c={C.lowland} key="s" />, "outfall: safe lowland"]);
+  }
+  if (show.dig && dig) rows.push([<Dot c={{ color: "#630", fillColor: "#c96" }} key="s" />, "dig site"]);
+  if (show.alerts && alerts.length > 0) rows.push([<Dot c={{ fillColor: "#e23", color: "#e23" }} key="s" />, "sink alert (R/A/G)"]);
+  if (show.roads && exposure) rows.push([<Line c="#c30" key="s" />, "flooded road"]);
+  if (show.buildings && exposure) rows.push([<Dot c={{ color: "#900", fillColor: "#e33" }} key="s" />, "at-risk building"]);
+  if (route) {
+    rows.push([<Line c={C.route} key="s" />, "flood-safe route"]);
+    rows.push([<Line c={C.shortest} dash key="s" />, "shortest (ignores water)"]);
+  }
+  if (!rows.length) return null;
+  return (
+    <div className="legend">
+      {rows.map(([swatch, label], i) => (
+        <div key={i} className="lg-row">{swatch}<span>{label}</span></div>
+      ))}
+    </div>
+  );
+}
+
+// two map clicks -> route endpoints (only while the evacuation panel is "picking")
+function RouteClicks({ picking, onPick }) {
+  useMapEvents({ click: (e) => picking && onPick([e.latlng.lat, e.latlng.lng]) });
+  return null;
+}
 
 function Panel({ title, children }) {
   return (
@@ -69,11 +122,42 @@ export default function App() {
 
   const [show, setShow] = useState({
     flood: true, alerts: true, sinks: false, recharge: false, canal: true, dig: true,
-    buildings: true, roads: true,
+    buildings: true, roads: true, route: true,
   });
   const [chat, setChat] = useState([]);
   const [msg, setMsg] = useState("");
   const debounce = useRef(null);
+
+  // evacuation routing: two picked points -> /api/route
+  const [picking, setPicking] = useState(false);
+  const [routePts, setRoutePts] = useState([]);        // [[lat,lon], [lat,lon]]
+  const [routeRes, setRouteRes] = useState(null);
+  const [routeErr, setRouteErr] = useState(null);
+  const routeDebounce = useRef(null);
+
+  function pickPoint(pt) {
+    setRoutePts((pts) => {
+      if (pts.length >= 2) return pts;
+      const next = [...pts, pt];
+      if (next.length === 2) setPicking(false);
+      return next;
+    });
+  }
+  function clearRoute() {
+    setPicking(false); setRoutePts([]); setRouteRes(null); setRouteErr(null);
+  }
+  useEffect(() => {                                    // (re)route on points / rain / area
+    if (routePts.length !== 2) return;
+    if (routeDebounce.current) clearTimeout(routeDebounce.current);
+    routeDebounce.current = setTimeout(() => {
+      setRouteErr(null);
+      api.route(routePts[0], routePts[1], rain, area)
+        .then(setRouteRes)
+        .catch((e) => { setRouteRes(null); setRouteErr(String(e)); });
+    }, 400);
+    return () => clearTimeout(routeDebounce.current);
+  }, [routePts, rain, area]);
+  useEffect(() => { clearRoute(); }, [area]);
 
   useEffect(() => {
     api.areas().then((list) => {
@@ -219,6 +303,31 @@ export default function App() {
           )}
         </Panel>
 
+        <Panel title="Evacuation route (GNN)">
+          <div className="row">
+            <button onClick={() => { clearRoute(); setPicking(true); }}>
+              {picking ? `Click map: ${routePts.length ? "destination" : "start"}…` : "Pick start & end"}
+            </button>
+            {(routePts.length > 0 || routeRes) && <button onClick={clearRoute}>Clear</button>}
+          </div>
+          {routeRes && (
+            <>
+              <p>
+                <span className={`badge ${routeRes.backend}`}>{routeRes.backend === "gnn" ? "GNN" : "emulator"}</span>
+                {" "}<b>{(routeRes.route.length_m / 1000).toFixed(1)} km</b>
+                {" "}(+{routeRes.detour_pct}% vs shortest)
+              </p>
+              <div className="kv">
+                <div>Flooded street crossed</div>
+                <div>{routeRes.route.wet_length_m} m <span className="muted">vs {routeRes.shortest.wet_length_m} m</span></div>
+                <div>Max depth on route</div><div>{routeRes.route.max_depth_m} m</div>
+              </div>
+            </>
+          )}
+          {routeErr && <p className="err">{routeErr}</p>}
+          <p className="muted">Streets scored by learned flood risk at {rain} mm; drag the rainfall slider to re-plan.</p>
+        </Panel>
+
         <Panel title="AI plan report">
           <button onClick={runReport} disabled={busy}>Generate report</button>
           {report && (
@@ -248,6 +357,7 @@ export default function App() {
       <main className="map">
         <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }}>
           <Recenter center={center} />
+          <RouteClicks picking={picking} onPick={pickPoint} />
           <TileLayer attribution="© OpenStreetMap"
                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
@@ -299,16 +409,14 @@ export default function App() {
           ))}
           {show.canal && canal && canal.network && canal.network.inlets.map((p, i) => (
             <CircleMarker key={`in${i}`} center={p.latlon} radius={4}
-                          pathOptions={{ color: "#4a1580", fillColor: "#9b59d0", fillOpacity: 0.9, weight: 1.5 }}>
+                          pathOptions={{ ...C.inlet, fillOpacity: 0.95, weight: 1.5 }}>
               <Tooltip>drain inlet · collects {p.drained_m3.toLocaleString()} m³</Tooltip>
             </CircleMarker>
           ))}
           {show.canal && canal && canal.network && canal.network.outfall_points.map((o, i) => (
             <CircleMarker key={`of${i}`} center={o.latlon} radius={7}
-                          pathOptions={{ color: { lowland: "#0d7a6b", pit: "#093", boundary: "#555" }[o.kind] || "#555",
-                                         fillColor: { lowland: "#2dd4bf", pit: "#3e6", boundary: "#999" }[o.kind] || "#999",
-                                         fillOpacity: 0.95, weight: 2 }}>
-              <Tooltip>outfall → {o.kind === "lowland" ? "safe low ground" : o.kind}</Tooltip>
+                          pathOptions={{ ...(OUTFALL_STYLE[o.kind] || C.boundary), fillOpacity: 0.95, weight: 2 }}>
+              <Tooltip>outfall → {o.kind === "lowland" ? "safe low ground" : o.kind === "pit" ? "storage pit" : o.kind}</Tooltip>
             </CircleMarker>
           ))}
           {/* legacy single-line canals (bundles without a road graph) */}
@@ -319,7 +427,7 @@ export default function App() {
           ))}
           {show.canal && canal && canal.storage_sites && canal.storage_sites.map((s, i) => (
             <CircleMarker key={`p${i}`} center={s.latlon} radius={5}
-                          pathOptions={{ color: "#093", fillColor: "#3e6", fillOpacity: 0.9 }}>
+                          pathOptions={{ ...C.pit, fillOpacity: 0.9, weight: 1.5 }}>
               <Tooltip>storage pit {s.excavation_m3.toLocaleString()} m³</Tooltip>
             </CircleMarker>
           ))}
@@ -330,7 +438,30 @@ export default function App() {
               <Tooltip>dig {s.dig_depth_m} m ({s.excavation_m3.toLocaleString()} m³)</Tooltip>
             </CircleMarker>
           ))}
+
+          {/* evacuation route: white casing keeps the line readable over the flood overlay */}
+          {show.route && routeRes && (
+            <>
+              <Polyline positions={routeRes.shortest.path_latlon}
+                        pathOptions={{ color: C.shortest, weight: 3, opacity: 0.7, dashArray: "6 6" }} />
+              <Polyline positions={routeRes.route.path_latlon}
+                        pathOptions={{ color: C.routeCasing, weight: 7, opacity: 0.9 }} />
+              <Polyline positions={routeRes.route.path_latlon}
+                        pathOptions={{ color: C.route, weight: 4, opacity: 0.95 }}>
+                <Tooltip>flood-safe route · {(routeRes.route.length_m / 1000).toFixed(1)} km · max {routeRes.route.max_depth_m} m</Tooltip>
+              </Polyline>
+            </>
+          )}
+          {show.route && routePts.map((p, i) => (
+            <CircleMarker key={`rp${i}`} center={p} radius={7}
+                          pathOptions={{ color: C.route, fillColor: i === 0 ? "#fff" : C.route,
+                                         fillOpacity: 1, weight: 3 }}>
+              <Tooltip>{i === 0 ? "start" : "destination"}</Tooltip>
+            </CircleMarker>
+          ))}
         </MapContainer>
+        <Legend show={show} canal={canal} alerts={alerts} exposure={exposure} dig={dig}
+                route={show.route && routeRes} />
       </main>
     </div>
   );
