@@ -1,8 +1,12 @@
 # Paper section: learned street-graph path planning (FloodGNN)
 
-Drop-in section for the workshop paper (markdown mirror + LaTeX below). Numbers marked
-`TODO-COLAB` come from `scripts/run_gnn_colab.py --train --ablation --transfer --eval`
-(one T4 session; see `RUNBOOK_GNN.md`). Everything else is already measured and committed.
+> **Status 2026-07-07: INTEGRATED** into `varuna-floodtwin.tex` (§5, `\label{sec:gnn}`) and
+> `PAPER.md` (§5). The tex/md are now the single source of the prose — this file keeps the
+> provenance table and the experiment checklist. When the Colab run finishes, fill the
+> `\todo{TODO-COLAB}` markers in the tex AND the `[TODO-COLAB]` markers in PAPER.md.
+
+Numbers marked `TODO-COLAB` come from `scripts/run_gnn_colab.py --train --ablation --transfer
+--eval` (one T4 session; see `RUNBOOK_GNN.md`). Everything else is already measured and committed.
 
 **Positioning.** The paper's diagnosis (§DEM-uncertainty) is that at 60 m in flat terrain,
 *where* water pools is uncertain even when *how much* is robust. FloodGNN turns that into a

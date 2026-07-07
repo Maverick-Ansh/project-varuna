@@ -10,6 +10,9 @@ Validation splits by RAINFALL, not by node: every 4th storm of the sweep is held
 slider actually poses. Cross-CITY generalization is a separate experiment (train with one
 area held out entirely; see evaluate.transfer and the Colab runbook).
 
+The saved checkpoint is the BEST-validation epoch (edge AUC, ties broken by wet-RMSE),
+not the last one — cosine LR makes late epochs similar, but this caps any late overfit.
+
 CPU-friendly (a full Patna epoch is seconds); on a T4 pass device='cuda' and amp=True
 (fp16 — T4 has no bf16).
 """
@@ -98,6 +101,8 @@ def train_gnn(works, out="artifacts/gnn/gnn.pt", hidden=96, layers=4, dropout=0.
     scaler = torch.amp.GradScaler("cuda", enabled=amp and device == "cuda")
 
     history = []
+    best = dict(key=(float("-inf"), float("-inf")), epoch=0, auc=float("nan"),
+                rmse=float("nan"), state=None)
     t0 = time.perf_counter()
     for ep in range(1, epochs + 1):
         losses = []
@@ -132,9 +137,20 @@ def train_gnn(works, out="artifacts/gnn/gnn.pt", hidden=96, layers=4, dropout=0.
                                 val_edge_auc=round(edge_auc, 4)))
             say(f"epoch {ep:3d}  loss {np.mean(losses):.4f}  "
                 f"val wet-RMSE {wet_rmse:.3f} m  edge-AUC {edge_auc:.3f}")
+            key = (-1.0 if np.isnan(edge_auc) else edge_auc,
+                   -np.nan_to_num(wet_rmse, nan=1e9))
+            if key > best["key"]:
+                best.update(key=key, epoch=ep, auc=edge_auc, rmse=wet_rmse,
+                            state={k: v.detach().cpu().clone()
+                                   for k, v in model.state_dict().items()})
 
+    if best["state"] is not None and best["epoch"] != epochs:
+        model.load_state_dict(best["state"])
+        say(f"kept best epoch {best['epoch']} (AUC {best['auc']:.3f}, "
+            f"wet-RMSE {best['rmse']:.3f} m) over final epoch {epochs}")
     path = save_checkpoint(model, out, extra=dict(
         works=list(works), history=history, epochs=epochs, lr=lr, seed=seed,
+        best_epoch=best["epoch"] or epochs,
         val_rains=[float(any_data["rains"][i]) for i in val_idx],
         train_seconds=round(time.perf_counter() - t0, 1)))
     say(f"checkpoint -> {path} ({sum(p.numel() for p in model.parameters()):,} params, "

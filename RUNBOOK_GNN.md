@@ -62,8 +62,11 @@ for a, v in rep['areas'].items():
 3. Redeploy the Space from main (`deploy/deploy_hf_space.py`) — the image copies
    `artifacts/`, so the checkpoint rides along and `/api/route` starts answering
    `"backend": "gnn"`. Vercel rebuilds itself on the main push.
-4. Paste the transfer/ablation numbers into `paper/GNN_SECTION.md` (placeholders are
-   marked `TODO-COLAB`).
+4. Fill the paper numbers: replace every `\todo{TODO-COLAB}` in `paper/varuna-floodtwin.tex`
+   §5 and `[TODO-COLAB]` in `paper/PAPER.md` §5 (the checklist in `paper/GNN_SECTION.md` maps
+   each placeholder to its source JSON), then copy the regenerated
+   `artifacts/gnn/figures/route_demo_patna.png` (and `auc_vs_rain.png` if a second figure
+   fits) into `paper/figures/`.
 
 ## Troubleshooting
 
