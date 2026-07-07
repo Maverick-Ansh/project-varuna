@@ -1,0 +1,14 @@
+{
+ "bengaluru": {
+  "patna": 0.8938,
+  "patna_east": 0.9371,
+  "patna_west": 0.8904,
+  "bengaluru": 0.7212
+ },
+ "patna": {
+  "patna": 0.8473,
+  "patna_east": 0.9386,
+  "patna_west": 0.8979,
+  "bengaluru": 0.9216
+ }
+}

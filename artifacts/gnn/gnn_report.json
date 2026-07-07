@@ -1,0 +1,132 @@
+{
+ "checkpoint": "/kaggle/working/project-varuna/artifacts/gnn/gnn.pt",
+ "val_rains": [
+  60.0,
+  140.0,
+  220.0
+ ],
+ "trained_on": [
+  "/kaggle/working/project-varuna/artifacts/patna",
+  "/kaggle/working/project-varuna/artifacts/patna_east",
+  "/kaggle/working/project-varuna/artifacts/patna_west",
+  "/kaggle/working/project-varuna/artifacts/bengaluru"
+ ],
+ "areas": {
+  "patna": {
+   "n_nodes": 37017,
+   "n_edges": 79928,
+   "edge_auc": 0.9056,
+   "wet_rmse_m": 0.154,
+   "flow_spearman": 0.137,
+   "ms_per_query_gnn": 4.1,
+   "ms_per_query_emulator": 260.2,
+   "routing": {
+    "n_routes": 150,
+    "shortest": {
+     "wet_m_per_route": 2297,
+     "pct_routes_hitting_water": 100.0,
+     "mean_length_m": 4721
+    },
+    "gnn": {
+     "wet_m_per_route": 1570,
+     "pct_routes_hitting_water": 98.7,
+     "mean_length_m": 5722,
+     "detour_pct": 21.2
+    },
+    "oracle": {
+     "wet_m_per_route": 1172,
+     "pct_routes_hitting_water": 97.3,
+     "mean_length_m": 6472,
+     "detour_pct": 37.1
+    }
+   }
+  },
+  "patna_east": {
+   "n_nodes": 13590,
+   "n_edges": 28448,
+   "edge_auc": 0.9422,
+   "wet_rmse_m": 0.252,
+   "flow_spearman": 0.24,
+   "ms_per_query_gnn": 3.9,
+   "ms_per_query_emulator": 110.9,
+   "routing": {
+    "n_routes": 150,
+    "shortest": {
+     "wet_m_per_route": 585,
+     "pct_routes_hitting_water": 71.3,
+     "mean_length_m": 3748
+    },
+    "gnn": {
+     "wet_m_per_route": 406,
+     "pct_routes_hitting_water": 63.3,
+     "mean_length_m": 3933,
+     "detour_pct": 4.9
+    },
+    "oracle": {
+     "wet_m_per_route": 369,
+     "pct_routes_hitting_water": 52.7,
+     "mean_length_m": 4365,
+     "detour_pct": 16.5
+    }
+   }
+  },
+  "patna_west": {
+   "n_nodes": 31961,
+   "n_edges": 66888,
+   "edge_auc": 0.8902,
+   "wet_rmse_m": 0.121,
+   "flow_spearman": 0.183,
+   "ms_per_query_gnn": 4.1,
+   "ms_per_query_emulator": 216.0,
+   "routing": {
+    "n_routes": 150,
+    "shortest": {
+     "wet_m_per_route": 2024,
+     "pct_routes_hitting_water": 98.7,
+     "mean_length_m": 5538
+    },
+    "gnn": {
+     "wet_m_per_route": 1727,
+     "pct_routes_hitting_water": 99.3,
+     "mean_length_m": 6304,
+     "detour_pct": 13.8
+    },
+    "oracle": {
+     "wet_m_per_route": 1349,
+     "pct_routes_hitting_water": 96.7,
+     "mean_length_m": 6408,
+     "detour_pct": 15.7
+    }
+   }
+  },
+  "bengaluru": {
+   "n_nodes": 31675,
+   "n_edges": 72922,
+   "edge_auc": 0.9155,
+   "wet_rmse_m": 0.33,
+   "flow_spearman": 0.145,
+   "ms_per_query_gnn": 5.0,
+   "ms_per_query_emulator": 238.4,
+   "routing": {
+    "n_routes": 150,
+    "shortest": {
+     "wet_m_per_route": 1888,
+     "pct_routes_hitting_water": 99.3,
+     "mean_length_m": 6061
+    },
+    "gnn": {
+     "wet_m_per_route": 1172,
+     "pct_routes_hitting_water": 98.0,
+     "mean_length_m": 7528,
+     "detour_pct": 24.2
+    },
+    "oracle": {
+     "wet_m_per_route": 1333,
+     "pct_routes_hitting_water": 96.7,
+     "mean_length_m": 8196,
+     "detour_pct": 35.2
+    }
+   }
+  }
+ }
+}
