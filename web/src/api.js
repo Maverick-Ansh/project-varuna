@@ -32,6 +32,7 @@ export const api = {
   optimize: (design_rain, budget_m3, area) => post("/api/optimize", { design_rain, budget_m3, area }),
   costbenefit: (rain_mm, area) => post("/api/costbenefit", { rain_mm, area }),
   exposure: (rain_mm, area) => post("/api/exposure", { rain_mm, area }),
+  route: (start, end, rain_mm, area) => post("/api/route", { start, end, rain_mm, area }),
   report: (rain_mm, area) => post("/api/report", { rain_mm, area }),
   chat: (message, history, area) => post("/api/chat", { message, history, area }),
 };

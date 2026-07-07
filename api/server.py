@@ -344,6 +344,33 @@ def exposure(req: ExposureReq):
         raise HTTPException(500, f"exposure failed: {e}")
 
 
+class RouteReq(BaseModel):
+    start: list                 # [lat, lon]
+    end: list                   # [lat, lon]
+    rain_mm: float = 100.0
+    avoid_depth_m: float = 0.3
+    area: str | None = None
+
+
+@app.post("/api/route")
+def route(req: RouteReq):
+    """Flood-safe street route A->B at the given storm, next to the flood-ignorant shortest
+    path. Risk backend is the FloodGNN checkpoint when the bundle ships one, else the raster
+    emulator sampled per street (response says which)."""
+    work = _work(req.area)
+    try:
+        from varuna.gnn.planner import safe_route
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(503, f"routing unavailable (need torch+rasterio+bundle): {e}")
+    try:
+        return safe_route(req.start, req.end, rain_mm=req.rain_mm, work=work,
+                          avoid_depth_m=req.avoid_depth_m)
+    except (ValueError, FileNotFoundError) as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"safe_route failed: {e}")
+
+
 class ReportReq(BaseModel):
     area: str | None = None
     rain_mm: float = 100.0

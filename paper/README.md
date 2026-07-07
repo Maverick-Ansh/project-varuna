@@ -11,6 +11,11 @@ hydrology / natural hazards. Body is written to fit a 4-page limit excluding ref
     (regenerate: overlay `canal_plan.json`'s `network.edges` on `exposure.json` road polylines)
   - `flood_uncertainty.png`, `baseline_comparison.png`, `storage_dose.png`, `dose_response.png` —
     copied from `artifacts/patna/figures/` (built by `varuna/build/baselines.py` + serve suite)
+  - `route_demo_patna.png` — FloodGNN flood-safe routing demo (currently the CPU **smoke**
+    checkpoint's render; regenerate with `scripts/run_gnn_colab.py --figures` after the
+    production training and re-copy)
+- `GNN_SECTION.md` — provenance + experiment checklist for §5 (the FloodGNN section); every
+  `\todo{TODO-COLAB}` in the tex maps to a `run_gnn_colab.py` flag there
 
 ## Build
 ```bash
@@ -35,6 +40,9 @@ replace with the template's rupee glyph if available.
 | INR 850/m³ (spiderweb) vs INR 1,309/m³ (sparse) | spiderweb: `network.total_length_m`×9000 + pit excavation×300 over volume removed; sparse: `artifacts/patna/costbenefit.json` |
 | exposure 1,205/3,749 buildings, 3,036/6,762 roads | `artifacts/patna/exposure.json` |
 | dose-response 25→200 mm monotone | `artifacts/patna/dose_response.json` |
+| FloodGNN smoke numbers quoted in §5 (AUC 0.856; routing 2,297→1,735→1,172 m) | CPU smoke run 2026-07-06, table in `paper/GNN_SECTION.md` |
+| FloodGNN production AUC / routing / ρ / speed (`TODO-COLAB`) | `artifacts/gnn/gnn_report.json` after `scripts/run_gnn_colab.py --train --eval` |
+| FloodGNN transfer + ablation (`TODO-COLAB`) | `artifacts/gnn/transfer_summary.json`, `ablation.json` after `--transfer --ablation` |
 
 Note: `artifacts/patna/costbenefit.json` still prices the **old sparse plan** (kept as the paper's
 comparison point). Re-running `/api/costbenefit` reprices with the spiderweb network length.

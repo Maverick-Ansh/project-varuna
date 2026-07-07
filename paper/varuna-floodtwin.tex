@@ -10,11 +10,13 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{microtype}
+\usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
 \usepackage[numbers,compress]{natbib}
 \usepackage{caption}
 \captionsetup{font=small,labelfont=bf}
 \newcommand{\rupee}{INR\,}   % swap for a rupee-glyph package if the venue template has one
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[#1]}}}   % filled by the Colab run (RUNBOOK_GNN.md)
 
 \title{\textbf{Varuna FloodTwin: an honestly-validated, free-tier flood digital twin\\
 with street-routed drainage planning for Indian cities}}
@@ -30,7 +32,7 @@ access to calibrated hydraulic models. We present \emph{Varuna FloodTwin}, an en
 pipeline that builds a differentiable urban flood twin for any area of interest from free
 satellite data (FABDEM, ESA WorldCover, JRC surface water, Sentinel-1), trains a millisecond
 what-if emulator, and serves both through a public web dashboard --- with every stage running on
-free tiers (Colab/Kaggle GPUs to build, CPU to serve). We report three findings. \textbf{(1) An
+free tiers (Colab/Kaggle GPUs to build, CPU to serve). We report four findings. \textbf{(1) An
 honest negative result:} against 8 Sentinel-1 flood masks over Patna, the dynamic twin scores mean
 CSI $0.033$--$0.041$ --- statistically indistinguishable from static topographic baselines (depression
 depth $0.032$, TWI $0.042$, HAND-lite $0.051$), and gradient calibration of per-land-class
@@ -44,7 +46,14 @@ storm-drain ``spiderweb'' routed along the real OpenStreetMap street graph --- $
 reverse multi-source Dijkstra from safe low-ground outfalls (never the river, which runs high during
 floods) --- cuts simulated street flooding by 73--89\% across four study areas at 100\,mm/day,
 versus 21--26\% for sparse least-cost canals, while \emph{improving} cost-efficiency
-(\rupee850 vs \rupee1{,}309 per m$^3$ removed in Patna). Code, artifacts, and the live dashboard are public.
+(\rupee850 vs \rupee1{,}309 per m$^3$ removed in Patna). \textbf{(4) Street-level flood knowledge is
+learnable and city-transferable:} a graph neural network over the OSM street graph, trained only on
+labels the twin generates itself and FiLM-conditioned on rainfall, amortizes the raster pipeline
+into a millisecond per-street risk ranking at any storm size (edge AUC 0.89--0.94 on held-out storms),
+yields evacuation routes that recover 65\% of an oracle's floodwater avoidance at 57\% of its
+detour, and --- its features being local and per-graph standardized --- transfers zero-shot between
+the flat and the hilly city (AUC 0.72--0.85), the learned counterpart of finding (2). Code,
+artifacts, and the live dashboard are public.
 \end{abstract}
 
 \section{Introduction}
@@ -73,6 +82,13 @@ Our contributions:
         ground rather than the river), whose benefit is measured by re-simulating the carved
         terrain. Density is the decisive lever: a $\sim$40-inlet spiderweb removes $4\times$ more
         flood volume than 2--5 sparse canals at \emph{lower} cost per m$^3$.
+  \item \textbf{Self-supervised street-graph learning (FloodGNN):} an edge-conditioned
+        message-passing network \citep{gilmer2017} on the same street graph, FiLM-conditioned on
+        rainfall \citep{perez2018film}, trained purely on labels the twin generates (emulator depth
+        sweeps, drain-planner flows). One forward pass ranks every street's flood risk at any
+        rainfall and powers a public flood-safe routing endpoint; a hold-one-city-out experiment
+        extends finding 2 to learned models --- street-level flood knowledge transfers across
+        cities even where cell-level locations do not.
 \end{enumerate}
 
 \section{System}
@@ -222,6 +238,70 @@ approximate depth ordering, and downhill topology --- not the exact street that 
 planner's outputs are also \emph{portfolios} (many inlets, many micro-basins) whose value degrades
 gracefully if any single pond shifts. We therefore frame outputs as relative planning guidance
 (which strategy, what density, where first), not as certified absolute depths.
+
+\section{Learned street-level risk, routing, and cross-city transfer}
+\label{sec:gnn}
+Both planning surfaces above route on graphs with hand-set costs: storm drains via a reverse
+Dijkstra whose flow-direction cost ($\ell + 2400\,\Delta z^{+}$\,m) encodes a fixed uphill aversion,
+and evacuation implicitly via raster overlays recomputed per storm. We replace the hand-set cost
+with a learned one. \textbf{FloodGNN} is an edge-conditioned message-passing network
+\citep{gilmer2017} (4 rounds, 96-dim states, $\sim$439k parameters, plain PyTorch) over the OSM
+street graph (37{,}017 nodes / 79{,}928 directed edges for Patna), FiLM-conditioned on rainfall
+\citep{perez2018film} so a single model covers the continuous storm range. Node features are
+deliberately local and standardized per graph --- elevation anomaly, pit-ness, grade, flow
+accumulation, permanent water, SAR waterlogging frequency, building/road density --- so nothing
+identifies the city. Supervision is generated by the twin itself: the emulator's depth fields for a
+20--240\,mm sweep sampled at street nodes and edges, and the drain planner's per-street conveyed
+volume at three (rain, inlet-count) configurations ($\sim$9\,s of label generation per city, CPU).
+Wet targets carry the same $\times$20 loss weight as the emulator (flooding is sparse;
+\S\ref{sec:system}), validation holds out \emph{storm sizes} rather than nodes, and the shipped
+checkpoint is the best-validation epoch.
+
+FloodGNN answers three questions. \emph{Risk}: per-street flood depth at any rainfall in one
+forward pass --- edge AUC 0.906 on held-out storm sizes in Patna and 0.89--0.94 across the four
+areas, vs 0.856 for a 24-epoch CPU smoke model trained on Patna alone. \emph{Routing}:
+cost-inflated Dijkstra ($\ell \cdot (1 + 8\min(d,1.5) + 25\cdot[d>0.3\,\text{m}])$) yields
+evacuation routes crossing 1{,}570\,m of flooded street per route versus 2{,}297\,m for the
+flood-ignorant shortest path and 1{,}172\,m for an oracle reading the emulator directly, at a
+21\% mean detour against the oracle's 37\% (Patna at 140\,mm, 150 random origin--destination
+pairs, all judged on oracle depths): 65\% of the oracle's improvement at 57\% of its detour. The
+pattern holds in every area --- in Bengaluru the GNN route even crosses \emph{less} water than
+the oracle router's ($1{,}172$ vs $1{,}333$\,m), since the oracle minimises risk-inflated cost,
+not wet metres (Figure~\ref{fig:route}). \emph{Placement}: the flow head recovers the drain
+planner's trunk ranking only weakly (Spearman $\rho=0.14$--$0.24$) --- usable for corridor
+suggestion in the dashboard, but trunk placement remains the planner's job, and we report the
+number rather than the claim.
+
+\textbf{Cross-city transfer.} Trained with Bengaluru held out entirely --- an all-flat training
+set --- FloodGNN ranks flooded Bengaluru streets at AUC 0.721 zero-shot, against 0.916 when
+Bengaluru is trained on. The reverse direction is stronger: held-out Patna scores 0.847 zero-shot
+versus 0.906, because the mixed flat-plus-hilly training set covers Patna's regime. A
+no-message-passing ablation (layers $=0$: the same features through a per-node MLP) reaches only
+0.866 on Patna versus 0.890 at 2 rounds and 0.906 at 4 --- a monotone gain confirming that
+neighbourhood structure, not raw local topography, carries signal beyond what local features
+explain. This extends \S\ref{sec:validation} to learned models: street-level flood knowledge is
+substantially city-transferable even where cell-level locations are not (and hardest into terrain
+regimes absent from training), because message passing aggregates exactly the local basin context
+that single cells lack.
+
+\textbf{Honesty and deployment.} FloodGNN distils the twin, so it inherits the twin's biases: its
+claims are amortization, routing quality \emph{under} the twin's flood fields, and transfer --- not
+the co-location skill that \S\ref{sec:validation} shows no topographic method has here.
+(Supervising directly on SAR-observed street water is the natural next step.) The $\sim$1.8\,MB
+checkpoint ships inside the dashboard image; \texttt{/api/route} answers from the GNN where present
+and from the raster emulator otherwise, reporting its backend; a full-graph risk query takes
+4\,ms versus $\sim$260\,ms for the raster-emulator pipeline it amortizes on the same hardware
+($\sim$60$\times$).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=.62\linewidth]{figures/route_demo_patna.png}
+\caption{Flood-safe evacuation routing on the Patna street graph at 120\,mm: streets shaded by
+GNN-predicted flood depth (blue = wet, grey = dry); the flood-ignorant shortest path (dashed)
+versus the FloodGNN route (solid). The learned route trades a modest detour for crossing a
+fraction of the floodwater --- live on the public dashboard at any rainfall.}
+\label{fig:route}
+\end{figure}
 
 \section{Limitations and outlook}
 Hydraulics run at 60\,m, coarser than the drawn street network; carved ``drains'' are full

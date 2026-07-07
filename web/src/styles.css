@@ -7,7 +7,22 @@ body { font: 14px/1.45 system-ui, sans-serif; color: var(--fg); background: var(
 
 .app { display: grid; grid-template-columns: 360px 1fr; height: 100vh; }
 .sidebar { overflow-y: auto; padding: 16px; background: var(--bg); border-right: 1px solid var(--line); }
-.map { height: 100vh; }
+.map { height: 100vh; position: relative; }
+
+/* map legend (light, to match the OSM tiles it floats over) */
+.legend { position: absolute; right: 10px; bottom: 24px; z-index: 1000; background: rgba(255,255,255,.94);
+  color: #1c2430; border: 1px solid #d8dde5; border-radius: 8px; padding: 8px 10px;
+  font-size: 11px; line-height: 1.7; box-shadow: 0 1px 4px rgba(0,0,0,.15); max-width: 200px; }
+.lg-row { display: flex; align-items: center; gap: 7px; }
+.lg-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid; flex: none; }
+.lg-line { width: 16px; height: 3px; border-radius: 2px; flex: none; }
+.lg-flood { width: 16px; height: 8px; border-radius: 2px; flex: none;
+  background: linear-gradient(90deg, #c6dbef, #2171b5); }
+
+.badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .03em; }
+.badge.gnn { background: #3b2a63; color: #cdb6f7; }
+.badge.emulator { background: #223247; color: #9cc3f0; }
 
 h1 { font-size: 18px; margin: 4px 0 14px; }
 h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }

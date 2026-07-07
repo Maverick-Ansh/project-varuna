@@ -1,0 +1,56 @@
+{
+ "layers_0": {
+  "patna": {
+   "edge_auc": 0.8661,
+   "wet_rmse_m": 0.196
+  },
+  "patna_east": {
+   "edge_auc": 0.9082,
+   "wet_rmse_m": 0.306
+  },
+  "patna_west": {
+   "edge_auc": 0.8793,
+   "wet_rmse_m": 0.14
+  },
+  "bengaluru": {
+   "edge_auc": 0.8878,
+   "wet_rmse_m": 0.406
+  }
+ },
+ "layers_2": {
+  "patna": {
+   "edge_auc": 0.8898,
+   "wet_rmse_m": 0.171
+  },
+  "patna_east": {
+   "edge_auc": 0.9378,
+   "wet_rmse_m": 0.259
+  },
+  "patna_west": {
+   "edge_auc": 0.8829,
+   "wet_rmse_m": 0.124
+  },
+  "bengaluru": {
+   "edge_auc": 0.9232,
+   "wet_rmse_m": 0.335
+  }
+ },
+ "layers_4": {
+  "patna": {
+   "edge_auc": 0.9056,
+   "wet_rmse_m": 0.154
+  },
+  "patna_east": {
+   "edge_auc": 0.9422,
+   "wet_rmse_m": 0.252
+  },
+  "patna_west": {
+   "edge_auc": 0.8902,
+   "wet_rmse_m": 0.121
+  },
+  "bengaluru": {
+   "edge_auc": 0.9155,
+   "wet_rmse_m": 0.33
+  }
+ }
+}

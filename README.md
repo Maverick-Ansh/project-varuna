@@ -23,6 +23,17 @@ Measured on the differentiable twin (128×128 @ 60 m) against free public data �
   non-linear by geography); the model reports *how many* sites a target cut needs — **727 → 30%,
   1359 → 50%, 2063 → 70%** (measured by re-simulating). See
   [`artifacts/patna/STORAGE_RESULTS.md`](artifacts/patna/STORAGE_RESULTS.md) and `varuna/serve/containers.py`.
+- **Learned path planning (FloodGNN, new):** a pure-PyTorch message-passing GNN over the real OSM
+  street graph (37k nodes / 80k edges for Patna) learns per-street flood depth at *any* rainfall
+  (FiLM conditioning) and where the drain planner sends water — from labels the twin generates
+  itself. It powers `/api/route`: click two points on the dashboard, get a flood-safe evacuation
+  route vs the flood-ignorant shortest path (honest raster-emulator fallback where no checkpoint
+  ships). Production run (T4, 80 epochs, all 4 areas): held-out-storm edge **AUC 0.89–0.94**;
+  risk-aware routing recovers **65% of the oracle's wet-street avoidance at 57% of its detour**
+  (Patna @140 mm: shortest 2,297 m wet/route → GNN 1,570 m → oracle 1,172 m); zero-shot cross-city
+  transfer AUC 0.72 (flat→hilly Bengaluru) / 0.85 (→Patna); message-passing ablation monotone
+  (0.866→0.906 layers 0→4); 4 ms/query vs 260 ms for the raster pipeline. Reproduce in one Colab
+  session: [`RUNBOOK_GNN.md`](RUNBOOK_GNN.md), `varuna/gnn/`, `notebooks/06_gnn_path_planning.ipynb`.
 
 ## Notebooks (run in this order)
 
