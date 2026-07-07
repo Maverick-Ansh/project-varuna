@@ -28,10 +28,11 @@ during floods) — cuts simulated street flooding by **73–89%** across four st
 (INR 850 vs INR 1,309 per m³ removed in Patna). **(4) Street-level flood knowledge is learnable
 and city-transferable:** a graph neural network over the OSM street graph, trained only on labels
 the twin generates itself and FiLM-conditioned on rainfall, amortizes the raster pipeline into a
-millisecond per-street risk ranking at any storm size, yields evacuation routes that cross a
-fraction of the floodwater of shortest paths, and — its features being local and per-graph
-standardized — transfers zero-shot between the flat and the hilly city, the learned counterpart of
-finding (2). Code, artifacts, and the live dashboard are public.
+millisecond per-street risk ranking at any storm size (edge AUC 0.89–0.94 on held-out storms),
+yields evacuation routes that recover 65% of an oracle's floodwater avoidance at 57% of its
+detour, and — its features being local and per-graph standardized — transfers zero-shot between
+the flat and the hilly city (AUC 0.72–0.85), the learned counterpart of finding (2). Code,
+artifacts, and the live dashboard are public.
 
 ## 1. Introduction
 
@@ -175,7 +176,7 @@ Both planning surfaces above route on graphs with hand-set costs: storm drains v
 Dijkstra whose flow-direction cost (ℓ + 2400·Δz⁺ m) encodes a fixed uphill aversion, and
 evacuation implicitly via raster overlays recomputed per storm. We replace the hand-set cost with
 a learned one. **FloodGNN** is an edge-conditioned message-passing network (4 rounds, 96-dim
-states, ~330k parameters, plain PyTorch) over the OSM street graph (37,017 nodes / 79,928 directed
+states, ~439k parameters, plain PyTorch) over the OSM street graph (37,017 nodes / 79,928 directed
 edges for Patna), FiLM-conditioned on rainfall so a single model covers the continuous storm
 range. Node features are deliberately local and standardized per graph — elevation anomaly,
 pit-ness, grade, flow accumulation, permanent water, SAR waterlogging frequency, building/road
@@ -187,29 +188,35 @@ validation holds out *storm sizes* rather than nodes, and the shipped checkpoint
 best-validation epoch.
 
 FloodGNN answers three questions. *Risk*: per-street flood depth at any rainfall in one forward
-pass — edge AUC **[TODO-COLAB]** on held-out storms, vs 0.856 for a 24-epoch CPU smoke model
-trained on Patna alone. *Routing*: cost-inflated Dijkstra (ℓ·(1 + 8·min(d,1.5) + 25·[d>0.3 m]))
-yields evacuation routes crossing **[TODO-COLAB]** m of flooded street per route versus [] m for
-the flood-ignorant shortest path and [] m for an oracle reading the emulator directly, at a []%
-mean detour (150 random origin–destination pairs; the smoke model already recovers half the
-oracle's improvement: 2,297 → 1,735 m at +24% detour, oracle 1,172 m). *Placement*: the flow head
-reproduces the drain planner's trunk ranking (Spearman ρ = **[TODO-COLAB]**) without running it.
+pass — edge AUC **0.906** on held-out storm sizes in Patna and 0.89–0.94 across the four areas,
+vs 0.856 for a 24-epoch CPU smoke model trained on Patna alone. *Routing*: cost-inflated Dijkstra
+(ℓ·(1 + 8·min(d,1.5) + 25·[d>0.3 m])) yields evacuation routes crossing **1,570 m** of flooded
+street per route versus 2,297 m for the flood-ignorant shortest path and 1,172 m for an oracle
+reading the emulator directly, at a 21% mean detour against the oracle's 37% (Patna at 140 mm,
+150 random origin–destination pairs, all judged on oracle depths): **65% of the oracle's
+improvement at 57% of its detour**. The pattern holds in every area — in Bengaluru the GNN route
+even crosses *less* water than the oracle router's (1,172 vs 1,333 m), since the oracle minimises
+risk-inflated cost, not wet metres. *Placement*: the flow head recovers the drain planner's trunk
+ranking only weakly (Spearman ρ = 0.14–0.24) — usable for corridor suggestion in the dashboard,
+but trunk placement remains the planner's job, and we report the number rather than the claim.
 
-**Cross-city transfer.** Trained with Bengaluru held out entirely, FloodGNN ranks flooded
-Bengaluru streets at AUC **[TODO-COLAB]** zero-shot (reverse direction []), against [] when
-trained on all cities. A no-message-passing ablation (layers = 0: the same features through a
-per-node MLP) reaches only [], confirming that neighbourhood structure — not raw local topography
-— carries the signal. This extends §3 to learned models: street-level flood knowledge is
+**Cross-city transfer.** Trained with Bengaluru held out entirely — an all-flat training set —
+FloodGNN ranks flooded Bengaluru streets at AUC **0.721** zero-shot, against 0.916 when Bengaluru
+is trained on. The reverse direction is stronger: held-out Patna scores **0.847** zero-shot
+versus 0.906, because the mixed flat-plus-hilly training set covers Patna's regime. A
+no-message-passing ablation (layers = 0: the same features through a per-node MLP) reaches only
+0.866 on Patna versus 0.890 at 2 rounds and 0.906 at 4 — a monotone gain confirming that
+neighbourhood structure — not raw local topography — carries the signal. This extends §3 to learned models: street-level flood knowledge is
 substantially city-transferable even where cell-level locations are not, because message passing
 aggregates exactly the local basin context that single cells lack.
 
 **Honesty and deployment.** FloodGNN distils the twin, so it inherits the twin's biases: its
 claims are amortization, routing quality *under* the twin's flood fields, and transfer — not the
 co-location skill that §3 shows no topographic method has here. (Supervising directly on
-SAR-observed street water is the natural next step.) The ~1.3 MB checkpoint ships inside the
+SAR-observed street water is the natural next step.) The ~1.8 MB checkpoint ships inside the
 dashboard image; `/api/route` answers from the GNN where present and from the raster emulator
-otherwise, reporting its backend; a full-graph risk query takes **[TODO-COLAB]** ms on CPU versus
-[] ms for the raster pipeline it amortizes.
+otherwise, reporting its backend; a full-graph risk query takes **4 ms versus ~260 ms** for the
+raster-emulator pipeline it amortizes on the same hardware (~60×).
 
 ![Flood-safe evacuation routing demo](figures/route_demo_patna.png)
 
