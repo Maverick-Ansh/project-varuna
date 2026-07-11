@@ -29,7 +29,11 @@ def load_emulator(work=None, device="cpu"):
     emu = UNet().to(device)
     emu.load_state_dict(torch.load(f"{work}/emulator.pt", map_location=device))
     emu.eval()
-    dom = build_domain(work, center=meta.get("center"), device=device)
+    # n_grid/dx must come from the bundle's meta too: passing center alone makes build_domain
+    # skip twin_meta entirely and fall back to CFG.n_grid — silently cropping a 256^2 bundle
+    # (Mumbai tiles) down to 128^2.
+    dom = build_domain(work, center=meta.get("center"), device=device,
+                       n_grid=meta.get("n_grid"), dx=meta.get("dx"))
     N = dom.N
     sites = meta["sites"]
     masks = torch.zeros(len(sites), N, N, device=device)

@@ -103,7 +103,7 @@ def finetune_emulator(work, train_days, epochs=15, lr=1e-4, obs_weight=3.0, devi
         opt.step()
         if ep % 5 == 0 or ep == epochs - 1:
             log.info("finetune ep %d: replay %.5f obs %.5f (%d pts, %d days)",
-                     ep, float(lr_), float(lo), n_pts, len(train_days))
+                     ep, float(lr_.detach()), float(lo.detach()), n_pts, len(train_days))
     path = os.path.join(work, "emulator_candidate.pt")
     torch.save(net.state_dict(), path)
     return path
