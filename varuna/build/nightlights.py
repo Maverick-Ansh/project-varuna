@@ -39,7 +39,11 @@ def compute_outage(latest, baseline, quality=None, built=None,
     """
     latest = np.asarray(latest, dtype="float64")
     baseline = np.asarray(baseline, dtype="float64")
-    valid = np.isfinite(latest) & np.isfinite(baseline) & (baseline >= min_baseline)
+    # missing retrievals arrive as the -1 sentinel (fetch unmasks with -1) or NaN — a cell with
+    # no valid recent observation is UNKNOWN, never "dark" (monsoon clouds would otherwise flag
+    # the whole city as a blackout)
+    valid = (np.isfinite(latest) & np.isfinite(baseline)
+             & (latest >= 0) & (baseline >= min_baseline))
     if quality is not None:
         q = np.asarray(quality, dtype="float64")
         valid &= np.isfinite(q) & (q < 2)
@@ -75,7 +79,7 @@ def _built_fraction(work, shape, transform):
     return out
 
 
-def fetch_vnp46a2(work, aoi=None, days_back=90, good_days=3, max_lag_days=14):
+def fetch_vnp46a2(work, aoi=None, days_back=90, good_days=6, max_lag_days=14):
     """Download latest-good + baseline VNP46A2 composites for the AOI (needs init_ee done).
 
     Writes ntl_latest.tif / ntl_baseline.tif / ntl_quality.tif into the bundle; returns the
@@ -109,12 +113,14 @@ def fetch_vnp46a2(work, aoi=None, days_back=90, good_days=3, max_lag_days=14):
     if lag > max_lag_days:
         raise RuntimeError(f"VNP46A2 archive is {lag} d stale (> {max_lag_days})")
 
-    latest = recent.median()
+    # unmask(-1): cells with NO good retrieval in the window arrive as -1 (invalid), never as
+    # 0 radiance — otherwise monsoon cloud cover reads as a city-wide blackout
+    latest = recent.median().unmask(-1)
     baseline = goodc.filterDate(str(today - _dt.timedelta(days=days_back + max_lag_days)),
                                 str(_dt.date.fromisoformat(latest_ms)
-                                    - _dt.timedelta(days=good_days))).median()
+                                    - _dt.timedelta(days=good_days))).median().unmask(-1)
     quality = (col.sort("system:time_start", False).limit(good_days)
-               .select(QF_BAND).reduce(ee.Reducer.min()))
+               .select(QF_BAND).reduce(ee.Reducer.min()).unmask(255))
 
     download_ee_image(latest, os.path.join(work, "ntl_latest.tif"), reg=reg, scale=SCALE_M)
     download_ee_image(baseline, os.path.join(work, "ntl_baseline.tif"), reg=reg, scale=SCALE_M)

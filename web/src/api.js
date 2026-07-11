@@ -35,4 +35,19 @@ export const api = {
   route: (start, end, rain_mm, area) => post("/api/route", { start, end, rain_mm, area }),
   report: (rain_mm, area) => post("/api/report", { rain_mm, area }),
   chat: (message, history, area) => post("/api/chat", { message, history, area }),
+
+  // v2 live layer
+  weather: (area) => get(`/api/weather${q(area)}`),
+  alertsLive: (area) => get(`/api/alerts_live${q(area)}`),
+  reports: (area, hours = 24) => get(`/api/reports${q(area)}${area ? "&" : "?"}hours=${hours}`),
+  reportFlood: (body) => post("/api/reports", body),
+  advisory: (area) => get(`/api/advisory${q(area)}`),
+  waterbalance: (area, rain_mm, efficiency = 1) =>
+    get(`/api/waterbalance${q(area)}${area ? "&" : "?"}rain_mm=${rain_mm}&efficiency=${efficiency}`),
+  storagePlan: (area) => get(`/api/storage_plan${q(area)}`),
+  nightlights: (area) => get(`/api/nightlights${q(area)}`),
+  learningLog: (area) => get(`/api/learning_log${q(area)}`),
+  city: (cityId, rain_mm) =>
+    get(`/api/city?city=${encodeURIComponent(cityId)}${rain_mm != null ? `&rain_mm=${rain_mm}` : ""}`),
+  imageUrl: (name, area) => `${BASE}/api/image/${name}${q(area)}`,
 };

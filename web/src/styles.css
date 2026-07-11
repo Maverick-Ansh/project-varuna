@@ -56,3 +56,28 @@ button:disabled { opacity: .5; cursor: default; }
 table.cb { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
 table.cb th, table.cb td { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--line); }
 table.cb th { color: var(--muted); font-weight: 600; }
+
+/* v2: live weather + citizen reports + water budget */
+button.live-on { background: #16a34a; color: #04170b; }
+button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+button.sel { background: var(--accent); }
+
+/* 48-h hyetograph: single-hue thin bars, no legend (title carries identity) */
+.hyeto { display: flex; align-items: flex-end; gap: 1px; height: 42px; margin-top: 8px;
+  padding: 2px; background: #0d1320; border: 1px solid var(--line); border-radius: 6px; }
+.hyeto span { flex: 1; min-width: 2px; background: var(--accent); border-radius: 2px 2px 0 0; }
+
+/* stacked budget bar: 2px surface gaps between segments, rounded data ends */
+.stack-bar { display: flex; gap: 2px; height: 20px; margin-top: 8px; border-radius: 4px;
+  overflow: hidden; background: var(--panel); position: relative; }
+.stack-bar.thin { height: 10px; margin-top: 6px; }
+.stack-bar .seg { height: 100%; border-radius: 4px; min-width: 2px; transition: width .3s; }
+.stack-bar .seg.over { position: absolute; left: 0; top: 0; }
+.lg-inline { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12px;
+  color: var(--muted); }
+.lg-inline i, i.sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px;
+  margin-right: 4px; vertical-align: -1px; }
+.lg-inline b { color: var(--fg); font-weight: 600; }
+
+.depth-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.depth-btns button { font-size: 12px; padding: 6px 4px; }

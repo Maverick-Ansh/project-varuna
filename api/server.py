@@ -128,7 +128,7 @@ def health():
 def areas():
     """Registered areas + whether each has a serveable bundle."""
     return [{"id": a.id, "name": a.name, "built": is_built(a.id),
-             "aoi": list(a.aoi), "center": list(a.center), "note": a.note}
+             "aoi": list(a.aoi), "center": list(a.center), "note": a.note, "city": a.city}
             for a in list_areas()]
 
 
