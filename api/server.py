@@ -17,18 +17,49 @@ import io
 import math
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from varuna.config import CFG
-from varuna.areas import list_areas, get_area, area_work, default_area_id, is_built
+from varuna.areas import (list_areas, get_area, area_work, default_area_id, is_built, CITIES)
 
 app = FastAPI(title="Varuna FloodTwin API", version="2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 _ENV_WORK = os.environ.get("VARUNA_WORK")
+
+# In-process TTL cache for live upstream calls (Open-Meteo, alerts, advisory). Races between
+# worker threads just cause a duplicate fetch — acceptable for these read-only payloads.
+_TTL_CACHE: dict = {}
+
+
+def _cached(key, ttl_s, fn):
+    import time
+    now = time.monotonic()
+    hit = _TTL_CACHE.get(key)
+    if hit is not None and now - hit[0] < ttl_s:
+        return hit[1]
+    val = fn()
+    _TTL_CACHE[key] = (now, val)
+    return val
+
+
+# Citizen report store: memory + JSONL + HF-dataset persistence (see varuna/serve/reports.py).
+from varuna.serve.reports import ReportStore, ip_hash as _ip_hash  # noqa: E402
+
+REPORTS = ReportStore()
+
+
+@app.on_event("startup")
+def _startup():
+    REPORTS.start()
+
+
+@app.on_event("shutdown")
+def _shutdown():
+    REPORTS.flush()
 
 
 def _work(area: str | None = None) -> str:
@@ -181,6 +212,202 @@ def image(name: str, area: str | None = None):
     return FileResponse(path, media_type="image/png")
 
 
+# ----------------------------------------------------------------------------- live data endpoints
+
+
+def _area_aoi(area: str | None) -> list:
+    try:
+        return list(get_area(area).aoi) if area else list(CFG.aoi)
+    except KeyError:
+        return list(CFG.aoi)
+
+
+@app.get("/api/weather")
+def weather(area: str | None = None):
+    """Live Open-Meteo forecast for the area: 24-h AOI max + hourly hyetograph. Cached 15 min."""
+    from varuna.serve.weather import area_weather
+    aid = area or default_area_id()
+
+    def fetch():
+        try:
+            return area_weather(aoi=_area_aoi(area), center=tuple(_center(area)))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(502, f"weather fetch failed: {e}")
+    return _cached(("weather", aid), 900, fetch)
+
+
+@app.get("/api/alerts_live")
+def alerts_live(area: str | None = None):
+    """Today's outlook at the LIVE forecast (read-only: never rewrites alerts_today.csv).
+
+    Cached 15 min; the committed /api/alerts stays as the nightly-refreshed fallback."""
+    from varuna.serve.alerts import run_alerts
+    aid = area or default_area_id()
+    work = _work(area)
+
+    def fetch():
+        try:
+            return run_alerts(rain_mm=None, work=work, aoi=_area_aoi(area),
+                              aggregate_wards=False, save_csv=False)
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(503, f"live alerts unavailable: {e}")
+    return _cached(("alerts_live", aid), 900, fetch)
+
+
+class CitizenReport(BaseModel):
+    area: str
+    lat: float
+    lon: float
+    depth_band: str                       # ankle | knee | waist | chest
+    note: str | None = Field(None, max_length=280)
+    client_ts: str | None = None
+    website: str | None = None            # honeypot: bots fill it; humans never see it
+
+
+@app.post("/api/reports")
+def post_report(req: CitizenReport, request: Request):
+    """Citizen flood report: pin + water level + note. Rate-limited, validated, persisted."""
+    if req.website:                        # honeypot tripped: pretend success, store nothing
+        return {"ok": True, "id": "0" * 12}
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+          or (request.client.host if request.client else "?"))
+    try:
+        work = _work(req.area)             # 404 on unknown area
+        rep = REPORTS.add(req.area, work, req.lat, req.lon, req.depth_band,
+                          note=req.note or "", client_ts=req.client_ts, ip_hash=_ip_hash(ip))
+        return {"ok": True, **rep}
+    except ValueError as e:
+        msg = str(e)
+        raise HTTPException(429 if msg.startswith("rate_limited") else 422, msg)
+
+
+@app.get("/api/reports")
+def get_reports(area: str | None = None, hours: float = 24):
+    """Recent citizen reports for the map layer (public fields only)."""
+    aid = area or default_area_id()
+    reps = REPORTS.recent(area=aid, hours=min(max(hours, 1), 24 * 7))
+    return {"area": aid, "count": len(reps), "reports": reps}
+
+
+@app.get("/api/advisory")
+def advisory(area: str | None = None):
+    """Grounded citizen advisory (EN+HI, +MR for Mumbai). Hosted LLM or template. 30-min cache."""
+    from varuna.serve.advisory import make_advisory
+    aid = area or default_area_id()
+    work = _work(area)
+
+    def build():
+        try:
+            wx = weather(area)
+        except HTTPException:
+            wx = None
+        try:
+            al = alerts_live(area)
+        except HTTPException:
+            al = None                       # advisory renders honestly from partial facts
+        a = None
+        try:
+            a = get_area(aid)
+        except KeyError:
+            pass
+        langs = ("en", "hi", "mr") if (a and a.city == "mumbai") else ("en", "hi")
+        return make_advisory(work, a.name if a else aid, weather=wx, alerts=al,
+                             reports=REPORTS.summary(area=aid, hours=24), langs=langs)
+    return _cached(("advisory", aid), 1800, build)
+
+
+@app.get("/api/waterbalance")
+def waterbalance(area: str | None = None, rain_mm: float = 100.0, efficiency: float = 1.0):
+    """Storm mass balance (rain = soil/vegetation + ponded) from the committed ladder. Read-only."""
+    from varuna.serve.waterbalance import water_balance
+    try:
+        return water_balance(work=_work(area), rain_mm=rain_mm, efficiency=efficiency)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"water balance failed: {e}")
+
+
+@app.get("/api/storage_plan")
+def storage_plan(area: str | None = None):
+    """The committed storage-sizing curve (for the client-side container designer)."""
+    plan = _load_json(_work(area), "storage_sizing.json")
+    if plan is None:
+        raise HTTPException(404, "storage_sizing.json not in bundle — run plan_storage")
+    return plan
+
+
+@app.get("/api/nightlights")
+def nightlights(area: str | None = None):
+    """VIIRS Black Marble power-outage summary (written by the nightly job)."""
+    js = _load_json(_work(area), "nightlights_outage.json")
+    if js is None:
+        raise HTTPException(404, "no night-lights data yet — the nightly job populates this")
+    return js
+
+
+@app.get("/api/learning_log")
+def learning_log(area: str | None = None):
+    """Nightly self-improvement history (reward-gated emulator updates)."""
+    js = _load_json(_work(area), "learning_log.json")
+    return {"area": area or default_area_id(), "entries": js or []}
+
+
+@app.get("/api/city")
+def city(city: str = "mumbai", rain_mm: float | None = None):
+    """City-wide aggregate over a tile group. Tiles tessellate exactly, so sums don't double-count."""
+    grp = CITIES.get(city)
+    if not grp:
+        raise HTTPException(404, f"unknown city '{city}'; known: {sorted(CITIES)}")
+
+    def build():
+        tiles, totals = [], dict(flooded_area_m2=0.0, flooded_volume_m3=0.0, red=0, amber=0,
+                                 reports_24h=0, outage_cells=0)
+        emulator_ok = True
+        for tid in grp["tiles"]:
+            built = is_built(tid)
+            a = get_area(tid)
+            work = a.work_dir()
+            t = dict(id=tid, name=a.name, built=built, center=list(a.center))
+            if built:
+                t["bounds"] = _domain_bounds(work, list(a.center))
+                r = rain_mm
+                if r is None:
+                    try:
+                        r = weather(tid)["rain_24h_mm"]
+                    except HTTPException:
+                        r = CFG.design_rain_mm
+                t["rain_mm"] = r
+                try:
+                    from varuna.serve.emulator import whatif
+                    s = whatif(r, work=work)
+                    t["summary"] = s
+                    totals["flooded_area_m2"] += s.get("flooded_area_m2", 0)
+                    totals["flooded_volume_m3"] += s.get("flooded_volume_m3", 0)
+                except Exception as e:  # noqa: BLE001
+                    emulator_ok = False
+                    t["summary_error"] = str(e)
+                try:
+                    al = alerts_live(tid)
+                    t["alerts"] = al.get("summary", {})
+                    totals["red"] += t["alerts"].get("red", 0)
+                    totals["amber"] += t["alerts"].get("amber", 0)
+                except HTTPException:
+                    pass
+                rs = REPORTS.summary(area=tid, hours=24)
+                t["reports_24h"] = rs["count"]
+                totals["reports_24h"] += rs["count"]
+                nl = _load_json(work, "nightlights_outage.json")
+                if nl:
+                    t["outage_cells"] = nl.get("n_outage_cells", 0)
+                    t["nightlights_date"] = nl.get("date")
+                    totals["outage_cells"] += t.get("outage_cells", 0)
+            tiles.append(t)
+        return dict(city=city, name=grp["name"], note=grp.get("note"),
+                    tiles=tiles, totals=totals, emulator=emulator_ok)
+    return _cached(("city", city, rain_mm), 60, build)
+
+
 # ----------------------------------------------------------------------------- live / heavy endpoints
 
 
@@ -251,6 +478,7 @@ def canals(req: CanalReq):
 class StorageReq(BaseModel):
     rain_mm: float = 100.0
     targets: list | None = None
+    unit_m3: float | None = None          # container unit size for the equiv_units readout
     area: str | None = None
 
 
@@ -263,7 +491,8 @@ def storage(req: StorageReq):
         raise HTTPException(503, f"storage unavailable: {e}")
     try:
         targets = tuple(req.targets) if req.targets else (30, 50, 70)
-        return plan_storage(rain_mm=req.rain_mm, targets=targets, work=_work(req.area))
+        kw = {"unit_m3": float(req.unit_m3)} if req.unit_m3 else {}
+        return plan_storage(rain_mm=req.rain_mm, targets=targets, work=_work(req.area), **kw)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(500, f"plan_storage failed: {e}")
 
