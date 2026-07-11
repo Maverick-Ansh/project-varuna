@@ -38,6 +38,9 @@ class Area:
     work: Optional[str] = None          # bundle dir; defaults to artifacts/<id>
     source_work: Optional[str] = None   # area id (or path) whose rasters a sub-crop reuses
     note: str = ""
+    n_grid: Optional[int] = None        # twin grid size for a fresh build (None -> CFG.n_grid)
+    dx: Optional[float] = None          # cell size m for a fresh build (None -> CFG.dx)
+    city: Optional[str] = None          # city group id for multi-tile aggregate views
 
     def work_dir(self) -> str:
         return self.work or os.path.join(artifacts_root(), self.id)
@@ -63,8 +66,32 @@ _AREAS = [
          note="sub-crop of the Patna DEM (no new download)"),
     Area("bengaluru", "Bengaluru", (77.50, 12.87, 77.78, 13.01), (12.940, 77.640),
          note="urban stormwater flooding; requires an Earth Engine build"),
+    # --- Mumbai (BMC) as four 256^2 @ 60 m tiles (15.36 km squares) tessellating edge-to-edge:
+    # row lat edges 18.8963/19.0348/19.1733/19.3118, col lon edges 72.7570/72.9030/73.0490.
+    # Exact tessellation (zero overlap) so city-wide sums are correct by construction. Tiles are
+    # independent closed-boundary models — flow across tile seams is not simulated; tidal /
+    # storm-surge effects are not modeled. AOIs pad the crop window for the EE download.
+    Area("mumbai_south", "Mumbai — Island City", (72.745, 18.884, 72.915, 19.047),
+         (18.9655, 72.8300), n_grid=256, city="mumbai",
+         note="Colaba-Mahim: Hindmata/Parel, Kings Circle, Dadar TT, Byculla, Worli"),
+    Area("mumbai_west", "Mumbai — Western suburbs & Kurla", (72.745, 19.023, 72.915, 19.185),
+         (19.1040, 72.8300), n_grid=256, city="mumbai",
+         note="Milan & Andheri subways, Khar, Sion, BKC, Kurla/Mithi lower reach, Juhu, airport"),
+    Area("mumbai_east", "Mumbai — East (Powai-Bhandup)", (72.891, 19.023, 73.061, 19.185),
+         (19.1040, 72.9760), n_grid=256, city="mumbai",
+         note="Powai/Mithi headwaters, Ghatkopar, Vikhroli, Bhandup, Mulund, Govandi"),
+    Area("mumbai_north", "Mumbai — North (Malad-Dahisar)", (72.745, 19.161, 72.915, 19.324),
+         (19.2425, 72.8300), n_grid=256, city="mumbai",
+         note="Malad subway, Kandivali, Borivali, Dahisar; Poisar & Dahisar rivers"),
 ]
 _REGISTRY = {a.id: a for a in _AREAS}
+
+# City groups for the aggregate dashboard view. Tiles tessellate exactly, so summing per-tile
+# volumes/areas never double-counts.
+CITIES = {"mumbai": dict(name="Mumbai (BMC)",
+                         tiles=["mumbai_south", "mumbai_west", "mumbai_east", "mumbai_north"],
+                         note=("Four independent 15.4 km tiles; cross-seam flow and tides are "
+                               "not simulated."))}
 
 
 def list_areas() -> list[Area]:
