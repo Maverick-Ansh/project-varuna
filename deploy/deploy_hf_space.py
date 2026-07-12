@@ -38,8 +38,13 @@ def main():
     from huggingface_hub import HfApi
     api = HfApi(token=token)
 
-    api.create_repo(repo_id=space_id, repo_type="space", space_sdk="docker", exist_ok=True)
-    print(f"Space ready: {space_id}")
+    # HF now 402s create_repo for Docker Spaces on free accounts EVEN when the Space already
+    # exists — only call it when the Space is genuinely missing (grandfathered Spaces keep running).
+    if api.repo_exists(repo_id=space_id, repo_type="space"):
+        print(f"Space exists: {space_id} (skipping create_repo)")
+    else:
+        api.create_repo(repo_id=space_id, repo_type="space", space_sdk="docker", exist_ok=True)
+        print(f"Space created: {space_id}")
 
     # HF reads the Space card front-matter from README.md
     api.upload_file(path_or_fileobj=os.path.join(REPO_ROOT, "deploy", "space_README.md"),
