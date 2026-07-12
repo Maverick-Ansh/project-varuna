@@ -90,7 +90,7 @@ def _cut_for_sites(dom, ys, xs, depths, f, K, rain_mm):
 
 def plan_storage(rain_mm=None, work=None, device=None, site_counts=None,
                  targets=(30, 50, 70), unit_m3=50.0, dom=None,
-                 phase_targets=(20, 40, 60), site_list_max=1500, save=True):
+                 phase_targets=(10, 20, 40), site_list_max=1500, save=True):
     """Sweep distributed-storage count -> flood cut, size the #sites for target reductions,
     emit the explicit buildable site list (lat/lon + per-site volume) and a phased,
     indicatively-costed implementation plan."""
