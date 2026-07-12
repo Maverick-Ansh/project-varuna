@@ -42,6 +42,9 @@ def _cached(key, ttl_s, fn):
     if hit is not None and now - hit[0] < ttl_s:
         return hit[1]
     val = fn()
+    if len(_TTL_CACHE) >= 512:            # user-influenced keys (e.g. rain_mm) must not grow unbounded
+        for k in sorted(_TTL_CACHE, key=lambda k: _TTL_CACHE[k][0])[:256]:
+            _TTL_CACHE.pop(k, None)
     _TTL_CACHE[key] = (now, val)
     return val
 
@@ -359,6 +362,8 @@ def city(city: str = "mumbai", rain_mm: float | None = None):
     grp = CITIES.get(city)
     if not grp:
         raise HTTPException(404, f"unknown city '{city}'; known: {sorted(CITIES)}")
+    if rain_mm is not None:                # quantize + clamp: it is a cache key
+        rain_mm = round(min(max(float(rain_mm), 0.0), 500.0))
 
     def build():
         tiles, totals = [], dict(flooded_area_m2=0.0, flooded_volume_m3=0.0, red=0, amber=0,
