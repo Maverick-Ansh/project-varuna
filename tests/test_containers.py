@@ -51,6 +51,36 @@ def test_plan_storage_curve_monotonic_and_targets(tmp_path):
     assert (tmp_path / "storage_sizing.json").exists()
 
 
+def test_sites_phases_and_buildability(tmp_path):
+    dom = _synth_domain()
+    N = dom.z0.shape[0]
+    # mark the bowl centre (the deepest minima) as buildings -> containers must avoid it
+    b = np.zeros((N, N), "float32")
+    b[N // 2 - 2:N // 2 + 3, N // 2 - 2:N // 2 + 3] = 1.0
+    np.savez(tmp_path / "urban_grid.npz", buildings=b, roads=np.zeros((N, N), "float32"))
+    rep = S.plan_storage(rain_mm=120.0, work=str(tmp_path), site_counts=(5, 20, 60),
+                         targets=(30,), dom=dom, phase_targets=(5, 200))
+
+    assert rep["sites"], "explicit site list must be emitted"
+    vols = [s["site_m3"] for s in rep["sites"]]
+    assert vols == sorted(vols, reverse=True)                  # deepest-first ranking
+    for s in rep["sites"]:
+        assert not b[s["row"], s["col"]], "no container under a building"
+        assert s["on_road"] is False                           # roads grid provided, all zero
+
+    ph = rep["phases"]
+    assert ph[0]["reachable"] and not ph[1]["reachable"]
+    assert ph[0]["add_cost_inr"] == round(ph[0]["add_storage_m3"] * rep["storage_inr_per_m3"])
+    assert ph[0]["cumulative_sites"] <= rep["max_sites"]
+
+    # WorldCover water exclusion: flag the top site's cell as water, replan -> it disappears
+    r0, c0 = rep["sites"][0]["row"], rep["sites"][0]["col"]
+    dom.wc[r0, c0] = 80
+    rep2 = S.plan_storage(rain_mm=120.0, work=str(tmp_path), site_counts=(5,),
+                          targets=(30,), dom=dom)
+    assert all((s["row"], s["col"]) != (r0, c0) for s in rep2["sites"])
+
+
 def test_plan_storage_writes_dose_figure(tmp_path):
     dom = _synth_domain(28)
     rep = S.plan_storage(rain_mm=100.0, work=str(tmp_path), site_counts=(5, 15), targets=(30,), dom=dom)

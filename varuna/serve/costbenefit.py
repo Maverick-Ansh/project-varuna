@@ -64,7 +64,8 @@ def rank_interventions(rain_mm=None, work=None, costs=None, device=None, iters=4
     # 2) distributed storage sized to ~50% cut
     try:
         st = plan_storage(rain_mm=rain_mm, work=work, device=device,
-                          site_counts=(100, 300, 600, 1000, 2000), targets=(50,))
+                          site_counts=(100, 300, 600, 1000, 2000), targets=(50,),
+                          site_list_max=0, save=False)   # probe only — never clobber the bundle plan
         tg = st.get("targets", {}).get("50%")
         if tg:
             reduced = 0.5 * st["total_flood_m3"]

@@ -165,6 +165,7 @@ export default function App() {
   const [show, setShow] = useState({
     flood: true, alerts: true, sinks: false, recharge: false, canal: true, dig: true,
     buildings: true, roads: true, route: true, reports: true, nightlights: true,
+    containers: false,
   });
   const [chat, setChat] = useState([]);
   const [msg, setMsg] = useState("");
@@ -600,6 +601,18 @@ export default function App() {
             <CircleMarker key={`p${i}`} center={s.latlon} radius={5}
                           pathOptions={{ ...C.pit, fillOpacity: 0.9, weight: 1.5 }}>
               <Tooltip>storage pit {s.excavation_m3.toLocaleString()} m³</Tooltip>
+            </CircleMarker>
+          ))}
+
+          {/* planned container sites: buildable detention cells, deepest (rank 1) first */}
+          {!isCity && show.containers && storagePlan && storagePlan.sites &&
+            storagePlan.sites.filter((s) => s.latlon).slice(0, 800).map((s) => (
+            <CircleMarker key={`ct${s.rank}`} center={s.latlon}
+                          radius={Math.max(2.5, Math.min(9, 1.5 * Math.sqrt(s.site_m3 / 500)))}
+                          pathOptions={{ color: "#0369a1", fillColor: "#0ea5e9",
+                                         fillOpacity: 0.75, weight: 1 }}>
+              <Tooltip>container #{s.rank} · {s.site_m3.toLocaleString()} m³
+                {s.on_road ? " · under street" : ""}</Tooltip>
             </CircleMarker>
           ))}
 

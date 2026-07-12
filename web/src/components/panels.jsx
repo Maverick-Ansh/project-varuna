@@ -206,6 +206,31 @@ export function WaterBalancePanel({ wb, plan, unitM3, setUnitM3, eff, setEff, ra
           </table>
           <p className="muted" style={{ marginBottom: 0 }}>
             Sizing at {plan.rain_mm} mm design storm; units = volume ÷ (unit size × efficiency).</p>
+
+          {plan.phases && plan.phases.some((p) => p.reachable) && (
+            <>
+              <h3 style={{ marginTop: 12 }}>Phased build-out plan</h3>
+              <table className="cb">
+                <thead><tr><th>phase</th><th>cut</th><th>+ sites</th><th>+ volume</th><th>≈ cost</th></tr></thead>
+                <tbody>
+                  {plan.phases.map((p) => (
+                    <tr key={p.phase}>
+                      <td>{p.phase}</td>
+                      <td>{p.target_cut_pct}%</td>
+                      <td>{p.reachable ? `+${p.add_sites.toLocaleString()}` : "—"}</td>
+                      <td>{p.reachable ? fmtM3(p.add_storage_m3) : "—"}</td>
+                      <td>{p.reachable ? `₹${p.add_cost_crore_inr} cr` : "unreachable"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="muted" style={{ marginBottom: 0 }}>
+                Each phase adds sites deepest-first on buildable ground (no buildings, no water;
+                under-street detention allowed). Costs at ₹{(plan.storage_inr_per_m3 || 6000).toLocaleString()}/m³
+                RCC detention — indicative, not a bid. Turn on the “containers” map layer to see
+                every planned site.</p>
+            </>
+          )}
         </>
       )}
     </Panel>
