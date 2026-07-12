@@ -333,33 +333,45 @@ def train_emulator(X, Y, epochs=40, device=None, save_path=None, flood_weight=20
     therefore up-weight wet cells (weight 1 + flood_weight where target > tau) and clip gradients
     so the net actually fits the flood signal. We also report a flooded-cell RMSE, which exposes the
     collapse the whole-grid RMSE hides.
+
+    The softplus head can also die outright: on some terrains (e.g. a half-ocean Mumbai tile) the
+    first optimiser steps push the logits so negative that softplus' gradient vanishes and the net
+    is stuck at 0 m everywhere — and because gen_dataset reseeds the global RNG, the init and
+    therefore the collapse repeat IDENTICALLY on every rebuild. We detect a collapsed val
+    prediction after training and retrain from explicit alternate seeds.
     """
     device = _device(device)
-    emu = UNet().to(device)
-    opt = torch.optim.Adam(emu.parameters(), lr=1e-3)
     ntr = int(0.9 * len(X))
     Xtr, Ytr = X[:ntr].to(device), Y[:ntr].to(device)
     Xv, Yv = X[ntr:].to(device), Y[ntr:].to(device)
-    vl = torch.tensor(float("nan"))
-    for ep in range(epochs):
-        perm = torch.randperm(ntr)
-        for b in range(0, ntr, 8):
-            idx = perm[b:b + 8]
-            pred, tgt = emu(Xtr[idx]), Ytr[idx]
-            w = 1.0 + flood_weight * (tgt > tau).float()          # emphasise the sparse wet cells
-            loss = (w * (pred - tgt) ** 2).mean()
-            opt.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(emu.parameters(), 5.0)
-            opt.step()
-        with torch.no_grad():
-            pv = emu(Xv)
-            vl = ((pv - Yv) ** 2).mean().sqrt()
-            wet = Yv > 0.15
-            vwet = ((pv - Yv) ** 2)[wet].mean().sqrt() if bool(wet.any()) else torch.zeros(())
-        if ep % 5 == 0:
-            log.info("epoch %d: val RMSE %.1f cm (flooded-cell RMSE %.1f cm)",
-                     ep, float(vl) * 100, float(vwet) * 100)
+    wet = Yv > 0.15
+    for seed in (None, 20260712, 42, 777):
+        if seed is not None:
+            log.warning("emulator collapsed to ~0 everywhere — retraining from seed %d", seed)
+            torch.manual_seed(seed)
+        emu = UNet().to(device)
+        opt = torch.optim.Adam(emu.parameters(), lr=1e-3)
+        vl = torch.tensor(float("nan"))
+        for ep in range(epochs):
+            perm = torch.randperm(ntr)
+            for b in range(0, ntr, 8):
+                idx = perm[b:b + 8]
+                pred, tgt = emu(Xtr[idx]), Ytr[idx]
+                w = 1.0 + flood_weight * (tgt > tau).float()      # emphasise the sparse wet cells
+                loss = (w * (pred - tgt) ** 2).mean()
+                opt.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(emu.parameters(), 5.0)
+                opt.step()
+            with torch.no_grad():
+                pv = emu(Xv)
+                vl = ((pv - Yv) ** 2).mean().sqrt()
+                vwet = ((pv - Yv) ** 2)[wet].mean().sqrt() if bool(wet.any()) else torch.zeros(())
+            if ep % 5 == 0:
+                log.info("epoch %d: val RMSE %.1f cm (flooded-cell RMSE %.1f cm)",
+                         ep, float(vl) * 100, float(vwet) * 100)
+        if not (bool(wet.any()) and float(pv.max()) < tau):       # alive: predicts some flooding
+            break
     if save_path:
         torch.save(emu.state_dict(), save_path)
         log.info("saved emulator -> %s", save_path)
