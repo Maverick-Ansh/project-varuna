@@ -1,57 +1,44 @@
 {
   "rain_mm": 100.0,
   "total_flood_m3": 1366007,
-  "max_sites": 1053,
+  "max_sites": 273,
   "unit_m3": 50.0,
   "curve": [
     {
       "sites": 50,
-      "reduction_pct": -0.7,
-      "storage_m3": 296464,
-      "median_site_m3": 4425,
+      "reduction_pct": 5.5,
+      "storage_m3": 220026,
+      "median_site_m3": 3612,
       "unstable": false
     },
     {
       "sites": 100,
-      "reduction_pct": 8.7,
-      "storage_m3": 460323,
-      "median_site_m3": 3734,
+      "reduction_pct": 8.0,
+      "storage_m3": 321653,
+      "median_site_m3": 2568,
       "unstable": false
     },
     {
       "sites": 200,
-      "reduction_pct": 14.6,
-      "storage_m3": 708483,
-      "median_site_m3": 2953,
+      "reduction_pct": 10.6,
+      "storage_m3": 429830,
+      "median_site_m3": 1587,
       "unstable": false
     },
     {
-      "sites": 500,
-      "reduction_pct": 34.6,
-      "storage_m3": 1141256,
-      "median_site_m3": 1832,
+      "sites": 273,
+      "reduction_pct": 10.7,
+      "storage_m3": 449783,
+      "median_site_m3": 1170,
       "unstable": false
-    },
-    {
-      "sites": 1000,
-      "reduction_pct": 0.5,
-      "storage_m3": 1364295,
-      "median_site_m3": 965,
-      "unstable": false
-    },
-    {
-      "sites": 1053,
-      "reduction_pct": -86633.9,
-      "storage_m3": 1366007,
-      "median_site_m3": 897,
-      "unstable": true
     }
   ],
   "targets": {
     "30%": {
-      "sites": 431,
-      "storage_m3": 1041718,
-      "equiv_units": 20834
+      "sites": null,
+      "storage_m3": null,
+      "equiv_units": null,
+      "note": "target beyond the stable part of the curve"
     },
     "50%": {
       "sites": null,
@@ -66,5 +53,3037 @@
       "note": "target beyond the stable part of the curve"
     }
   },
-  "note": "Each storage site sized to its local pooled depth (dynamic, non-linear by geography); sites ranked by gradient-pooled depth = local minima, deepest first."
+  "sites": [
+    {
+      "rank": 1,
+      "row": 104,
+      "col": 40,
+      "site_m3": 15124,
+      "latlon": [
+        12.91849,
+        77.62684
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 2,
+      "row": 104,
+      "col": 38,
+      "site_m3": 14470,
+      "latlon": [
+        12.91849,
+        77.62576
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 3,
+      "row": 12,
+      "col": 127,
+      "site_m3": 12061,
+      "latlon": [
+        12.96808,
+        77.67373
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 4,
+      "row": 95,
+      "col": 67,
+      "site_m3": 9116,
+      "latlon": [
+        12.92334,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 5,
+      "row": 99,
+      "col": 62,
+      "site_m3": 7006,
+      "latlon": [
+        12.92119,
+        77.6387
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 6,
+      "row": 105,
+      "col": 39,
+      "site_m3": 6522,
+      "latlon": [
+        12.91795,
+        77.6263
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 7,
+      "row": 40,
+      "col": 68,
+      "site_m3": 5683,
+      "latlon": [
+        12.95299,
+        77.64193
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 8,
+      "row": 41,
+      "col": 65,
+      "site_m3": 4987,
+      "latlon": [
+        12.95245,
+        77.64031
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 9,
+      "row": 40,
+      "col": 70,
+      "site_m3": 4412,
+      "latlon": [
+        12.95299,
+        77.64301
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 10,
+      "row": 98,
+      "col": 62,
+      "site_m3": 4338,
+      "latlon": [
+        12.92173,
+        77.6387
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 11,
+      "row": 41,
+      "col": 72,
+      "site_m3": 4293,
+      "latlon": [
+        12.95245,
+        77.64408
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 12,
+      "row": 40,
+      "col": 69,
+      "site_m3": 4259,
+      "latlon": [
+        12.95299,
+        77.64247
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 13,
+      "row": 42,
+      "col": 71,
+      "site_m3": 4229,
+      "latlon": [
+        12.95191,
+        77.64355
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 14,
+      "row": 127,
+      "col": 5,
+      "site_m3": 4152,
+      "latlon": [
+        12.9061,
+        77.60797
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 15,
+      "row": 42,
+      "col": 72,
+      "site_m3": 4148,
+      "latlon": [
+        12.95191,
+        77.64408
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 16,
+      "row": 39,
+      "col": 71,
+      "site_m3": 4054,
+      "latlon": [
+        12.95353,
+        77.64355
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 17,
+      "row": 40,
+      "col": 72,
+      "site_m3": 4051,
+      "latlon": [
+        12.95299,
+        77.64408
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 18,
+      "row": 103,
+      "col": 61,
+      "site_m3": 3906,
+      "latlon": [
+        12.91903,
+        77.63816
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 19,
+      "row": 33,
+      "col": 72,
+      "site_m3": 3882,
+      "latlon": [
+        12.95676,
+        77.64408
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 20,
+      "row": 88,
+      "col": 49,
+      "site_m3": 3857,
+      "latlon": [
+        12.92712,
+        77.63169
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 21,
+      "row": 88,
+      "col": 47,
+      "site_m3": 3795,
+      "latlon": [
+        12.92712,
+        77.63061
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 22,
+      "row": 42,
+      "col": 69,
+      "site_m3": 3744,
+      "latlon": [
+        12.95191,
+        77.64247
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 23,
+      "row": 96,
+      "col": 63,
+      "site_m3": 3689,
+      "latlon": [
+        12.9228,
+        77.63923
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 24,
+      "row": 104,
+      "col": 61,
+      "site_m3": 3643,
+      "latlon": [
+        12.91849,
+        77.63816
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 25,
+      "row": 119,
+      "col": 119,
+      "site_m3": 3621,
+      "latlon": [
+        12.91041,
+        77.66942
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 26,
+      "row": 34,
+      "col": 74,
+      "site_m3": 3603,
+      "latlon": [
+        12.95622,
+        77.64516
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 27,
+      "row": 33,
+      "col": 71,
+      "site_m3": 3531,
+      "latlon": [
+        12.95676,
+        77.64355
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 28,
+      "row": 46,
+      "col": 20,
+      "site_m3": 3466,
+      "latlon": [
+        12.94975,
+        77.61606
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 29,
+      "row": 43,
+      "col": 70,
+      "site_m3": 3454,
+      "latlon": [
+        12.95137,
+        77.64301
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 30,
+      "row": 50,
+      "col": 26,
+      "site_m3": 3380,
+      "latlon": [
+        12.9476,
+        77.61929
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 31,
+      "row": 49,
+      "col": 26,
+      "site_m3": 3363,
+      "latlon": [
+        12.94814,
+        77.61929
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 32,
+      "row": 53,
+      "col": 26,
+      "site_m3": 3250,
+      "latlon": [
+        12.94598,
+        77.61929
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 33,
+      "row": 48,
+      "col": 27,
+      "site_m3": 3202,
+      "latlon": [
+        12.94868,
+        77.61983
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 34,
+      "row": 38,
+      "col": 69,
+      "site_m3": 3148,
+      "latlon": [
+        12.95407,
+        77.64247
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 35,
+      "row": 51,
+      "col": 27,
+      "site_m3": 3124,
+      "latlon": [
+        12.94706,
+        77.61983
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 36,
+      "row": 48,
+      "col": 21,
+      "site_m3": 3123,
+      "latlon": [
+        12.94868,
+        77.6166
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 37,
+      "row": 41,
+      "col": 67,
+      "site_m3": 3107,
+      "latlon": [
+        12.95245,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 38,
+      "row": 50,
+      "col": 25,
+      "site_m3": 3064,
+      "latlon": [
+        12.9476,
+        77.61875
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 39,
+      "row": 44,
+      "col": 71,
+      "site_m3": 3010,
+      "latlon": [
+        12.95083,
+        77.64355
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 40,
+      "row": 105,
+      "col": 61,
+      "site_m3": 3007,
+      "latlon": [
+        12.91795,
+        77.63816
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 41,
+      "row": 45,
+      "col": 26,
+      "site_m3": 2978,
+      "latlon": [
+        12.95029,
+        77.61929
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 42,
+      "row": 43,
+      "col": 73,
+      "site_m3": 2956,
+      "latlon": [
+        12.95137,
+        77.64462
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 43,
+      "row": 103,
+      "col": 38,
+      "site_m3": 2949,
+      "latlon": [
+        12.91903,
+        77.62576
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 44,
+      "row": 43,
+      "col": 69,
+      "site_m3": 2924,
+      "latlon": [
+        12.95137,
+        77.64247
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 45,
+      "row": 120,
+      "col": 119,
+      "site_m3": 2838,
+      "latlon": [
+        12.90987,
+        77.66942
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 46,
+      "row": 47,
+      "col": 24,
+      "site_m3": 2752,
+      "latlon": [
+        12.94921,
+        77.61821
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 47,
+      "row": 49,
+      "col": 21,
+      "site_m3": 2736,
+      "latlon": [
+        12.94814,
+        77.6166
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 48,
+      "row": 53,
+      "col": 25,
+      "site_m3": 2722,
+      "latlon": [
+        12.94598,
+        77.61875
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 49,
+      "row": 45,
+      "col": 19,
+      "site_m3": 2719,
+      "latlon": [
+        12.95029,
+        77.61552
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 50,
+      "row": 68,
+      "col": 43,
+      "site_m3": 2582,
+      "latlon": [
+        12.9379,
+        77.62845
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 51,
+      "row": 44,
+      "col": 24,
+      "site_m3": 2554,
+      "latlon": [
+        12.95083,
+        77.61821
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 52,
+      "row": 120,
+      "col": 118,
+      "site_m3": 2550,
+      "latlon": [
+        12.90987,
+        77.66888
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 53,
+      "row": 47,
+      "col": 23,
+      "site_m3": 2536,
+      "latlon": [
+        12.94921,
+        77.61767
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 54,
+      "row": 44,
+      "col": 25,
+      "site_m3": 2501,
+      "latlon": [
+        12.95083,
+        77.61875
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 55,
+      "row": 105,
+      "col": 38,
+      "site_m3": 2499,
+      "latlon": [
+        12.91795,
+        77.62576
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 56,
+      "row": 48,
+      "col": 22,
+      "site_m3": 2484,
+      "latlon": [
+        12.94868,
+        77.61714
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 57,
+      "row": 32,
+      "col": 72,
+      "site_m3": 2478,
+      "latlon": [
+        12.9573,
+        77.64408
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 58,
+      "row": 44,
+      "col": 26,
+      "site_m3": 2465,
+      "latlon": [
+        12.95083,
+        77.61929
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 59,
+      "row": 105,
+      "col": 37,
+      "site_m3": 2426,
+      "latlon": [
+        12.91795,
+        77.62522
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 60,
+      "row": 44,
+      "col": 73,
+      "site_m3": 2416,
+      "latlon": [
+        12.95083,
+        77.64462
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 61,
+      "row": 87,
+      "col": 67,
+      "site_m3": 2312,
+      "latlon": [
+        12.92766,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 62,
+      "row": 105,
+      "col": 36,
+      "site_m3": 2300,
+      "latlon": [
+        12.91795,
+        77.62468
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 63,
+      "row": 68,
+      "col": 41,
+      "site_m3": 2285,
+      "latlon": [
+        12.9379,
+        77.62738
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 64,
+      "row": 87,
+      "col": 66,
+      "site_m3": 2284,
+      "latlon": [
+        12.92766,
+        77.64085
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 65,
+      "row": 44,
+      "col": 72,
+      "site_m3": 2241,
+      "latlon": [
+        12.95083,
+        77.64408
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 66,
+      "row": 48,
+      "col": 28,
+      "site_m3": 2203,
+      "latlon": [
+        12.94868,
+        77.62037
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 67,
+      "row": 61,
+      "col": 36,
+      "site_m3": 2182,
+      "latlon": [
+        12.94167,
+        77.62468
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 68,
+      "row": 43,
+      "col": 27,
+      "site_m3": 2105,
+      "latlon": [
+        12.95137,
+        77.61983
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 69,
+      "row": 42,
+      "col": 68,
+      "site_m3": 2080,
+      "latlon": [
+        12.95191,
+        77.64193
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 70,
+      "row": 106,
+      "col": 61,
+      "site_m3": 2069,
+      "latlon": [
+        12.91741,
+        77.63816
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 71,
+      "row": 48,
+      "col": 23,
+      "site_m3": 2015,
+      "latlon": [
+        12.94868,
+        77.61767
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 72,
+      "row": 27,
+      "col": 43,
+      "site_m3": 2011,
+      "latlon": [
+        12.95999,
+        77.62845
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 73,
+      "row": 106,
+      "col": 39,
+      "site_m3": 2004,
+      "latlon": [
+        12.91741,
+        77.6263
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 74,
+      "row": 26,
+      "col": 44,
+      "site_m3": 1992,
+      "latlon": [
+        12.96053,
+        77.62899
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 75,
+      "row": 44,
+      "col": 28,
+      "site_m3": 1971,
+      "latlon": [
+        12.95083,
+        77.62037
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 76,
+      "row": 39,
+      "col": 127,
+      "site_m3": 1959,
+      "latlon": [
+        12.95353,
+        77.67373
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 77,
+      "row": 81,
+      "col": 60,
+      "site_m3": 1941,
+      "latlon": [
+        12.93089,
+        77.63762
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 78,
+      "row": 84,
+      "col": 68,
+      "site_m3": 1935,
+      "latlon": [
+        12.92927,
+        77.64193
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 79,
+      "row": 57,
+      "col": 106,
+      "site_m3": 1928,
+      "latlon": [
+        12.94382,
+        77.66241
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 80,
+      "row": 88,
+      "col": 65,
+      "site_m3": 1924,
+      "latlon": [
+        12.92712,
+        77.64031
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 81,
+      "row": 40,
+      "col": 127,
+      "site_m3": 1903,
+      "latlon": [
+        12.95299,
+        77.67373
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 82,
+      "row": 48,
+      "col": 86,
+      "site_m3": 1901,
+      "latlon": [
+        12.94868,
+        77.65163
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 83,
+      "row": 43,
+      "col": 28,
+      "site_m3": 1890,
+      "latlon": [
+        12.95137,
+        77.62037
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 84,
+      "row": 121,
+      "col": 119,
+      "site_m3": 1848,
+      "latlon": [
+        12.90933,
+        77.66942
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 85,
+      "row": 43,
+      "col": 29,
+      "site_m3": 1836,
+      "latlon": [
+        12.95137,
+        77.62091
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 86,
+      "row": 106,
+      "col": 34,
+      "site_m3": 1834,
+      "latlon": [
+        12.91741,
+        77.6236
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 87,
+      "row": 120,
+      "col": 120,
+      "site_m3": 1821,
+      "latlon": [
+        12.90987,
+        77.66996
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 88,
+      "row": 49,
+      "col": 22,
+      "site_m3": 1781,
+      "latlon": [
+        12.94814,
+        77.61714
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 89,
+      "row": 106,
+      "col": 40,
+      "site_m3": 1763,
+      "latlon": [
+        12.91741,
+        77.62684
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 90,
+      "row": 60,
+      "col": 38,
+      "site_m3": 1745,
+      "latlon": [
+        12.94221,
+        77.62576
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 91,
+      "row": 48,
+      "col": 87,
+      "site_m3": 1742,
+      "latlon": [
+        12.94868,
+        77.65217
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 92,
+      "row": 80,
+      "col": 59,
+      "site_m3": 1736,
+      "latlon": [
+        12.93143,
+        77.63708
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 93,
+      "row": 56,
+      "col": 32,
+      "site_m3": 1689,
+      "latlon": [
+        12.94436,
+        77.62253
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 94,
+      "row": 87,
+      "col": 64,
+      "site_m3": 1677,
+      "latlon": [
+        12.92766,
+        77.63977
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 95,
+      "row": 82,
+      "col": 60,
+      "site_m3": 1659,
+      "latlon": [
+        12.93035,
+        77.63762
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 96,
+      "row": 50,
+      "col": 21,
+      "site_m3": 1646,
+      "latlon": [
+        12.9476,
+        77.6166
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 97,
+      "row": 38,
+      "col": 127,
+      "site_m3": 1645,
+      "latlon": [
+        12.95407,
+        77.67373
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 98,
+      "row": 15,
+      "col": 56,
+      "site_m3": 1640,
+      "latlon": [
+        12.96646,
+        77.63546
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 99,
+      "row": 56,
+      "col": 106,
+      "site_m3": 1633,
+      "latlon": [
+        12.94436,
+        77.66241
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 100,
+      "row": 90,
+      "col": 127,
+      "site_m3": 1588,
+      "latlon": [
+        12.92604,
+        77.67373
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 101,
+      "row": 43,
+      "col": 93,
+      "site_m3": 1587,
+      "latlon": [
+        12.95137,
+        77.6554
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 102,
+      "row": 106,
+      "col": 33,
+      "site_m3": 1559,
+      "latlon": [
+        12.91741,
+        77.62306
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 103,
+      "row": 48,
+      "col": 88,
+      "site_m3": 1559,
+      "latlon": [
+        12.94868,
+        77.65271
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 104,
+      "row": 6,
+      "col": 51,
+      "site_m3": 1543,
+      "latlon": [
+        12.97131,
+        77.63277
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 105,
+      "row": 94,
+      "col": 64,
+      "site_m3": 1539,
+      "latlon": [
+        12.92388,
+        77.63977
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 106,
+      "row": 29,
+      "col": 45,
+      "site_m3": 1534,
+      "latlon": [
+        12.95892,
+        77.62953
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 107,
+      "row": 94,
+      "col": 67,
+      "site_m3": 1527,
+      "latlon": [
+        12.92388,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 108,
+      "row": 121,
+      "col": 116,
+      "site_m3": 1523,
+      "latlon": [
+        12.90933,
+        77.6678
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 109,
+      "row": 50,
+      "col": 85,
+      "site_m3": 1505,
+      "latlon": [
+        12.9476,
+        77.65109
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 110,
+      "row": 32,
+      "col": 73,
+      "site_m3": 1496,
+      "latlon": [
+        12.9573,
+        77.64462
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 111,
+      "row": 89,
+      "col": 65,
+      "site_m3": 1483,
+      "latlon": [
+        12.92658,
+        77.64031
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 112,
+      "row": 88,
+      "col": 67,
+      "site_m3": 1478,
+      "latlon": [
+        12.92712,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 113,
+      "row": 12,
+      "col": 52,
+      "site_m3": 1474,
+      "latlon": [
+        12.96808,
+        77.63331
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 114,
+      "row": 42,
+      "col": 93,
+      "site_m3": 1449,
+      "latlon": [
+        12.95191,
+        77.6554
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 115,
+      "row": 44,
+      "col": 69,
+      "site_m3": 1448,
+      "latlon": [
+        12.95083,
+        77.64247
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 116,
+      "row": 108,
+      "col": 55,
+      "site_m3": 1441,
+      "latlon": [
+        12.91634,
+        77.63492
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 117,
+      "row": 42,
+      "col": 94,
+      "site_m3": 1441,
+      "latlon": [
+        12.95191,
+        77.65594
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 118,
+      "row": 55,
+      "col": 32,
+      "site_m3": 1434,
+      "latlon": [
+        12.9449,
+        77.62253
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 119,
+      "row": 50,
+      "col": 22,
+      "site_m3": 1430,
+      "latlon": [
+        12.9476,
+        77.61714
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 120,
+      "row": 108,
+      "col": 54,
+      "site_m3": 1423,
+      "latlon": [
+        12.91634,
+        77.63438
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 121,
+      "row": 110,
+      "col": 126,
+      "site_m3": 1381,
+      "latlon": [
+        12.91526,
+        77.67319
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 122,
+      "row": 16,
+      "col": 44,
+      "site_m3": 1374,
+      "latlon": [
+        12.96592,
+        77.62899
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 123,
+      "row": 107,
+      "col": 33,
+      "site_m3": 1356,
+      "latlon": [
+        12.91688,
+        77.62306
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 124,
+      "row": 15,
+      "col": 53,
+      "site_m3": 1346,
+      "latlon": [
+        12.96646,
+        77.63384
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 125,
+      "row": 101,
+      "col": 70,
+      "site_m3": 1342,
+      "latlon": [
+        12.92011,
+        77.64301
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 126,
+      "row": 43,
+      "col": 92,
+      "site_m3": 1330,
+      "latlon": [
+        12.95137,
+        77.65486
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 127,
+      "row": 8,
+      "col": 9,
+      "site_m3": 1326,
+      "latlon": [
+        12.97024,
+        77.61013
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 128,
+      "row": 48,
+      "col": 89,
+      "site_m3": 1321,
+      "latlon": [
+        12.94868,
+        77.65325
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 129,
+      "row": 49,
+      "col": 91,
+      "site_m3": 1292,
+      "latlon": [
+        12.94814,
+        77.65433
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 130,
+      "row": 108,
+      "col": 57,
+      "site_m3": 1283,
+      "latlon": [
+        12.91634,
+        77.636
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 131,
+      "row": 41,
+      "col": 127,
+      "site_m3": 1283,
+      "latlon": [
+        12.95245,
+        77.67373
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 132,
+      "row": 108,
+      "col": 56,
+      "site_m3": 1282,
+      "latlon": [
+        12.91634,
+        77.63546
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 133,
+      "row": 49,
+      "col": 28,
+      "site_m3": 1230,
+      "latlon": [
+        12.94814,
+        77.62037
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 134,
+      "row": 90,
+      "col": 11,
+      "site_m3": 1227,
+      "latlon": [
+        12.92604,
+        77.61121
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 135,
+      "row": 59,
+      "col": 36,
+      "site_m3": 1195,
+      "latlon": [
+        12.94275,
+        77.62468
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 136,
+      "row": 108,
+      "col": 59,
+      "site_m3": 1190,
+      "latlon": [
+        12.91634,
+        77.63708
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 137,
+      "row": 105,
+      "col": 32,
+      "site_m3": 1170,
+      "latlon": [
+        12.91795,
+        77.62253
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 138,
+      "row": 25,
+      "col": 67,
+      "site_m3": 1170,
+      "latlon": [
+        12.96107,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 139,
+      "row": 42,
+      "col": 95,
+      "site_m3": 1166,
+      "latlon": [
+        12.95191,
+        77.65648
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 140,
+      "row": 41,
+      "col": 29,
+      "site_m3": 1151,
+      "latlon": [
+        12.95245,
+        77.62091
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 141,
+      "row": 108,
+      "col": 58,
+      "site_m3": 1151,
+      "latlon": [
+        12.91634,
+        77.63654
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 142,
+      "row": 6,
+      "col": 50,
+      "site_m3": 1149,
+      "latlon": [
+        12.97131,
+        77.63223
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 143,
+      "row": 92,
+      "col": 120,
+      "site_m3": 1147,
+      "latlon": [
+        12.92496,
+        77.66996
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 144,
+      "row": 111,
+      "col": 37,
+      "site_m3": 1117,
+      "latlon": [
+        12.91472,
+        77.62522
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 145,
+      "row": 106,
+      "col": 32,
+      "site_m3": 1111,
+      "latlon": [
+        12.91741,
+        77.62253
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 146,
+      "row": 107,
+      "col": 61,
+      "site_m3": 1104,
+      "latlon": [
+        12.91688,
+        77.63816
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 147,
+      "row": 51,
+      "col": 23,
+      "site_m3": 1093,
+      "latlon": [
+        12.94706,
+        77.61767
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 148,
+      "row": 42,
+      "col": 92,
+      "site_m3": 1090,
+      "latlon": [
+        12.95191,
+        77.65486
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 149,
+      "row": 58,
+      "col": 32,
+      "site_m3": 1069,
+      "latlon": [
+        12.94329,
+        77.62253
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 150,
+      "row": 32,
+      "col": 70,
+      "site_m3": 1052,
+      "latlon": [
+        12.9573,
+        77.64301
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 151,
+      "row": 59,
+      "col": 37,
+      "site_m3": 1050,
+      "latlon": [
+        12.94275,
+        77.62522
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 152,
+      "row": 104,
+      "col": 31,
+      "site_m3": 1040,
+      "latlon": [
+        12.91849,
+        77.62199
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 153,
+      "row": 77,
+      "col": 58,
+      "site_m3": 1021,
+      "latlon": [
+        12.93305,
+        77.63654
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 154,
+      "row": 25,
+      "col": 65,
+      "site_m3": 1015,
+      "latlon": [
+        12.96107,
+        77.64031
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 155,
+      "row": 24,
+      "col": 66,
+      "site_m3": 1014,
+      "latlon": [
+        12.96161,
+        77.64085
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 156,
+      "row": 106,
+      "col": 66,
+      "site_m3": 1002,
+      "latlon": [
+        12.91741,
+        77.64085
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 157,
+      "row": 51,
+      "col": 21,
+      "site_m3": 999,
+      "latlon": [
+        12.94706,
+        77.6166
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 158,
+      "row": 24,
+      "col": 67,
+      "site_m3": 990,
+      "latlon": [
+        12.96161,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 159,
+      "row": 54,
+      "col": 34,
+      "site_m3": 976,
+      "latlon": [
+        12.94544,
+        77.6236
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 160,
+      "row": 103,
+      "col": 31,
+      "site_m3": 975,
+      "latlon": [
+        12.91903,
+        77.62199
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 161,
+      "row": 108,
+      "col": 61,
+      "site_m3": 965,
+      "latlon": [
+        12.91634,
+        77.63816
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 162,
+      "row": 90,
+      "col": 63,
+      "site_m3": 943,
+      "latlon": [
+        12.92604,
+        77.63923
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 163,
+      "row": 35,
+      "col": 22,
+      "site_m3": 937,
+      "latlon": [
+        12.95568,
+        77.61714
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 164,
+      "row": 46,
+      "col": 29,
+      "site_m3": 936,
+      "latlon": [
+        12.94975,
+        77.62091
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 165,
+      "row": 120,
+      "col": 115,
+      "site_m3": 930,
+      "latlon": [
+        12.90987,
+        77.66726
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 166,
+      "row": 59,
+      "col": 38,
+      "site_m3": 926,
+      "latlon": [
+        12.94275,
+        77.62576
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 167,
+      "row": 46,
+      "col": 74,
+      "site_m3": 922,
+      "latlon": [
+        12.94975,
+        77.64516
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 168,
+      "row": 32,
+      "col": 1,
+      "site_m3": 910,
+      "latlon": [
+        12.9573,
+        77.60582
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 169,
+      "row": 107,
+      "col": 32,
+      "site_m3": 904,
+      "latlon": [
+        12.91688,
+        77.62253
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 170,
+      "row": 89,
+      "col": 66,
+      "site_m3": 897,
+      "latlon": [
+        12.92658,
+        77.64085
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 171,
+      "row": 83,
+      "col": 59,
+      "site_m3": 896,
+      "latlon": [
+        12.92981,
+        77.63708
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 172,
+      "row": 48,
+      "col": 90,
+      "site_m3": 895,
+      "latlon": [
+        12.94868,
+        77.65379
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 173,
+      "row": 108,
+      "col": 33,
+      "site_m3": 883,
+      "latlon": [
+        12.91634,
+        77.62306
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 174,
+      "row": 27,
+      "col": 67,
+      "site_m3": 872,
+      "latlon": [
+        12.95999,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 175,
+      "row": 122,
+      "col": 119,
+      "site_m3": 866,
+      "latlon": [
+        12.90879,
+        77.66942
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 176,
+      "row": 104,
+      "col": 33,
+      "site_m3": 846,
+      "latlon": [
+        12.91849,
+        77.62306
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 177,
+      "row": 91,
+      "col": 63,
+      "site_m3": 843,
+      "latlon": [
+        12.9255,
+        77.63923
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 178,
+      "row": 43,
+      "col": 19,
+      "site_m3": 837,
+      "latlon": [
+        12.95137,
+        77.61552
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 179,
+      "row": 43,
+      "col": 91,
+      "site_m3": 834,
+      "latlon": [
+        12.95137,
+        77.65433
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 180,
+      "row": 90,
+      "col": 64,
+      "site_m3": 831,
+      "latlon": [
+        12.92604,
+        77.63977
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 181,
+      "row": 12,
+      "col": 50,
+      "site_m3": 818,
+      "latlon": [
+        12.96808,
+        77.63223
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 182,
+      "row": 11,
+      "col": 11,
+      "site_m3": 803,
+      "latlon": [
+        12.96862,
+        77.61121
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 183,
+      "row": 78,
+      "col": 55,
+      "site_m3": 794,
+      "latlon": [
+        12.93251,
+        77.63492
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 184,
+      "row": 42,
+      "col": 96,
+      "site_m3": 791,
+      "latlon": [
+        12.95191,
+        77.65702
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 185,
+      "row": 121,
+      "col": 115,
+      "site_m3": 758,
+      "latlon": [
+        12.90933,
+        77.66726
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 186,
+      "row": 104,
+      "col": 30,
+      "site_m3": 734,
+      "latlon": [
+        12.91849,
+        77.62145
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 187,
+      "row": 109,
+      "col": 34,
+      "site_m3": 733,
+      "latlon": [
+        12.9158,
+        77.6236
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 188,
+      "row": 100,
+      "col": 28,
+      "site_m3": 732,
+      "latlon": [
+        12.92065,
+        77.62037
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 189,
+      "row": 109,
+      "col": 46,
+      "site_m3": 731,
+      "latlon": [
+        12.9158,
+        77.63007
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 190,
+      "row": 28,
+      "col": 67,
+      "site_m3": 697,
+      "latlon": [
+        12.95946,
+        77.64139
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 191,
+      "row": 76,
+      "col": 54,
+      "site_m3": 659,
+      "latlon": [
+        12.93358,
+        77.63438
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 192,
+      "row": 86,
+      "col": 26,
+      "site_m3": 643,
+      "latlon": [
+        12.92819,
+        77.61929
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 193,
+      "row": 0,
+      "col": 27,
+      "site_m3": 635,
+      "latlon": [
+        12.97455,
+        77.61983
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 194,
+      "row": 103,
+      "col": 30,
+      "site_m3": 632,
+      "latlon": [
+        12.91903,
+        77.62145
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 195,
+      "row": 51,
+      "col": 28,
+      "site_m3": 631,
+      "latlon": [
+        12.94706,
+        77.62037
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 196,
+      "row": 23,
+      "col": 62,
+      "site_m3": 630,
+      "latlon": [
+        12.96215,
+        77.6387
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 197,
+      "row": 19,
+      "col": 32,
+      "site_m3": 628,
+      "latlon": [
+        12.96431,
+        77.62253
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 198,
+      "row": 86,
+      "col": 108,
+      "site_m3": 612,
+      "latlon": [
+        12.92819,
+        77.66349
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 199,
+      "row": 45,
+      "col": 73,
+      "site_m3": 611,
+      "latlon": [
+        12.95029,
+        77.64462
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 200,
+      "row": 43,
+      "col": 96,
+      "site_m3": 579,
+      "latlon": [
+        12.95137,
+        77.65702
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 201,
+      "row": 67,
+      "col": 34,
+      "site_m3": 565,
+      "latlon": [
+        12.93844,
+        77.6236
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 202,
+      "row": 42,
+      "col": 91,
+      "site_m3": 540,
+      "latlon": [
+        12.95191,
+        77.65433
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 203,
+      "row": 48,
+      "col": 10,
+      "site_m3": 527,
+      "latlon": [
+        12.94868,
+        77.61067
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 204,
+      "row": 77,
+      "col": 53,
+      "site_m3": 527,
+      "latlon": [
+        12.93305,
+        77.63384
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 205,
+      "row": 25,
+      "col": 64,
+      "site_m3": 521,
+      "latlon": [
+        12.96107,
+        77.63977
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 206,
+      "row": 39,
+      "col": 126,
+      "site_m3": 502,
+      "latlon": [
+        12.95353,
+        77.67319
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 207,
+      "row": 22,
+      "col": 62,
+      "site_m3": 488,
+      "latlon": [
+        12.96269,
+        77.6387
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 208,
+      "row": 45,
+      "col": 90,
+      "site_m3": 486,
+      "latlon": [
+        12.95029,
+        77.65379
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 209,
+      "row": 109,
+      "col": 59,
+      "site_m3": 485,
+      "latlon": [
+        12.9158,
+        77.63708
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 210,
+      "row": 107,
+      "col": 50,
+      "site_m3": 485,
+      "latlon": [
+        12.91688,
+        77.63223
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 211,
+      "row": 93,
+      "col": 111,
+      "site_m3": 484,
+      "latlon": [
+        12.92442,
+        77.66511
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 212,
+      "row": 109,
+      "col": 45,
+      "site_m3": 484,
+      "latlon": [
+        12.9158,
+        77.62953
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 213,
+      "row": 40,
+      "col": 65,
+      "site_m3": 479,
+      "latlon": [
+        12.95299,
+        77.64031
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 214,
+      "row": 90,
+      "col": 81,
+      "site_m3": 460,
+      "latlon": [
+        12.92604,
+        77.64894
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 215,
+      "row": 9,
+      "col": 10,
+      "site_m3": 456,
+      "latlon": [
+        12.9697,
+        77.61067
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 216,
+      "row": 12,
+      "col": 14,
+      "site_m3": 449,
+      "latlon": [
+        12.96808,
+        77.61282
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 217,
+      "row": 88,
+      "col": 108,
+      "site_m3": 446,
+      "latlon": [
+        12.92712,
+        77.66349
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 218,
+      "row": 53,
+      "col": 33,
+      "site_m3": 436,
+      "latlon": [
+        12.94598,
+        77.62306
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 219,
+      "row": 18,
+      "col": 33,
+      "site_m3": 395,
+      "latlon": [
+        12.96485,
+        77.62306
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 220,
+      "row": 88,
+      "col": 109,
+      "site_m3": 389,
+      "latlon": [
+        12.92712,
+        77.66403
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 221,
+      "row": 44,
+      "col": 90,
+      "site_m3": 384,
+      "latlon": [
+        12.95083,
+        77.65379
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 222,
+      "row": 37,
+      "col": 127,
+      "site_m3": 379,
+      "latlon": [
+        12.9546,
+        77.67373
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 223,
+      "row": 112,
+      "col": 53,
+      "site_m3": 365,
+      "latlon": [
+        12.91418,
+        77.63384
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 224,
+      "row": 127,
+      "col": 14,
+      "site_m3": 364,
+      "latlon": [
+        12.9061,
+        77.61282
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 225,
+      "row": 47,
+      "col": 90,
+      "site_m3": 347,
+      "latlon": [
+        12.94921,
+        77.65379
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 226,
+      "row": 43,
+      "col": 90,
+      "site_m3": 339,
+      "latlon": [
+        12.95137,
+        77.65379
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 227,
+      "row": 27,
+      "col": 40,
+      "site_m3": 336,
+      "latlon": [
+        12.95999,
+        77.62684
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 228,
+      "row": 40,
+      "col": 126,
+      "site_m3": 330,
+      "latlon": [
+        12.95299,
+        77.67319
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 229,
+      "row": 53,
+      "col": 34,
+      "site_m3": 326,
+      "latlon": [
+        12.94598,
+        77.6236
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 230,
+      "row": 51,
+      "col": 75,
+      "site_m3": 323,
+      "latlon": [
+        12.94706,
+        77.6457
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 231,
+      "row": 42,
+      "col": 97,
+      "site_m3": 292,
+      "latlon": [
+        12.95191,
+        77.65756
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 232,
+      "row": 44,
+      "col": 96,
+      "site_m3": 292,
+      "latlon": [
+        12.95083,
+        77.65702
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 233,
+      "row": 48,
+      "col": 91,
+      "site_m3": 284,
+      "latlon": [
+        12.94868,
+        77.65433
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 234,
+      "row": 33,
+      "col": 66,
+      "site_m3": 282,
+      "latlon": [
+        12.95676,
+        77.64085
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 235,
+      "row": 33,
+      "col": 2,
+      "site_m3": 266,
+      "latlon": [
+        12.95676,
+        77.60636
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 236,
+      "row": 54,
+      "col": 126,
+      "site_m3": 235,
+      "latlon": [
+        12.94544,
+        77.67319
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 237,
+      "row": 107,
+      "col": 49,
+      "site_m3": 233,
+      "latlon": [
+        12.91688,
+        77.63169
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 238,
+      "row": 112,
+      "col": 36,
+      "site_m3": 225,
+      "latlon": [
+        12.91418,
+        77.62468
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 239,
+      "row": 13,
+      "col": 14,
+      "site_m3": 224,
+      "latlon": [
+        12.96754,
+        77.61282
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 240,
+      "row": 18,
+      "col": 32,
+      "site_m3": 224,
+      "latlon": [
+        12.96485,
+        77.62253
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 241,
+      "row": 107,
+      "col": 43,
+      "site_m3": 221,
+      "latlon": [
+        12.91688,
+        77.62845
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 242,
+      "row": 102,
+      "col": 29,
+      "site_m3": 204,
+      "latlon": [
+        12.91957,
+        77.62091
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 243,
+      "row": 57,
+      "col": 0,
+      "site_m3": 196,
+      "latlon": [
+        12.94382,
+        77.60528
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 244,
+      "row": 30,
+      "col": 98,
+      "site_m3": 195,
+      "latlon": [
+        12.95838,
+        77.6581
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 245,
+      "row": 100,
+      "col": 112,
+      "site_m3": 194,
+      "latlon": [
+        12.92065,
+        77.66564
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 246,
+      "row": 66,
+      "col": 35,
+      "site_m3": 189,
+      "latlon": [
+        12.93897,
+        77.62414
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 247,
+      "row": 110,
+      "col": 108,
+      "site_m3": 187,
+      "latlon": [
+        12.91526,
+        77.66349
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 248,
+      "row": 19,
+      "col": 34,
+      "site_m3": 179,
+      "latlon": [
+        12.96431,
+        77.6236
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 249,
+      "row": 52,
+      "col": 75,
+      "site_m3": 176,
+      "latlon": [
+        12.94652,
+        77.6457
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 250,
+      "row": 57,
+      "col": 108,
+      "site_m3": 171,
+      "latlon": [
+        12.94382,
+        77.66349
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 251,
+      "row": 106,
+      "col": 31,
+      "site_m3": 165,
+      "latlon": [
+        12.91741,
+        77.62199
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 252,
+      "row": 26,
+      "col": 69,
+      "site_m3": 151,
+      "latlon": [
+        12.96053,
+        77.64247
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 253,
+      "row": 40,
+      "col": 97,
+      "site_m3": 148,
+      "latlon": [
+        12.95299,
+        77.65756
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 254,
+      "row": 111,
+      "col": 60,
+      "site_m3": 146,
+      "latlon": [
+        12.91472,
+        77.63762
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 255,
+      "row": 104,
+      "col": 68,
+      "site_m3": 145,
+      "latlon": [
+        12.91849,
+        77.64193
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 256,
+      "row": 44,
+      "col": 127,
+      "site_m3": 144,
+      "latlon": [
+        12.95083,
+        77.67373
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 257,
+      "row": 56,
+      "col": 0,
+      "site_m3": 142,
+      "latlon": [
+        12.94436,
+        77.60528
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 258,
+      "row": 85,
+      "col": 108,
+      "site_m3": 130,
+      "latlon": [
+        12.92873,
+        77.66349
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 259,
+      "row": 47,
+      "col": 2,
+      "site_m3": 129,
+      "latlon": [
+        12.94921,
+        77.60636
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 260,
+      "row": 49,
+      "col": 94,
+      "site_m3": 128,
+      "latlon": [
+        12.94814,
+        77.65594
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 261,
+      "row": 102,
+      "col": 111,
+      "site_m3": 126,
+      "latlon": [
+        12.91957,
+        77.66511
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 262,
+      "row": 99,
+      "col": 112,
+      "site_m3": 120,
+      "latlon": [
+        12.92119,
+        77.66564
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 263,
+      "row": 91,
+      "col": 47,
+      "site_m3": 120,
+      "latlon": [
+        12.9255,
+        77.63061
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 264,
+      "row": 28,
+      "col": 79,
+      "site_m3": 115,
+      "latlon": [
+        12.95946,
+        77.64786
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 265,
+      "row": 19,
+      "col": 31,
+      "site_m3": 97,
+      "latlon": [
+        12.96431,
+        77.62199
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 266,
+      "row": 111,
+      "col": 35,
+      "site_m3": 93,
+      "latlon": [
+        12.91472,
+        77.62414
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 267,
+      "row": 107,
+      "col": 46,
+      "site_m3": 89,
+      "latlon": [
+        12.91688,
+        77.63007
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 268,
+      "row": 43,
+      "col": 97,
+      "site_m3": 62,
+      "latlon": [
+        12.95137,
+        77.65756
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 269,
+      "row": 94,
+      "col": 113,
+      "site_m3": 51,
+      "latlon": [
+        12.92388,
+        77.66618
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 270,
+      "row": 94,
+      "col": 68,
+      "site_m3": 30,
+      "latlon": [
+        12.92388,
+        77.64193
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 271,
+      "row": 31,
+      "col": 97,
+      "site_m3": 30,
+      "latlon": [
+        12.95784,
+        77.65756
+      ],
+      "on_road": true
+    },
+    {
+      "rank": 272,
+      "row": 42,
+      "col": 90,
+      "site_m3": 15,
+      "latlon": [
+        12.95191,
+        77.65379
+      ],
+      "on_road": false
+    },
+    {
+      "rank": 273,
+      "row": 99,
+      "col": 113,
+      "site_m3": 14,
+      "latlon": [
+        12.92119,
+        77.66618
+      ],
+      "on_road": true
+    }
+  ],
+  "phases": [
+    {
+      "phase": 1,
+      "target_cut_pct": 10,
+      "reachable": true,
+      "cumulative_sites": 176,
+      "cumulative_storage_m3": 403868,
+      "add_sites": 176,
+      "add_storage_m3": 403868,
+      "add_units": 8077,
+      "add_cost_inr": 2423205120,
+      "add_cost_crore_inr": 242.32
+    },
+    {
+      "phase": 2,
+      "target_cut_pct": 20,
+      "reachable": false,
+      "note": "beyond the stable part of the dose curve"
+    },
+    {
+      "phase": 3,
+      "target_cut_pct": 40,
+      "reachable": false,
+      "note": "beyond the stable part of the dose curve"
+    }
+  ],
+  "storage_inr_per_m3": 6000.0,
+  "note": "Each storage site sized to its local pooled depth (dynamic, non-linear by geography); sites ranked by gradient-pooled depth = local minima, deepest first. Sites are placed only where buildable: building footprints and permanent water are excluded; under-street detention is allowed. Phase costs use the indicative RCC detention rate \u2014 relative ROI, not a bid."
 }
