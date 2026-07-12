@@ -89,6 +89,11 @@ def _post_build_artifacts(area, rain_mm):
         except Exception:  # ward aggregation needs geopandas/OSM — retry without
             run_alerts(work=work, aoi=list(area.aoi), aggregate_wards=False)
 
+    def roadgraph():
+        from varuna.serve.roadnet import build_road_graph, load_road_graph
+        if load_road_graph(work) is None:           # cached fetch — Overpass is rate-limited
+            build_road_graph(work=work)
+
     def canals():
         from varuna.serve.canals import plan_canals
         r = plan_canals(rain_mm=rain_mm, work=work)
@@ -113,12 +118,23 @@ def _post_build_artifacts(area, rain_mm):
         from varuna.serve.exposure import save_exposure
         save_exposure(rain_mm=rain_mm, work=work)
 
+    def ladder():
+        from varuna.serve.waterbalance import build_ladder
+        build_ladder(work=work)
+
+    def gnn_data():
+        from varuna.gnn.dataset import build_dataset
+        build_dataset(work=work)
+
     step("alerts", alerts)
+    step("roadgraph", roadgraph)                    # before canals: spiderweb needs streets
     step("canals", canals)
     step("storage", storage)
     step("costbenefit", costbenefit)
     step("maps", maps)
     step("exposure", exposure)
+    step("ladder", ladder)                          # water_balance.json for the dashboard panel
+    step("gnn_data", gnn_data)                      # labels so the GNN can retrain over Mumbai
 
 
 def do_build(area_id, project_id, rain_mm, n_samples=None, epochs=40, skip_artifacts=False):

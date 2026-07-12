@@ -117,10 +117,13 @@ def _save_map(work, alerts, wards, aoi):
     return path
 
 
-def run_alerts(rain_mm=None, work=None, aoi=None, make_map=False, aggregate_wards=True):
+def run_alerts(rain_mm=None, work=None, aoi=None, make_map=False, aggregate_wards=True,
+               save_csv=True):
     """Compute today's flood outlook.
 
     rain_mm: total 24-h rainfall; if None, fetch the AOI max from Open-Meteo.
+    save_csv=False for read-only serving (the live API endpoint must not write into the
+    shared bundle dir — writes there are racy and ephemeral on the deployed Space).
     Returns a JSON-serialisable dict: forecast_rain_mm, sinks[], wards{}, summary{}, plus a
     'caveats' line so any consumer (LLM, dashboard) surfaces the limitations.
     """
@@ -149,7 +152,8 @@ def run_alerts(rain_mm=None, work=None, aoi=None, make_map=False, aggregate_ward
                            inflow_m3=round(inflow_m3), capacity_m3=float(s.volume_m3),
                            fill_ratio=round(ratio, 2), level=level))
     alerts.sort(key=lambda a: a["fill_ratio"], reverse=True)
-    pd.DataFrame(alerts).to_csv(f"{work}/alerts_today.csv", index=False)
+    if save_csv:
+        pd.DataFrame(alerts).to_csv(f"{work}/alerts_today.csv", index=False)
 
     wards = {}
     if aggregate_wards and alerts:

@@ -1,0 +1,231 @@
+{
+  "n_grid": 128,
+  "dx": 60.0,
+  "storm_hr": 1.5,
+  "total_hr": 3.0,
+  "counterfactual_infil_mm_hr": 1.0,
+  "entries": [
+    {
+      "rain_mm": 10.0,
+      "rain_m3": 589824,
+      "infiltrated_m3": 410013,
+      "infil_by_class": {
+        "vegetation": 309428,
+        "built": 96848,
+        "bare": 3737,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 179811,
+      "ponded_peak_m3": 267612,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 428508,
+      "reduced_by_nature_m3": 248697
+    },
+    {
+      "rain_mm": 30.0,
+      "rain_m3": 1769472,
+      "infiltrated_m3": 560917,
+      "infil_by_class": {
+        "vegetation": 451751,
+        "built": 104901,
+        "bare": 4266,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 1208554,
+      "ponded_peak_m3": 1401050,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 1601006,
+      "reduced_by_nature_m3": 392452
+    },
+    {
+      "rain_mm": 50.0,
+      "rain_m3": 2949120,
+      "infiltrated_m3": 586072,
+      "infil_by_class": {
+        "vegetation": 474257,
+        "built": 107387,
+        "bare": 4429,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 2363057,
+      "ponded_peak_m3": 2580703,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 2778740,
+      "reduced_by_nature_m3": 415683
+    },
+    {
+      "rain_mm": 70.0,
+      "rain_m3": 4128768,
+      "infiltrated_m3": 599698,
+      "infil_by_class": {
+        "vegetation": 486433,
+        "built": 108760,
+        "bare": 4506,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 3536648,
+      "ponded_peak_m3": 3760348,
+      "closure_err_pct": 0.184,
+      "ponded_if_all_built_m3": 3958448,
+      "reduced_by_nature_m3": 421800
+    },
+    {
+      "rain_mm": 90.0,
+      "rain_m3": 5308416,
+      "infiltrated_m3": 607274,
+      "infil_by_class": {
+        "vegetation": 493217,
+        "built": 109479,
+        "bare": 4578,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 4701141,
+      "ponded_peak_m3": 4939977,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 5137357,
+      "reduced_by_nature_m3": 436216
+    },
+    {
+      "rain_mm": 110.0,
+      "rain_m3": 6488064,
+      "infiltrated_m3": 612606,
+      "infil_by_class": {
+        "vegetation": 498122,
+        "built": 109882,
+        "bare": 4602,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 5875868,
+      "ponded_peak_m3": 6119639,
+      "closure_err_pct": 0.006,
+      "ponded_if_all_built_m3": 6315910,
+      "reduced_by_nature_m3": 440042
+    },
+    {
+      "rain_mm": 130.0,
+      "rain_m3": 7667712,
+      "infiltrated_m3": 616830,
+      "infil_by_class": {
+        "vegetation": 502036,
+        "built": 110171,
+        "bare": 4623,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 7051220,
+      "ponded_peak_m3": 7299288,
+      "closure_err_pct": 0.004,
+      "ponded_if_all_built_m3": 7495851,
+      "reduced_by_nature_m3": 444631
+    },
+    {
+      "rain_mm": 150.0,
+      "rain_m3": 8847360,
+      "infiltrated_m3": 619714,
+      "infil_by_class": {
+        "vegetation": 504600,
+        "built": 110471,
+        "bare": 4642,
+        "water_wetland": 0,
+        "other": 1
+      },
+      "ponded_final_m3": 8228600,
+      "ponded_peak_m3": 8478922,
+      "closure_err_pct": 0.011,
+      "ponded_if_all_built_m3": 8675336,
+      "reduced_by_nature_m3": 446736
+    },
+    {
+      "rain_mm": 170.0,
+      "rain_m3": 10027008,
+      "infiltrated_m3": 620993,
+      "infil_by_class": {
+        "vegetation": 505705,
+        "built": 110629,
+        "bare": 4659,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 9407239,
+      "ponded_peak_m3": 9658645,
+      "closure_err_pct": 0.012,
+      "ponded_if_all_built_m3": 9857150,
+      "reduced_by_nature_m3": 449911
+    },
+    {
+      "rain_mm": 190.0,
+      "rain_m3": 11206656,
+      "infiltrated_m3": 622099,
+      "infil_by_class": {
+        "vegetation": 506631,
+        "built": 110797,
+        "bare": 4671,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 10601986,
+      "ponded_peak_m3": 10838238,
+      "closure_err_pct": 0.156,
+      "ponded_if_all_built_m3": 11045801,
+      "reduced_by_nature_m3": 443815
+    },
+    {
+      "rain_mm": 210.0,
+      "rain_m3": 12386304,
+      "infiltrated_m3": 622932,
+      "infil_by_class": {
+        "vegetation": 507345,
+        "built": 110891,
+        "bare": 4696,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 11772353,
+      "ponded_peak_m3": 12017979,
+      "closure_err_pct": 0.073,
+      "ponded_if_all_built_m3": 12219936,
+      "reduced_by_nature_m3": 447583
+    },
+    {
+      "rain_mm": 230.0,
+      "rain_m3": 13565952,
+      "infiltrated_m3": 623822,
+      "infil_by_class": {
+        "vegetation": 508090,
+        "built": 111018,
+        "bare": 4713,
+        "water_wetland": 0,
+        "other": 1
+      },
+      "ponded_final_m3": 12956599,
+      "ponded_peak_m3": 13197533,
+      "closure_err_pct": 0.107,
+      "ponded_if_all_built_m3": 13397884,
+      "reduced_by_nature_m3": 441285
+    },
+    {
+      "rain_mm": 250.0,
+      "rain_m3": 14745600,
+      "infiltrated_m3": 624711,
+      "infil_by_class": {
+        "vegetation": 508883,
+        "built": 111104,
+        "bare": 4724,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 14126402,
+      "ponded_peak_m3": 14377168,
+      "closure_err_pct": 0.037,
+      "ponded_if_all_built_m3": 14576686,
+      "reduced_by_nature_m3": 450284
+    }
+  ],
+  "note": "Closed-boundary storm budget: rain = infiltrated + ponded (exact). 'reduced_by_nature' = extra final ponding if all ground infiltrated like built-up land (soil & vegetation removed)."
+}

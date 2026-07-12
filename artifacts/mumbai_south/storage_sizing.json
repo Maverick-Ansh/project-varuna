@@ -1,0 +1,51 @@
+{
+  "rain_mm": 100.0,
+  "total_flood_m3": 1280108,
+  "max_sites": 1846,
+  "unit_m3": 50.0,
+  "curve": [
+    {
+      "sites": 100,
+      "reduction_pct": 5.4,
+      "storage_m3": 224633,
+      "median_site_m3": 1942,
+      "unstable": false
+    },
+    {
+      "sites": 300,
+      "reduction_pct": 12.6,
+      "storage_m3": 507824,
+      "median_site_m3": 1533,
+      "unstable": false
+    },
+    {
+      "sites": 600,
+      "reduction_pct": 27.2,
+      "storage_m3": 812011,
+      "median_site_m3": 1200,
+      "unstable": false
+    },
+    {
+      "sites": 1000,
+      "reduction_pct": 40.4,
+      "storage_m3": 1084444,
+      "median_site_m3": 951,
+      "unstable": false
+    },
+    {
+      "sites": 1846,
+      "reduction_pct": 100.0,
+      "storage_m3": 1280108,
+      "median_site_m3": 569,
+      "unstable": false
+    }
+  ],
+  "targets": {
+    "50%": {
+      "sites": 1136,
+      "storage_m3": 1115898,
+      "equiv_units": 22318
+    }
+  },
+  "note": "Each storage site sized to its local pooled depth (dynamic, non-linear by geography); sites ranked by gradient-pooled depth = local minima, deepest first."
+}

@@ -13,3 +13,4 @@ requests>=2.31
 fastapi>=0.110
 uvicorn[standard]>=0.29
 pydantic>=2
+huggingface_hub>=0.23    # citizen-report persistence (CommitScheduler -> dataset repo)

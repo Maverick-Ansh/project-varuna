@@ -47,7 +47,7 @@ class Domain:
         self.row0 = 0
         self.col0 = 0
 
-    def step(self, h, qx, qy, z, rain_ms, dt):
+    def step(self, h, qx, qy, z, rain_ms, dt, return_infil=False):
         mann, infil, DX = self.mann, self.infil, self.dx
         eta = z + h
         hf = torch.clamp(torch.maximum(eta[:, :-1], eta[:, 1:]) - torch.maximum(z[:, :-1], z[:, 1:]), min=0.0)
@@ -67,28 +67,42 @@ class Domain:
         Qx = torch.nn.functional.pad(qx, (1, 1, 0, 0))     # closed boundaries
         Qy = torch.nn.functional.pad(qy, (0, 0, 1, 1))
         dh = dt / DX * (Qx[:, :-1] - Qx[:, 1:] + Qy[:-1, :] - Qy[1:, :])
-        h = torch.clamp(h + dh + rain_ms * dt - infil * dt, min=0.0)
+        pre = h + dh + rain_ms * dt
+        h = torch.clamp(pre - infil * dt, min=0.0)
+        if return_infil:
+            # Water actually removed by infiltration this step (exact under the clamp: a cell
+            # can only infiltrate what it holds). Lets rollout() close the mass balance.
+            return h, qx, qy, torch.clamp(pre, min=0.0) - h
         return h, qx, qy
 
-    def rollout(self, z, rain_mm, storm_hr=1.5, total_hr=3.0, dt=10.0, every=30, probes=None):
+    def rollout(self, z, rain_mm, storm_hr=1.5, total_hr=3.0, dt=10.0, every=30, probes=None,
+                track_infil=False):
         """No-grad storm rollout that RECORDS dynamics (for animation / hydrographs / mass curves).
 
         Returns dict: frames (T,N,N depth snapshots every `every` steps), times (hours), volume
         (total water m^3 per frame), hmax, and probe depth time-series at `probes` [(row,col),...].
+        track_infil=True additionally accumulates the water each cell actually infiltrated:
+        adds `infiltrated_m3` (cumulative total per frame) and `infil_grid` (final N x N metres).
+        Boundaries are closed, so rain_in == volume + infiltrated holds exactly per frame.
         """
         with torch.no_grad():
             h = torch.zeros_like(z)
             qx = torch.zeros(z.shape[0], z.shape[1] - 1, device=z.device)
             qy = torch.zeros(z.shape[0] - 1, z.shape[1], device=z.device)
             hmax = torch.zeros_like(z)
+            infil_cum = torch.zeros_like(z) if track_infil else None
             nsteps = int(total_hr * 3600 / dt)
             rain_steps = int(storm_hr * 3600 / dt)
             rain_rate = rain_mm / 1000.0 / (storm_hr * 3600.0)
             cell = self.dx * self.dx
-            frames, times, volume, probe_ts = [], [], [], []
+            frames, times, volume, probe_ts, infiltrated = [], [], [], [], []
             for k in range(nsteps):
                 r = rain_rate if k < rain_steps else 0.0
-                h, qx, qy = self.step(h, qx, qy, z, r, dt)
+                if track_infil:
+                    h, qx, qy, fin = self.step(h, qx, qy, z, r, dt, return_infil=True)
+                    infil_cum += fin
+                else:
+                    h, qx, qy = self.step(h, qx, qy, z, r, dt)
                 hmax = torch.maximum(hmax, h)
                 if k % every == 0 or k == nsteps - 1:
                     frames.append(h.cpu().numpy().copy())
@@ -96,9 +110,13 @@ class Domain:
                     volume.append(float(h.sum()) * cell)
                     if probes:
                         probe_ts.append([float(h[r0, c0]) for (r0, c0) in probes])
+                    if track_infil:
+                        infiltrated.append(float(infil_cum.sum()) * cell)
         return dict(frames=np.stack(frames), times=np.asarray(times),
                     volume=np.asarray(volume), hmax=hmax,
-                    probes=np.asarray(probe_ts) if probes else None)
+                    probes=np.asarray(probe_ts) if probes else None,
+                    infiltrated_m3=np.asarray(infiltrated) if track_infil else None,
+                    infil_grid=infil_cum)
 
     def simulate(self, z, rain_mm, storm_hr=1.5, total_hr=3.0, dt=10.0, chunk=60,
                  grad=False, return_final=False):
@@ -147,19 +165,20 @@ def _bundle_meta(work):
         return {}
 
 
-def build_domain(work=None, center=None, device=None):
+def build_domain(work=None, center=None, device=None, n_grid=None, dx=None):
     """Crop an N x N / dx-m domain over `center` from nb01's dem.tif + worldcover.tif.
 
     Area-correct from the bundle: when `center` is not given explicitly, the crop centre, grid
     size and cell size are read from the bundle's twin_meta.pt (so a non-Patna bundle crops at
-    its own location), falling back to CFG for a not-yet-trained bundle.
+    its own location), falling back to CFG for a not-yet-trained bundle. Explicit `n_grid`/`dx`
+    (a fresh build of a larger area, e.g. Mumbai tiles at 256) beat both.
     """
     import rasterio
     work = work or CFG.work
     meta = {} if center is not None else _bundle_meta(work)
     center = center or tuple(meta.get("center", CFG.center))
-    N = int(meta.get("n_grid", CFG.n_grid))
-    dx = float(meta.get("dx", CFG.dx))
+    N = int(n_grid or meta.get("n_grid", CFG.n_grid))
+    dx = float(dx or meta.get("dx", CFG.dx))
     N30 = N * 2
     with rasterio.open(f"{work}/dem.tif") as src:
         dem30 = src.read(1).astype("float64")
@@ -314,53 +333,85 @@ def train_emulator(X, Y, epochs=40, device=None, save_path=None, flood_weight=20
     therefore up-weight wet cells (weight 1 + flood_weight where target > tau) and clip gradients
     so the net actually fits the flood signal. We also report a flooded-cell RMSE, which exposes the
     collapse the whole-grid RMSE hides.
+
+    The softplus head can also die outright: on some terrains (e.g. a half-ocean Mumbai tile) the
+    first optimiser steps push the logits so negative that softplus' gradient vanishes and the net
+    is stuck at 0 m everywhere — and because gen_dataset reseeds the global RNG, the init and
+    therefore the collapse repeat IDENTICALLY on every rebuild. We detect a collapsed val
+    prediction after training and retrain from explicit alternate seeds.
     """
     device = _device(device)
-    emu = UNet().to(device)
-    opt = torch.optim.Adam(emu.parameters(), lr=1e-3)
     ntr = int(0.9 * len(X))
     Xtr, Ytr = X[:ntr].to(device), Y[:ntr].to(device)
     Xv, Yv = X[ntr:].to(device), Y[ntr:].to(device)
-    vl = torch.tensor(float("nan"))
-    for ep in range(epochs):
-        perm = torch.randperm(ntr)
-        for b in range(0, ntr, 8):
-            idx = perm[b:b + 8]
-            pred, tgt = emu(Xtr[idx]), Ytr[idx]
-            w = 1.0 + flood_weight * (tgt > tau).float()          # emphasise the sparse wet cells
-            loss = (w * (pred - tgt) ** 2).mean()
-            opt.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(emu.parameters(), 5.0)
-            opt.step()
-        with torch.no_grad():
-            pv = emu(Xv)
-            vl = ((pv - Yv) ** 2).mean().sqrt()
-            wet = Yv > 0.15
-            vwet = ((pv - Yv) ** 2)[wet].mean().sqrt() if bool(wet.any()) else torch.zeros(())
-        if ep % 5 == 0:
-            log.info("epoch %d: val RMSE %.1f cm (flooded-cell RMSE %.1f cm)",
-                     ep, float(vl) * 100, float(vwet) * 100)
+    wet = Yv > 0.15
+    for seed in (None, 20260712, 42, 777):
+        if seed is not None:
+            log.warning("emulator collapsed to ~0 everywhere — retraining from seed %d", seed)
+            torch.manual_seed(seed)
+        emu = UNet().to(device)
+        opt = torch.optim.Adam(emu.parameters(), lr=1e-3)
+        vl = torch.tensor(float("nan"))
+        for ep in range(epochs):
+            perm = torch.randperm(ntr)
+            for b in range(0, ntr, 8):
+                idx = perm[b:b + 8]
+                pred, tgt = emu(Xtr[idx]), Ytr[idx]
+                w = 1.0 + flood_weight * (tgt > tau).float()      # emphasise the sparse wet cells
+                loss = (w * (pred - tgt) ** 2).mean()
+                opt.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(emu.parameters(), 5.0)
+                opt.step()
+            with torch.no_grad():
+                pv = emu(Xv)
+                vl = ((pv - Yv) ** 2).mean().sqrt()
+                vwet = ((pv - Yv) ** 2)[wet].mean().sqrt() if bool(wet.any()) else torch.zeros(())
+            if ep % 5 == 0:
+                log.info("epoch %d: val RMSE %.1f cm (flooded-cell RMSE %.1f cm)",
+                         ep, float(vl) * 100, float(vwet) * 100)
+        if not (bool(wet.any()) and float(pv.max()) < tau):       # alive: predicts some flooding
+            break
     if save_path:
         torch.save(emu.state_dict(), save_path)
         log.info("saved emulator -> %s", save_path)
     return emu, float(vl)
 
 
-def train_twin(work=None, center=None, n_samples=None, epochs=40, device=None):
+def save_replay(work, X, Y, k=16):
+    """Persist a small rain-spanning subset of the training pairs as {work}/replay_buffer.pt.
+
+    The nightly learner fine-tunes the emulator on sparse citizen reports; this buffer is the
+    anchor loss that stops those few points from dragging the rest of the grid (and the reward
+    gate's "did the grid degrade?" check). fp16 to keep bundles small (~1.5 MB @128, ~6 MB @256).
+    """
+    rains = X[:, 1, 0, 0]                                     # rain/100 channel is constant per sample
+    order = torch.argsort(rains)
+    k = max(2, min(int(k), len(order)))
+    idx = order[torch.linspace(0, len(order) - 1, k).long()]
+    torch.save({"X": X[idx].clone().half(), "Y": Y[idx].clone().half()}, f"{work}/replay_buffer.pt")
+    log.info("replay buffer: %d pairs spanning %.0f-%.0f mm -> %s/replay_buffer.pt",
+             k, float(rains[idx].min()) * 100, float(rains[idx].max()) * 100, work)
+
+
+def train_twin(work=None, center=None, n_samples=None, epochs=40, device=None,
+               n_grid=None, dx=None, replay_k=16):
     """End-to-end nb05 training: build domain -> sites -> dataset -> train -> persist.
 
     Saves emulator.pt (weights) and twin_meta.pt (sites, z stats, crop offsets) so the serve
-    layer can reconstruct inputs without re-running the simulator.
+    layer can reconstruct inputs without re-running the simulator; also a small replay_buffer.pt
+    for the nightly report-driven fine-tune (see varuna.learn).
     """
     work = work or CFG.work
     from ..io import require_bundle
     require_bundle(work, ["dem.tif", "worldcover.tif"])
-    dom = build_domain(work, center, device)
+    dom = build_domain(work, center, device, n_grid=n_grid, dx=dx)
     sites, masks, site_area, eval_mask = candidate_sites(dom, work)
     log.info("domain %s | %d sites: %s", tuple(dom.z0.shape), len(sites), sites)
     X, Y = gen_dataset(dom, masks, n_samples)
     torch.save({"X": X, "Y": Y}, f"{work}/twin_dataset.pt")
+    if replay_k:
+        save_replay(work, X, Y, k=replay_k)
     emu, rmse = train_emulator(X, Y, epochs, dom.device, save_path=f"{work}/emulator.pt")
     meta = dict(sites=sites, zmean=float(dom.z0.mean()), zstd=float(dom.z0.std()),
                 row0=dom.row0, col0=dom.col0, dx=dom.dx, n_grid=dom.N, val_rmse_m=rmse,

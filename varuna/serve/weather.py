@@ -48,3 +48,40 @@ def aoi_max_rain(aoi=None, hours=24):
     p = max(forecast_rain_mm(la, lo, hours) for la, lo in pts)
     log.info("AOI max 24-h rainfall forecast: %.1f mm", p)
     return p
+
+
+def forecast_hyetograph(lat, lon, hours=48):
+    """Hourly forecast precipitation at one point, arrays kept (not summed away).
+
+    Returns {"times": ISO hours, "precip_mm": mm/hr, "past24_mm": observed total of the
+    last 24 h} — past_days=1 makes recent actual rain part of the same free call.
+    """
+    url = ("https://api.open-meteo.com/v1/forecast"
+           f"?latitude={lat}&longitude={lon}&hourly=precipitation"
+           "&forecast_days=3&past_days=1&timezone=Asia/Kolkata")
+    js = http_get_json(url, timeout=60)
+    times = js["hourly"]["time"]
+    p = [float(v or 0) for v in js["hourly"]["precipitation"]]
+    # past_days=1 -> the first 24 entries are the previous day (observed/analysed)
+    past24 = sum(p[:24])
+    return {"times": times[24:24 + hours], "precip_mm": p[24:24 + hours],
+            "past24_mm": round(past24, 1)}
+
+
+def area_weather(aoi=None, center=None, hours=24):
+    """One dashboard-ready live-weather dict for an area (the /api/weather payload).
+
+    rain_24h_mm is the conservative AOI max (alerts use the same number); the hyetograph is
+    sampled at the twin-crop centre where the dashboard's storm actually falls.
+    """
+    import datetime as _dt
+    aoi = aoi or CFG.aoi
+    center = center or CFG.center
+    hyeto = forecast_hyetograph(center[0], center[1], hours=48)
+    return dict(rain_24h_mm=round(aoi_max_rain(aoi, hours), 1),
+                rain_center_24h_mm=round(sum(hyeto["precip_mm"][:24]), 1),
+                rain_center_48h_mm=round(sum(hyeto["precip_mm"]), 1),
+                past24_mm=hyeto["past24_mm"],
+                hyetograph={"times": hyeto["times"], "precip_mm": hyeto["precip_mm"]},
+                fetched_at=_dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+                source="open-meteo")

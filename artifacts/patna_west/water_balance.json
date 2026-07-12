@@ -1,0 +1,231 @@
+{
+  "n_grid": 128,
+  "dx": 60.0,
+  "storm_hr": 1.5,
+  "total_hr": 3.0,
+  "counterfactual_infil_mm_hr": 1.0,
+  "entries": [
+    {
+      "rain_mm": 10.0,
+      "rain_m3": 589824,
+      "infiltrated_m3": 419525,
+      "infil_by_class": {
+        "vegetation": 332367,
+        "built": 84407,
+        "bare": 2751,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 170298,
+      "ponded_peak_m3": 299055,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 418134,
+      "reduced_by_nature_m3": 247836
+    },
+    {
+      "rain_mm": 30.0,
+      "rain_m3": 1769472,
+      "infiltrated_m3": 539792,
+      "infil_by_class": {
+        "vegetation": 449667,
+        "built": 86965,
+        "bare": 3160,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 1229679,
+      "ponded_peak_m3": 1467861,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 1595187,
+      "reduced_by_nature_m3": 365508
+    },
+    {
+      "rain_mm": 50.0,
+      "rain_m3": 2949120,
+      "infiltrated_m3": 554184,
+      "infil_by_class": {
+        "vegetation": 463368,
+        "built": 87569,
+        "bare": 3247,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 2394943,
+      "ponded_peak_m3": 2647516,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 2774208,
+      "reduced_by_nature_m3": 379265
+    },
+    {
+      "rain_mm": 70.0,
+      "rain_m3": 4128768,
+      "infiltrated_m3": 560851,
+      "infil_by_class": {
+        "vegetation": 469693,
+        "built": 87881,
+        "bare": 3277,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 3567915,
+      "ponded_peak_m3": 3827155,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 3953563,
+      "reduced_by_nature_m3": 385648
+    },
+    {
+      "rain_mm": 90.0,
+      "rain_m3": 5308416,
+      "infiltrated_m3": 564861,
+      "infil_by_class": {
+        "vegetation": 473507,
+        "built": 88068,
+        "bare": 3285,
+        "water_wetland": 0,
+        "other": 1
+      },
+      "ponded_final_m3": 4743557,
+      "ponded_peak_m3": 5006806,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 5133019,
+      "reduced_by_nature_m3": 389462
+    },
+    {
+      "rain_mm": 110.0,
+      "rain_m3": 6488064,
+      "infiltrated_m3": 567817,
+      "infil_by_class": {
+        "vegetation": 476325,
+        "built": 88201,
+        "bare": 3290,
+        "water_wetland": 0,
+        "other": 1
+      },
+      "ponded_final_m3": 5920238,
+      "ponded_peak_m3": 6186444,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 6312515,
+      "reduced_by_nature_m3": 392277
+    },
+    {
+      "rain_mm": 130.0,
+      "rain_m3": 7667712,
+      "infiltrated_m3": 570006,
+      "infil_by_class": {
+        "vegetation": 478402,
+        "built": 88306,
+        "bare": 3297,
+        "water_wetland": 0,
+        "other": 1
+      },
+      "ponded_final_m3": 7097724,
+      "ponded_peak_m3": 7366119,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 7492077,
+      "reduced_by_nature_m3": 394353
+    },
+    {
+      "rain_mm": 150.0,
+      "rain_m3": 8847360,
+      "infiltrated_m3": 571725,
+      "infil_by_class": {
+        "vegetation": 480042,
+        "built": 88381,
+        "bare": 3302,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 8275632,
+      "ponded_peak_m3": 8545744,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 8671639,
+      "reduced_by_nature_m3": 396007
+    },
+    {
+      "rain_mm": 170.0,
+      "rain_m3": 10027008,
+      "infiltrated_m3": 573043,
+      "infil_by_class": {
+        "vegetation": 481279,
+        "built": 88458,
+        "bare": 3306,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 9453950,
+      "ponded_peak_m3": 9725380,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 9851191,
+      "reduced_by_nature_m3": 397241
+    },
+    {
+      "rain_mm": 190.0,
+      "rain_m3": 11206656,
+      "infiltrated_m3": 574302,
+      "infil_by_class": {
+        "vegetation": 482475,
+        "built": 88520,
+        "bare": 3307,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 10632328,
+      "ponded_peak_m3": 10905016,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 11030781,
+      "reduced_by_nature_m3": 398453
+    },
+    {
+      "rain_mm": 210.0,
+      "rain_m3": 12386304,
+      "infiltrated_m3": 575337,
+      "infil_by_class": {
+        "vegetation": 483455,
+        "built": 88569,
+        "bare": 3313,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 11810981,
+      "ponded_peak_m3": 12084704,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 12210396,
+      "reduced_by_nature_m3": 399415
+    },
+    {
+      "rain_mm": 230.0,
+      "rain_m3": 13565952,
+      "infiltrated_m3": 576269,
+      "infil_by_class": {
+        "vegetation": 484336,
+        "built": 88614,
+        "bare": 3318,
+        "water_wetland": 0,
+        "other": 1
+      },
+      "ponded_final_m3": 12989704,
+      "ponded_peak_m3": 13264356,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 13390004,
+      "reduced_by_nature_m3": 400300
+    },
+    {
+      "rain_mm": 250.0,
+      "rain_m3": 14745600,
+      "infiltrated_m3": 577046,
+      "infil_by_class": {
+        "vegetation": 485065,
+        "built": 88661,
+        "bare": 3320,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 14168500,
+      "ponded_peak_m3": 14443928,
+      "closure_err_pct": 0.0,
+      "ponded_if_all_built_m3": 14569511,
+      "reduced_by_nature_m3": 401011
+    }
+  ],
+  "note": "Closed-boundary storm budget: rain = infiltrated + ponded (exact). 'reduced_by_nature' = extra final ponding if all ground infiltrated like built-up land (soil & vegetation removed)."
+}

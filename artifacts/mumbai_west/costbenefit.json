@@ -1,0 +1,31 @@
+{
+  "rain_mm": 100.0,
+  "costs_assumed_inr": {
+    "excavation_inr_per_m3": 300.0,
+    "canal_inr_per_m": 9000.0,
+    "storage_inr_per_m3": 6000.0
+  },
+  "interventions": [
+    {
+      "name": "Canals + storage pits",
+      "detail": "street spiderweb: 33 inlets (37528 m) to lowlands+pits",
+      "flood_m3_reduced": 1143169,
+      "reduction_pct": 39.2,
+      "cost_inr": 674712000,
+      "cost_crore_inr": 67.47,
+      "cost_per_m3_reduced_inr": 590.2,
+      "rank": 1
+    },
+    {
+      "name": "Optimised excavation",
+      "detail": "141282 m\u00b3 across 8 sites",
+      "flood_m3_reduced": 44003,
+      "reduction_pct": 1.3,
+      "cost_inr": 42384600,
+      "cost_crore_inr": 4.24,
+      "cost_per_m3_reduced_inr": 963.2,
+      "rank": 2
+    }
+  ],
+  "note": "Indicative unit rates; ranking is relative flood-reduction ROI, not a bid estimate. Flood volume is measured on built-up land by re-simulation."
+}

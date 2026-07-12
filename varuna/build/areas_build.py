@@ -58,7 +58,8 @@ def build_subcrop(area, n_samples=None, epochs=40, device=None):
     copied = _copy_shared(src, work)
     if "dem.tif" not in copied or "worldcover.tif" not in copied:
         raise FileNotFoundError(f"source {src} lacks dem.tif/worldcover.tif — cannot build sub-crop")
-    meta = train_twin(work=work, center=area.center, n_samples=n_samples, epochs=epochs, device=device)
+    meta = train_twin(work=work, center=area.center, n_samples=n_samples, epochs=epochs,
+                      device=device, n_grid=area.n_grid, dx=area.dx)
     _drop_dataset(work)
     log.info("sub-crop '%s' built at centre %s -> %s", area.id, area.center, work)
     return meta
@@ -76,7 +77,8 @@ def build_full(area, project_id=None, n_samples=None, epochs=40, device=None, st
     if "recharge" in steps:
         recharge.run(work=work, aoi=aoi, project_id=project_id)
     if "twin" in steps:
-        twin.train_twin(work=work, center=area.center, n_samples=n_samples, epochs=epochs, device=device)
+        twin.train_twin(work=work, center=area.center, n_samples=n_samples, epochs=epochs,
+                        device=device, n_grid=area.n_grid, dx=area.dx)
         _drop_dataset(work)
     log.info("full build for '%s' complete -> %s", area.id, work)
     return work
