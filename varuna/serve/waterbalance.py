@@ -25,12 +25,15 @@ from ..io import load_json, save_json
 log = logging.getLogger("varuna.serve.waterbalance")
 
 # WorldCover classes grouped for the dashboard story. "vegetation" is the forestation lever
-# (tree 10 / shrub 20 / grass 30 / crop 40); built 50 is ~impervious; water/wetland absorb 0.
+# (tree 10 / shrub 20 / grass 30 / crop 40); built 50 is ~impervious; water/wetland absorb 0
+# (the canonical NO_RECHARGE set — see build.landcover).
+from ..build.landcover import NO_RECHARGE as _NO_RECHARGE  # noqa: E402
+
 CLASS_GROUPS = {
     "vegetation": (10, 20, 30, 40),
     "built": (50,),
     "bare": (60,),
-    "water_wetland": (80, 90),
+    "water_wetland": tuple(sorted(_NO_RECHARGE)),
 }
 
 LADDER = tuple(range(10, 251, 20))          # 10, 30, ..., 250 mm

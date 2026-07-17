@@ -24,6 +24,11 @@ G, HMIN = 9.81, 1e-3
 N_TABLE = {10: 0.060, 20: 0.050, 30: 0.040, 40: 0.040, 50: 0.015, 60: 0.030, 80: 0.030, 90: 0.045}
 F_TABLE = {10: 10.0, 20: 8.0, 30: 8.0, 40: 8.0, 50: 1.0, 60: 5.0, 80: 0.0, 90: 0.0}
 
+# saturated ground must not infiltrate — keep F_TABLE consistent with the canonical class sets
+from .landcover import NO_RECHARGE as _NO_RECHARGE  # noqa: E402
+assert all(F_TABLE.get(c, 0.0) == 0.0 for c in _NO_RECHARGE), \
+    "F_TABLE gives a NO_RECHARGE class a nonzero infiltration rate"
+
 
 def _device(device=None):
     return device or ("cuda" if torch.cuda.is_available() else "cpu")

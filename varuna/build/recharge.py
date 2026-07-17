@@ -150,13 +150,21 @@ def download_soil(work=None, aoi=None, scale=None):
     download_ee_image(clay, f"{work}/clay.tif", reg, scale)
 
 
+def cosby_ksat(sand_pct, clay_pct):
+    """Cosby (1984) pedotransfer: sand/clay % -> saturated conductivity (mm/hr).
+
+    The formula itself, separated from raster I/O so the state screen can apply it to
+    per-block mean sand/clay tables without downloading a single pixel.
+    """
+    return (10 ** (-0.6 + 0.0126 * np.asarray(sand_pct) - 0.0064 * np.asarray(clay_pct))) * 25.4
+
+
 def compute_ksat(work=None, R=None, C=None):
-    """Cosby (1984) pedotransfer: sand/clay % -> saturated conductivity (mm/hr)."""
+    """Cosby Ksat over the bundle's SoilGrids rasters (values are g/kg, hence /10 -> %)."""
     work = work or CFG.work
     sand_pct = read_aligned(f"{work}/sand.tif", R, C) / 10.0
     clay_pct = read_aligned(f"{work}/clay.tif", R, C) / 10.0
-    ksat = (10 ** (-0.6 + 0.0126 * sand_pct - 0.0064 * clay_pct)) * 25.4
-    return ksat
+    return cosby_ksat(sand_pct, clay_pct)
 
 
 def compute_rsi(work=None, weights=None):
@@ -177,8 +185,11 @@ def compute_rsi(work=None, weights=None):
     gw_depth = idw(LON, LAT, gw[["lat", "lon"]].values, gw["depth_to_water_m"].values)
     ksat = compute_ksat(work, R, C)
 
+    # canonical pervious set — the old ~isin([50, 80]) counted saturated wetland (90),
+    # mangrove (95) and nodata as pervious, which flattered RSI on exactly the wrong ground
+    from .landcover import NO_RECHARGE, PERVIOUS
     wc = read_aligned(f"{work}/worldcover.tif", R, C)
-    pervious = (~np.isin(wc, [50, 80])).astype("float64")
+    pervious = np.isin(wc, sorted(PERVIOUS)).astype("float64")
     pervious = ndimage.uniform_filter(pervious, size=7)
     avail = np.log1p(read_aligned(f"{work}/acc.tif", R, C))
 
@@ -188,7 +199,7 @@ def compute_rsi(work=None, weights=None):
         return np.clip((a - p1) / max(p2 - p1, 1e-9), 0, 1)
 
     rsi = (w_gw * norm(gw_depth) + w_ks * norm(ksat) + w_perv * pervious + w_avail * norm(avail))
-    rsi = np.where(wc == 80, 0, rsi)
+    rsi = np.where(np.isin(wc, sorted(NO_RECHARGE)), 0, rsi)
     write_raster(f"{work}/rsi.tif", rsi.astype("float32"), transform, dtype="float32")
     return rsi, gw_depth, ksat, (R, C)
 
