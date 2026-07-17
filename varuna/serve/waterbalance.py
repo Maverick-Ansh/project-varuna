@@ -44,7 +44,13 @@ _BUILT_INFIL_MM_HR = 1.0
 
 
 def _budget_for_rain(dom, rain_mm, storm_hr=1.5, total_hr=3.0):
-    """One tracked rollout -> exact budget terms + per-class-group infiltration split."""
+    """One tracked rollout -> exact budget terms + per-class-group infiltration split.
+
+    Closure `rain = infiltrated + ponded_final + runoff_out` is an ACCOUNTING IDENTITY of a
+    closed-boundary run (runoff_out = 0 by construction), kept as a solver smoke test — it is
+    not a validation against observations. ponded_final is the would-be runoff a real drainage
+    path would export. With the V3 aquifer on, infiltrated is metered by soil capacity.
+    """
     import torch
 
     cell = dom.dx * dom.dx
@@ -53,7 +59,8 @@ def _budget_for_rain(dom, rain_mm, storm_hr=1.5, total_hr=3.0):
     infil_m3 = float(out["infil_grid"].sum()) * cell
     ponded_final_m3 = float(out["volume"][-1])
     ponded_peak_m3 = float(out["volume"].max())
-    closure = abs(rain_m3 - infil_m3 - ponded_final_m3) / max(rain_m3, 1.0)
+    runoff_out_m3 = 0.0                                 # closed boundaries — nothing leaves
+    closure = abs(rain_m3 - infil_m3 - ponded_final_m3 - runoff_out_m3) / max(rain_m3, 1.0)
 
     by_class = {}
     wc = torch.as_tensor(np.asarray(dom.wc), device=out["infil_grid"].device)
@@ -65,10 +72,16 @@ def _budget_for_rain(dom, rain_mm, storm_hr=1.5, total_hr=3.0):
     known = sum(by_class.values())
     by_class["other"] = max(0, round(infil_m3) - known)
 
-    return dict(rain_mm=float(rain_mm), rain_m3=round(rain_m3),
-                infiltrated_m3=round(infil_m3), infil_by_class=by_class,
-                ponded_final_m3=round(ponded_final_m3), ponded_peak_m3=round(ponded_peak_m3),
-                closure_err_pct=round(closure * 100, 3))
+    e = dict(rain_mm=float(rain_mm), rain_m3=round(rain_m3),
+             infiltrated_m3=round(infil_m3), infil_by_class=by_class,
+             ponded_final_m3=round(ponded_final_m3), ponded_peak_m3=round(ponded_peak_m3),
+             runoff_out_m3=round(runoff_out_m3),
+             closure_err_pct=round(closure * 100, 3))
+    if dom.capacity is not None:
+        cap_m3 = float(dom.capacity.sum()) * cell
+        e["soil_capacity_m3"] = round(cap_m3)
+        e["soil_filled_pct"] = round(100.0 * infil_m3 / max(cap_m3, 1.0), 1)
+    return e
 
 
 def _counterfactual_ponded(dom, rain_mm, storm_hr=1.5, total_hr=3.0):
@@ -77,6 +90,8 @@ def _counterfactual_ponded(dom, rain_mm, storm_hr=1.5, total_hr=3.0):
     from ..build.twin import Domain
 
     infil_cf = torch.full_like(dom.infil, _BUILT_INFIL_MM_HR / 1000.0 / 3600.0)
+    # capacity deliberately None: the counterfactual is all-concrete, and concrete has no
+    # soil column to fill — its ~1 mm/hr seepage is not storage-limited
     cf = Domain(dom.z0, dom.mann, infil_cf, dom.built, dx=dom.dx, device=str(dom.device))
     out = cf.rollout(cf.z0, rain_mm, storm_hr=storm_hr, total_hr=total_hr)
     return float(out["volume"][-1])
@@ -94,8 +109,11 @@ def build_ladder(work=None, rains=LADDER, device=None, counterfactual=True,
         e = _budget_for_rain(dom, r, storm_hr=storm_hr, total_hr=total_hr)
         if e["closure_err_pct"] > 0.5:
             raise AssertionError(
-                f"water balance does not close at {r} mm: err {e['closure_err_pct']}% "
-                f"(rain {e['rain_m3']} != infil {e['infiltrated_m3']} + ponded {e['ponded_final_m3']})")
+                f"water budget does not close at {r} mm: err {e['closure_err_pct']}% "
+                f"(rain {e['rain_m3']} != infil {e['infiltrated_m3']} + ponded "
+                f"{e['ponded_final_m3']} + runoff_out {e['runoff_out_m3']}) — "
+                "solver smoke test failed (this is an accounting identity, so a miss means "
+                "numerical blowup, not a bad calibration)")
         if counterfactual:
             cf = _counterfactual_ponded(dom, r, storm_hr=storm_hr, total_hr=total_hr)
             e["ponded_if_all_built_m3"] = round(cf)
@@ -107,9 +125,13 @@ def build_ladder(work=None, rains=LADDER, device=None, counterfactual=True,
     report = dict(n_grid=dom.N, dx=dom.dx, storm_hr=storm_hr, total_hr=total_hr,
                   counterfactual_infil_mm_hr=_BUILT_INFIL_MM_HR if counterfactual else None,
                   entries=entries,
-                  note=("Closed-boundary storm budget: rain = infiltrated + ponded (exact). "
-                        "'reduced_by_nature' = extra final ponding if all ground infiltrated "
-                        "like built-up land (soil & vegetation removed)."))
+                  note=("Closed-boundary storm budget: rain = infiltrated + ponded + runoff_out "
+                        "with runoff_out = 0 by construction. This closure is an accounting "
+                        "identity (a solver smoke test), NOT a validation against observations; "
+                        "ponded_final is the would-be runoff a real drainage path would export. "
+                        "Where soil data exists, infiltration is metered by per-cell soil "
+                        "storage capacity (V3 aquifer). 'reduced_by_nature' = extra final "
+                        "ponding if all ground infiltrated like built-up land."))
     save_json(f"{work}/water_balance.json", report)
     return report
 

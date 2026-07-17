@@ -39,20 +39,28 @@ class Domain:
 
     Holds the simulator. `step`/`simulate` are the verbatim Bates 2010 scheme; the only change
     from the notebook is binding mann/infil/dx to the instance instead of module globals.
+
+    `capacity` (optional, metres of water column per cell) is the V3 aquifer: the soil water
+    the unsaturated zone can actually hold. When set, infiltration is metered — a cell that has
+    absorbed its capacity stops infiltrating and further rain ponds/routes instead. When None,
+    infiltration is a pure rate limited only by available water (the pre-V3 behaviour, which
+    lets a tree cell absorb 10 mm/hr forever).
     """
 
-    def __init__(self, z0, mann, infil, built, dx=None, device=None):
+    def __init__(self, z0, mann, infil, built, dx=None, device=None, capacity=None):
         self.device = _device(device)
         self.dx = float(dx or CFG.dx)
         self.z0 = torch.as_tensor(z0, dtype=torch.float32, device=self.device)
         self.mann = torch.as_tensor(mann, dtype=torch.float32, device=self.device)
         self.infil = torch.as_tensor(infil, dtype=torch.float32, device=self.device)
         self.built = torch.as_tensor(built, dtype=torch.float32, device=self.device)
+        self.capacity = (None if capacity is None else
+                         torch.as_tensor(capacity, dtype=torch.float32, device=self.device))
         self.N = self.z0.shape[0]
         self.row0 = 0
         self.col0 = 0
 
-    def step(self, h, qx, qy, z, rain_ms, dt, return_infil=False):
+    def step(self, h, qx, qy, z, rain_ms, dt, return_infil=False, infil_cum=None):
         mann, infil, DX = self.mann, self.infil, self.dx
         eta = z + h
         hf = torch.clamp(torch.maximum(eta[:, :-1], eta[:, 1:]) - torch.maximum(z[:, :-1], z[:, 1:]), min=0.0)
@@ -73,11 +81,17 @@ class Domain:
         Qy = torch.nn.functional.pad(qy, (0, 0, 1, 1))
         dh = dt / DX * (Qx[:, :-1] - Qx[:, 1:] + Qy[:-1, :] - Qy[1:, :])
         pre = h + dh + rain_ms * dt
-        h = torch.clamp(pre - infil * dt, min=0.0)
+        # Infiltration this step: rate-limited, water-limited and — when the aquifer is on —
+        # storage-limited. A cell can only infiltrate what it holds (`avail`), and only into
+        # the room its soil column has left (`capacity - infil_cum`). With capacity=None this
+        # reduces bit-exactly to the old clamp(pre - infil*dt, 0).
+        avail = torch.clamp(pre, min=0.0)
+        fin = torch.minimum(infil * dt, avail)
+        if self.capacity is not None and infil_cum is not None:
+            fin = torch.minimum(fin, torch.clamp(self.capacity - infil_cum, min=0.0))
+        h = avail - fin
         if return_infil:
-            # Water actually removed by infiltration this step (exact under the clamp: a cell
-            # can only infiltrate what it holds). Lets rollout() close the mass balance.
-            return h, qx, qy, torch.clamp(pre, min=0.0) - h
+            return h, qx, qy, fin
         return h, qx, qy
 
     def rollout(self, z, rain_mm, storm_hr=1.5, total_hr=3.0, dt=10.0, every=30, probes=None,
@@ -89,13 +103,16 @@ class Domain:
         track_infil=True additionally accumulates the water each cell actually infiltrated:
         adds `infiltrated_m3` (cumulative total per frame) and `infil_grid` (final N x N metres).
         Boundaries are closed, so rain_in == volume + infiltrated holds exactly per frame.
+        When the domain has a `capacity`, the cumulative grid is also the aquifer state, so it
+        is tracked regardless and infil_grid is metered — never exceeds capacity per cell.
         """
         with torch.no_grad():
             h = torch.zeros_like(z)
             qx = torch.zeros(z.shape[0], z.shape[1] - 1, device=z.device)
             qy = torch.zeros(z.shape[0] - 1, z.shape[1], device=z.device)
             hmax = torch.zeros_like(z)
-            infil_cum = torch.zeros_like(z) if track_infil else None
+            need_cum = track_infil or self.capacity is not None
+            infil_cum = torch.zeros_like(z) if need_cum else None
             nsteps = int(total_hr * 3600 / dt)
             rain_steps = int(storm_hr * 3600 / dt)
             rain_rate = rain_mm / 1000.0 / (storm_hr * 3600.0)
@@ -103,8 +120,9 @@ class Domain:
             frames, times, volume, probe_ts, infiltrated = [], [], [], [], []
             for k in range(nsteps):
                 r = rain_rate if k < rain_steps else 0.0
-                if track_infil:
-                    h, qx, qy, fin = self.step(h, qx, qy, z, r, dt, return_infil=True)
+                if need_cum:
+                    h, qx, qy, fin = self.step(h, qx, qy, z, r, dt, return_infil=True,
+                                               infil_cum=infil_cum)
                     infil_cum += fin
                 else:
                     h, qx, qy = self.step(h, qx, qy, z, r, dt)
@@ -134,25 +152,34 @@ class Domain:
         qx = torch.zeros(z.shape[0], z.shape[1] - 1, device=z.device)
         qy = torch.zeros(z.shape[0] - 1, z.shape[1], device=z.device)
         hmax = torch.zeros_like(z)
+        # aquifer state: cumulative infiltration per cell, threaded through the chunks so the
+        # capacity clamp (and its gradient) survives checkpointing
+        cum = torch.zeros_like(z) if self.capacity is not None else None
         nsteps = int(total_hr * 3600 / dt)
         rain_steps = int(storm_hr * 3600 / dt)
         rain_rate = rain_mm / 1000.0 / (storm_hr * 3600.0)
 
-        def run_chunk(h, qx, qy, hmax, k0, k1):
+        def run_chunk(h, qx, qy, hmax, cum, k0, k1):
             for k in range(int(k0), int(k1)):
                 r = rain_rate if k < rain_steps else 0.0
-                h, qx, qy = self.step(h, qx, qy, z, r, dt)
+                if cum is not None:
+                    h, qx, qy, fin = self.step(h, qx, qy, z, r, dt, return_infil=True,
+                                               infil_cum=cum)
+                    cum = cum + fin
+                else:
+                    h, qx, qy = self.step(h, qx, qy, z, r, dt)
                 hmax = torch.maximum(hmax, h)
-            return h, qx, qy, hmax
+            return h, qx, qy, hmax, cum
 
         k = 0
         while k < nsteps:
             k1 = min(k + chunk, nsteps)
             if grad:
-                h, qx, qy, hmax = torch.utils.checkpoint.checkpoint(
-                    run_chunk, h, qx, qy, hmax, torch.tensor(k), torch.tensor(k1), use_reentrant=False)
+                h, qx, qy, hmax, cum = torch.utils.checkpoint.checkpoint(
+                    run_chunk, h, qx, qy, hmax, cum, torch.tensor(k), torch.tensor(k1),
+                    use_reentrant=False)
             else:
-                h, qx, qy, hmax = run_chunk(h, qx, qy, hmax, k, k1)
+                h, qx, qy, hmax, cum = run_chunk(h, qx, qy, hmax, cum, k, k1)
             k = k1
         return (hmax, h) if return_final else hmax
 
@@ -204,31 +231,82 @@ def build_domain(work=None, center=None, device=None, n_grid=None, dx=None):
     # Soil modulation: scale land-cover infiltration by the soil's absorbability. If nb02's
     # clay.tif exists, clayey ground soaks slower, sandy ground faster (factor ~[0.3, 1.5]).
     # Concrete (built-up) stays ~impervious regardless because its base rate is already ~1 mm/hr.
-    soil_factor = _soil_infil_factor(work, row0, col0, N30, N)
-    infil_np = (infil_mm_hr * soil_factor) / 1000.0 / 3600.0                # m/s
+    sand_pct = _soil_pct(work, "sand", row0, col0, N30, N)
+    clay_pct = _soil_pct(work, "clay", row0, col0, N30, N)
+    soil_factor = _soil_infil_factor(clay_pct)
+    infil_mm_hr = infil_mm_hr * soil_factor
+    # Ksat reconciliation (V3): two estimates of "how fast water enters" used to coexist
+    # unreconciled — Cosby Ksat ranked recharge while the simulator used this land-cover table.
+    # Rate = min(F_TABLE[wc] * soil_factor, Ksat): land cover caps intake at the surface,
+    # soil physics caps throughput below it. Skipped when the bundle has no sand.tif.
+    if sand_pct is not None and clay_pct is not None:
+        from .recharge import cosby_ksat
+        infil_mm_hr = np.minimum(infil_mm_hr, cosby_ksat(sand_pct, clay_pct))
+    infil_np = infil_mm_hr / 1000.0 / 3600.0                                # m/s
 
     built_np = (wc_np == 50).astype("float32")
-    dom = Domain(z_np, mann_np, infil_np, built_np, dx=dx, device=device)
+    capacity = soil_capacity_m(work, sand_pct, clay_pct)
+    dom = Domain(z_np, mann_np, infil_np, built_np, dx=dx, device=device, capacity=capacity)
     dom.row0, dom.col0 = row0, col0
     dom.wc = wc_np.astype(np.int32)        # WorldCover class per cell -> calibrate.py learnable physics
     return dom
 
 
-def _soil_infil_factor(work, row0, col0, N30, N):
-    """Per-cell infiltration multiplier from soil clay %. 1.0 (neutral) if clay.tif absent."""
+def _soil_pct(work, name, row0, col0, N30, N):
+    """Crop {name}.tif (SoilGrids g/kg) to the domain and downsample -> % grid, or None."""
     import os
     import rasterio
-    path = f"{work}/clay.tif"
+    path = f"{work}/{name}.tif"
     if not os.path.exists(path):
-        return 1.0
+        return None
     with rasterio.open(path) as src:
-        clay = src.read(1).astype("float64")
-    clay = clay[row0:row0 + N30, col0:col0 + N30][::2, ::2] / 10.0          # SoilGrids g/kg -> %
-    if clay.shape != (N, N):                                                # defensive (edge crops)
-        clay = np.pad(clay, ((0, max(0, N - clay.shape[0])), (0, max(0, N - clay.shape[1]))),
-                      mode="edge")[:N, :N]
-    # clay 10% -> 1.0x, 30% -> 0.6x, >=50% -> 0.3x (floor); sandier than 10% speeds up to 1.5x
-    return np.clip(1.2 - 0.02 * clay, 0.3, 1.5)
+        a = src.read(1).astype("float64")
+    a = a[row0:row0 + N30, col0:col0 + N30][::2, ::2] / 10.0                # g/kg -> %
+    if a.shape != (N, N):                                                   # defensive (edge crops)
+        a = np.pad(a, ((0, max(0, N - a.shape[0])), (0, max(0, N - a.shape[1]))),
+                   mode="edge")[:N, :N]
+    return a
+
+
+def _soil_infil_factor(clay_pct):
+    """Per-cell infiltration multiplier from soil clay %. 1.0 (neutral) if clay is unknown.
+
+    clay 10% -> 1.0x, 30% -> 0.6x, >=50% -> 0.3x (floor); sandier than 10% speeds up to 1.5x.
+    """
+    if clay_pct is None:
+        return 1.0
+    return np.clip(1.2 - 0.02 * clay_pct, 0.3, 1.5)
+
+
+def soil_capacity_m(work, sand_pct, clay_pct):
+    """Per-cell soil storage capacity (m of water column), or None when soil data is missing.
+
+    capacity = porosity * min(root_zone_m, gw_depth) * soil_avail_frac
+      porosity   : Cosby et al. (1984) theta_s = 0.505 - 0.00142*sand% - 0.00037*clay%
+      root zone  : CFG.root_zone_m — the storage depth a storm can fill on its timescale
+      gw_depth   : shallower water table shrinks the column, but ONLY from a real (non-sample,
+                   in-AOI) gw_levels.csv — the Phase 0 gate decides; fake wells must not
+                   silently shape the physics
+      avail frac : CFG.soil_avail_frac — antecedent-moisture headroom (monsoon soils are not dry)
+    """
+    if sand_pct is None or clay_pct is None:
+        log.info("no sand/clay rasters in %s — soil capacity off (legacy unlimited infiltration)", work)
+        return None
+    porosity = np.clip(0.505 - 0.00142 * sand_pct - 0.00037 * clay_pct, 0.05, 0.6)
+    depth = np.full_like(porosity, CFG.root_zone_m)
+    try:
+        from .recharge import bundle_center, load_groundwater
+        gw = load_groundwater(work, center=bundle_center(work))
+        real = gw[~gw["_is_sample"]]
+        if len(real):
+            # shallowest real station caps the whole tile — stations sit kilometres apart, so
+            # per-cell IDW would be false precision; the conservative scalar is the honest cap
+            gw_depth = float(real["depth_to_water_m"].min())
+            depth = np.minimum(depth, gw_depth)
+            log.info("soil capacity capped by real water table at %.1f m", gw_depth)
+    except Exception as e:  # noqa: BLE001 — no gw file / no rasterio: root zone only
+        log.debug("no groundwater cap for capacity (%s)", e)
+    return porosity * depth * CFG.soil_avail_frac
 
 
 def candidate_sites(dom, work=None, k=None, radius=None):

@@ -43,6 +43,7 @@ def synth_bundle(tmp_path, monkeypatch):
     _write(f"{work}/worldcover.tif", wc, "uint8")
     _write(f"{work}/jrc_occurrence.tif", (wc == 80).astype("uint8") * 100, "uint8")
     _write(f"{work}/clay.tif", np.full((N, N), 300, dtype="float32"), "float32")  # 30% clay -> group C
+    _write(f"{work}/sand.tif", np.full((N, N), 400, dtype="float32"), "float32")  # 40% sand
 
     # two catchments
     labels = np.zeros((N, N), dtype="int32")
