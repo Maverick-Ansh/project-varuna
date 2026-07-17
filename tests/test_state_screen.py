@@ -130,6 +130,34 @@ def test_load_cgwb_real_csv_reality_check():
     assert df["stage_pct"].between(0, 400).all()
 
 
+# The actual FAO/GAUL/2015/level2 Karnataka frame, fetched live 2026-07-17: the PRE-2007
+# 27 districts, GAUL's own spellings. Pinning it keeps the alias/split tables honest offline.
+GAUL_KARNATAKA_2015 = [
+    "Bagalkot", "Bangalore Rural", "Bangalore Urban", "Belgaum", "Bellary", "Bidar",
+    "Bijapur", "Chamrajnagar", "Chikmagalur", "Chitradurga", "Dakshin Kannad", "Davanagere",
+    "Dharwad", "Gadag", "Gulbarga", "Hassan", "Haveri", "Kodagu", "Kolar", "Koppal",
+    "Mandya", "Mysore", "Raichur", "Shimoga", "Tumkur", "Udupi", "Uttar Kannand",
+]
+
+
+def test_full_cgwb_gaul_join_coverage():
+    """All 31 CGWB 2024 districts must resolve against the real GAUL 27-name frame — via
+    alias, fuzzy, or a post-split merge — with nothing silently dropped either way."""
+    cgwb = ss.load_cgwb(DATA_CSV)
+    joined, report = ss.join_units(cgwb, GAUL_KARNATAKA_2015)
+    assert report["coverage"] == 1.0
+    assert report["unmatched_cgwb"] == []
+    assert report["unmatched_polygons"] == []
+    assert len(joined) == 27
+    merged_into = {m["into"] for m in report["merged"]}
+    assert merged_into == {"Ballari", "Kolara", "Bengaluru (Rural)", "Kalburgi"}
+    # Chikkaballapur's 164% must stay visible inside the merged Kolar unit
+    kolar = joined[joined["unit"] == "Kolar"].iloc[0]
+    stages = {m["district"]: m["stage_pct"] for m in kolar["members"]}
+    assert stages["Chikkaballapura"] == pytest.approx(164.3, abs=0.1)
+    assert kolar["category"] == "Over-exploited"
+
+
 def test_cosby_ksat_orders_soils():
     """Sanity: sandy soil conducts far more than clayey; the formula is Cosby 1984."""
     from varuna.build.recharge import cosby_ksat

@@ -80,9 +80,10 @@ SENSITIVITY_JITTER = 0.30
 
 # ------------------------------------------------------------------------- CGWB table loading
 
-# Modern Karnataka district names (CGWB 2024 CSV) -> FAO GAUL 2015 names. GAUL predates the
-# 2014+ renamings wave. Names not listed pass through `_canon` + fuzzy matching, and every
-# fuzzy decision is recorded in the join report — nothing matches silently.
+# Modern Karnataka district names (CGWB 2024 CSV) -> FAO GAUL 2015 names, verified against the
+# actual GAUL Karnataka frame (27 units, pre-2007 districts, idiosyncratic spellings like
+# "Dakshin Kannad"). Names not listed pass through `_canon` + fuzzy matching, and every fuzzy
+# decision is recorded in the join report — nothing matches silently.
 GAUL_ALIASES = {
     "bengaluru urban": "bangalore urban",
     "bengaluru rural": "bangalore rural",
@@ -95,15 +96,23 @@ GAUL_ALIASES = {
     "shivamogga": "shimoga",
     "tumakuru": "tumkur",
     "chikkamagaluru": "chikmagalur",
-    "chamarajanagara": "chamarajanagar",
-    "chikkaballapura": "chikballapur",
+    "chamarajanagara": "chamrajnagar",
     "kolara": "kolar",
+    "dakshina kannada": "dakshin kannad",
+    "uttara kannada": "uttar kannand",
 }
 
-# Districts created after GAUL 2015, merged into the parent whose polygon still contains them.
-# The merge recomputes stage volumetrically for the combined polygon but ships every member's
-# own stage in `members`, so e.g. Vijayanagara's 88% is not hidden inside Ballari's 27%.
-POST_GAUL_SPLITS = {"Vijayanagara": "Ballari"}
+# Districts created after the polygon vintage, merged into the parent whose polygon still
+# contains them. GAUL 2015 ships the PRE-2007 27-district frame, so Chikkaballapur (2007),
+# Ramanagara (2007) and Yadgir (2010) fold in alongside Vijayanagara (2021). The merge
+# recomputes stage volumetrically for the combined polygon but ships every member's own stage
+# in `members`, so e.g. Chikkaballapur's 164% is not hidden inside a diluted parent number.
+POST_GAUL_SPLITS = {
+    "Vijayanagara": "Ballari",
+    "Chikkaballapura": "Kolara",
+    "Ramanagara": "Bengaluru (Rural)",
+    "Yadgir": "Kalburgi",
+}
 
 
 def _canon(name):
