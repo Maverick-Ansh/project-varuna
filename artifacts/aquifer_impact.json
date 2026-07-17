@@ -1,0 +1,89 @@
+{
+  "note": "Legacy (rate-only infiltration) vs V3 (soil-capacity-metered, Ksat-capped) on identical crops and storms. Predicted flooding INCREASES by design \u2014 the old model let every pervious cell absorb at a constant rate forever. Committed so the physics change is auditable, per the plan's honesty note.",
+  "areas": [
+    {
+      "area": "patna",
+      "n_grid": 128,
+      "dx": 60.0,
+      "depth_thresh_m": 0.1,
+      "soil_capacity_m3": 14565680.859375,
+      "entries": [
+        {
+          "rain_mm": 60.0,
+          "infiltrated_m3_old": 455636,
+          "infiltrated_m3_new": 385219,
+          "ponded_final_m3_old": 3083300,
+          "ponded_final_m3_new": 3153718,
+          "flooded_km2_old": 13.74,
+          "flooded_km2_new": 13.91,
+          "ponded_change_pct": 2.3,
+          "soil_filled_pct": 2.6
+        },
+        {
+          "rain_mm": 100.0,
+          "infiltrated_m3_old": 465449,
+          "infiltrated_m3_new": 391525,
+          "ponded_final_m3_old": 5432795,
+          "ponded_final_m3_new": 5506716,
+          "flooded_km2_old": 20.63,
+          "flooded_km2_new": 20.78,
+          "ponded_change_pct": 1.4,
+          "soil_filled_pct": 2.7
+        },
+        {
+          "rain_mm": 150.0,
+          "infiltrated_m3_old": 472152,
+          "infiltrated_m3_new": 395692,
+          "ponded_final_m3_old": 8375182,
+          "ponded_final_m3_new": 8451643,
+          "flooded_km2_old": 25.94,
+          "flooded_km2_new": 26.0,
+          "ponded_change_pct": 0.9,
+          "soil_filled_pct": 2.7
+        }
+      ]
+    },
+    {
+      "area": "bengaluru",
+      "n_grid": 128,
+      "dx": 60.0,
+      "depth_thresh_m": 0.1,
+      "soil_capacity_m3": 14241665.0390625,
+      "entries": [
+        {
+          "rain_mm": 60.0,
+          "infiltrated_m3_old": 593268,
+          "infiltrated_m3_new": 469943,
+          "ponded_final_m3_old": 2945714,
+          "ponded_final_m3_new": 3069000,
+          "flooded_km2_old": 8.84,
+          "flooded_km2_new": 8.95,
+          "ponded_change_pct": 4.2,
+          "soil_filled_pct": 3.3
+        },
+        {
+          "rain_mm": 100.0,
+          "infiltrated_m3_old": 610063,
+          "infiltrated_m3_new": 481309,
+          "ponded_final_m3_old": 5288212,
+          "ponded_final_m3_new": 5416999,
+          "flooded_km2_old": 11.39,
+          "flooded_km2_new": 11.46,
+          "ponded_change_pct": 2.4,
+          "soil_filled_pct": 3.4
+        },
+        {
+          "rain_mm": 150.0,
+          "infiltrated_m3_old": 619623,
+          "infiltrated_m3_new": 487249,
+          "ponded_final_m3_old": 8228362,
+          "ponded_final_m3_new": 8361062,
+          "flooded_km2_old": 13.76,
+          "flooded_km2_new": 13.82,
+          "ponded_change_pct": 1.6,
+          "soil_filled_pct": 3.4
+        }
+      ]
+    }
+  ]
+}
