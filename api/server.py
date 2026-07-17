@@ -161,7 +161,9 @@ def sinks(area: str | None = None):
 @app.get("/api/recharge")
 def recharge(area: str | None = None):
     import pandas as pd
-    path = _pj(_work(area), "recharge_sites.csv")
+    from varuna.build.recharge import groundwater_status
+    work = _work(area)
+    path = _pj(work, "recharge_sites.csv")
     if not os.path.exists(path):
         raise HTTPException(404, "recharge_sites.csv not in bundle")
     df = pd.read_csv(path)
@@ -170,7 +172,10 @@ def recharge(area: str | None = None):
               "properties": {k: (float(r[k]) if k != "sink_id" else int(r[k]))
                              for k in df.columns if k not in ("lat", "lon")}}
              for _, r in df.iterrows()]
-    return {"type": "FeatureCollection", "features": feats}
+    # provenance of the groundwater input; sample=True means the ranking must not be trusted
+    status = groundwater_status(work)
+    return {"type": "FeatureCollection", "features": feats,
+            "sample": status["sample"], "gw_status": status, "caveat": status["caveat"]}
 
 
 @app.get("/api/alerts")

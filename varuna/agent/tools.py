@@ -154,15 +154,20 @@ def _plan_canals(rain_mm=None, n_canals=3, **_):
 
 def _recharge_sites(top_n=10, **_):
     import pandas as pd
+    from ..build.recharge import groundwater_status
     path = CFG.path("recharge_sites.csv")
     df = pd.read_csv(path).head(int(top_n))
     cols = [c for c in ["sink_id", "lat", "lon", "volume_m3", "gw_depth_m", "ksat_mm_hr",
                         "rsi", "recharge_score"] if c in df.columns]
-    sample = bool(df.get("station", pd.Series(dtype=str)).astype(str).str.startswith("SAMPLE").any()) \
-        if "station" in df.columns else False
+    # provenance comes from gw_levels.csv (the input), not recharge_sites.csv (the product,
+    # which carries no station column — checking it here is how the old warning went dead)
+    status = groundwater_status(CFG.work)
     return {"sites": df[cols].to_dict(orient="records"),
-            "warning": ("Groundwater input is SAMPLE data — rankings not meaningful until real "
-                        "CGWB data is loaded." if sample else None)}
+            "sample": status["sample"],
+            "warning": (f"Groundwater input is SAMPLE data ({status['reason']}) — rankings are "
+                        "not meaningful until real CGWB/India-WRIS data is loaded."
+                        if status["sample"] else None),
+            "caveat": status["caveat"]}
 
 
 def _validation_scores(**_):
