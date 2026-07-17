@@ -381,8 +381,10 @@ export default function App() {
 
             <Panel title="Layers">
               {Object.keys(show).map((k) => (
-                <label key={k} className="chk">
+                <label key={k} className="chk"
+                       title={k === "recharge" && recharge?.sample ? recharge.gw_status?.reason : undefined}>
                   <input type="checkbox" checked={show[k]} onChange={() => toggle(k)} /> {k}
+                  {k === "recharge" && recharge?.sample && <span className="badge sample">sample</span>}
                 </label>
               ))}
             </Panel>
@@ -567,8 +569,11 @@ export default function App() {
           {!isCity && show.recharge && recharge && recharge.features.map((f, i) => (
             <CircleMarker key={i} center={[f.geometry.coordinates[1], f.geometry.coordinates[0]]}
                           radius={4 + 6 * (f.properties.rsi || 0)}
-                          pathOptions={{ color: "#2a7", fillOpacity: 0.6 }}>
-              <Tooltip>recharge RSI {Number(f.properties.rsi).toFixed(2)}</Tooltip>
+                          pathOptions={recharge.sample
+                            ? { color: "#888", fillOpacity: 0.3, dashArray: "3 3" }
+                            : { color: "#2a7", fillOpacity: 0.6 }}>
+              <Tooltip>recharge RSI {Number(f.properties.rsi).toFixed(2)}
+                {recharge.sample ? " — SAMPLE groundwater input; ranking not meaningful" : ""}</Tooltip>
             </CircleMarker>
           ))}
 

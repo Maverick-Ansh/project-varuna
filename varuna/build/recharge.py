@@ -32,9 +32,46 @@ SAMPLE_GW = [
     ("SAMPLE_Fatuha", 25.560, 85.290, 10.3),
 ]
 
+# Every recharge payload ships this. It began as notebook-02 markdown, got dropped in the port,
+# and the omission is exactly how a prioritisation quietly becomes a certification.
+QUALITY_CAVEAT = (
+    "Recharge siting requires geotechnical and water-quality screening before construction — "
+    "this ranking prioritises, it does not certify. Region-specific risks: parts of Bihar's "
+    "shallow alluvium carry arsenic; Karnataka's hard-rock (gneiss) aquifers carry fluoride; "
+    "urban runoff carries sewage and heavy metals."
+)
 
-def load_groundwater(work=None):
-    """Read gw_levels.csv; write the SAMPLE file (with a loud warning) if missing."""
+# A groundwater station farther than this from the area centre cannot support an IDW field
+# inside it. Patna's wells sat ~1,600 km from Bengaluru's bundle and still ranked its sites.
+GW_MAX_STATION_KM = 50.0
+
+
+def station_km(center, lats, lons):
+    """Great-circle (haversine) distance in km from center=(lat, lon) to each station."""
+    lat0, lon0 = np.radians(center[0]), np.radians(center[1])
+    lat, lon = np.radians(np.asarray(lats, dtype="float64")), np.radians(np.asarray(lons, dtype="float64"))
+    a = np.sin((lat - lat0) / 2) ** 2 + np.cos(lat0) * np.cos(lat) * np.sin((lon - lon0) / 2) ** 2
+    return 2 * 6371.0 * np.arcsin(np.sqrt(a))
+
+
+def bundle_center(work=None):
+    """(lat, lon) of the bundle's raster mid-point from depth.tif — the bundle itself is the
+    ground truth of where it sits, so provenance checks can't be fooled by a stale registry."""
+    import rasterio
+    work = work or CFG.work
+    with rasterio.open(f"{work}/depth.tif") as s:
+        T, h, w = s.transform, s.height, s.width
+    lon, lat = T * (w / 2, h / 2)
+    return float(lat), float(lon)
+
+
+def load_groundwater(work=None, center=None, max_km=GW_MAX_STATION_KM):
+    """Read gw_levels.csv; write the SAMPLE file (with a loud warning) if missing.
+
+    When `center` is given, stations get a `_km_to_center` column and the AOI sanity gate runs:
+    if no station falls within `max_km`, every row is forced `_is_sample=True` — an IDW field
+    built entirely from far-away wells is structured noise, not data.
+    """
     import pandas as pd
     work = work or CFG.work
     path = f"{work}/gw_levels.csv"
@@ -44,7 +81,47 @@ def load_groundwater(work=None):
                     "meaningless until you replace it with real CGWB/India-WRIS data.")
     gw = pd.read_csv(path)
     gw["_is_sample"] = gw["station"].astype(str).str.startswith("SAMPLE")
+    if center is not None and len(gw):
+        gw["_km_to_center"] = station_km(center, gw["lat"].values, gw["lon"].values)
+        nearest = float(gw["_km_to_center"].min())
+        if nearest > max_km:
+            gw["_is_sample"] = True
+            log.warning("NO groundwater station within %.0f km of area centre %s (nearest %.0f km) "
+                        "— treating gw_levels.csv as SAMPLE; recharge rankings are meaningless "
+                        "for this area.", max_km, tuple(round(c, 3) for c in center), nearest)
     return gw
+
+
+def groundwater_status(work=None, center=None, max_km=GW_MAX_STATION_KM):
+    """Provenance summary of the groundwater input behind RSI / recharge ranks.
+
+    `sample` is True if ANY station is a SAMPLE placeholder or none sits within `max_km` of the
+    centre — a partially fake input still taints the ranking. Centre defaults to the bundle's
+    own raster mid-point; `aoi_check` says whether the distance gate actually ran (absence of a
+    check is not a pass — same three-state doctrine as nightlights).
+    """
+    work = work or CFG.work
+    if center is None:
+        try:
+            center = bundle_center(work)
+        except Exception as e:  # noqa: BLE001 — no rasterio / no depth.tif: skip gate, say so
+            log.warning("groundwater_status: no bundle centre (%s); AOI gate skipped", e)
+    gw = load_groundwater(work, center=center, max_km=max_km)
+    n_placeholder = int(gw["_is_sample"].sum()) if len(gw) else 0
+    nearest = float(gw["_km_to_center"].min()) if "_km_to_center" in gw else None
+    sample = bool(gw["_is_sample"].any()) or not len(gw)
+    if not len(gw):
+        reason = "gw_levels.csv has no stations"
+    elif gw["station"].astype(str).str.startswith("SAMPLE").any():
+        reason = "gw_levels.csv contains SAMPLE placeholder stations (not real measurements)"
+    elif nearest is not None and nearest > max_km:
+        reason = f"no groundwater station within {max_km:.0f} km of area centre (nearest {nearest:.0f} km)"
+    else:
+        reason = None
+    return {"sample": sample, "reason": reason, "n_stations": int(len(gw)),
+            "n_placeholder": n_placeholder, "nearest_station_km": nearest,
+            "aoi_check": "ok" if center is not None else "skipped — bundle centre unavailable",
+            "caveat": QUALITY_CAVEAT}
 
 
 def idw(LON, LAT, pts, vals, power=2.0):
@@ -95,7 +172,8 @@ def compute_rsi(work=None, weights=None):
     lats = transform.f + rows * transform.e
     LON, LAT = np.meshgrid(lons, lats)
 
-    gw = load_groundwater(work)
+    # centre from the grid being ranked, so building e.g. Bengaluru on Patna wells warns loudly
+    gw = load_groundwater(work, center=(float(np.mean(lats)), float(np.mean(lons))))
     gw_depth = idw(LON, LAT, gw[["lat", "lon"]].values, gw["depth_to_water_m"].values)
     ksat = compute_ksat(work, R, C)
 

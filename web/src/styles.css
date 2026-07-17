@@ -23,6 +23,7 @@ body { font: 14px/1.45 system-ui, sans-serif; color: var(--fg); background: var(
   text-transform: uppercase; letter-spacing: .03em; }
 .badge.gnn { background: #3b2a63; color: #cdb6f7; }
 .badge.emulator { background: #223247; color: #9cc3f0; }
+.badge.sample { background: #4a3418; color: #f0c078; }
 
 h1 { font-size: 18px; margin: 4px 0 14px; }
 h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
