@@ -22,6 +22,7 @@ DEFAULT_COSTS = {
     "excavation_inr_per_m3": 300.0,     # earthwork excavation + disposal
     "canal_inr_per_m": 9000.0,          # lined trapezoidal storm drain, per metre
     "storage_inr_per_m3": 6000.0,       # RCC detention capacity, per m3
+    "recharge_inr_per_m3": 2500.0,      # percolation structure incl. filter media, per m3
 }
 
 
