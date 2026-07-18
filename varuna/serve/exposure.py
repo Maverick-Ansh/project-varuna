@@ -60,16 +60,35 @@ def _domain_bbox(work, dom):
 
 
 def _osm_features(north, south, east, west, tags):
-    """osmnx features query, tolerant of the 1.x/2.x API rename."""
+    """osmnx features query, tolerant of the 1.x/2.x API rename AND of a dead default
+    Overpass endpoint (retries through roadnet's mirrors — the bare except chain here used
+    to swallow a network timeout and resurface it as a bogus AttributeError)."""
     import osmnx as ox
-    try:                                             # osmnx >= 2.0
-        return ox.features_from_bbox((west, south, east, north), tags)
-    except Exception:
-        pass
-    try:                                             # osmnx 1.x positional
-        return ox.features_from_bbox(north, south, east, west, tags)
-    except Exception:                                # older name
-        return ox.geometries_from_bbox(north, south, east, west, tags)
+    from .roadnet import OVERPASS_MIRRORS
+
+    def query():
+        try:                                         # osmnx >= 2.0 (bbox tuple)
+            return ox.features_from_bbox((west, south, east, north), tags)
+        except (TypeError, AttributeError):
+            pass
+        try:                                         # osmnx 1.x positional
+            return ox.features_from_bbox(north, south, east, west, tags)
+        except (TypeError, AttributeError):          # pre-1.5 name
+            return ox.geometries_from_bbox(north, south, east, west, tags)
+
+    last = None
+    for url in (None,) + tuple(OVERPASS_MIRRORS):    # None = whatever osmnx defaults to
+        if url is not None:
+            if hasattr(ox.settings, "overpass_url"):            # osmnx >= 2.0
+                ox.settings.overpass_url = url
+            if hasattr(ox.settings, "overpass_endpoint"):       # 1.x appends /interpreter
+                ox.settings.overpass_endpoint = url.rsplit("/interpreter", 1)[0]
+        try:
+            return query()
+        except Exception as e:  # noqa: BLE001 - try the next mirror
+            log.warning("osm features via %s failed: %s", url or "default endpoint", e)
+            last = e
+    raise last
 
 
 def assess_exposure(rain_mm=None, work=None, center=None, device="cpu"):

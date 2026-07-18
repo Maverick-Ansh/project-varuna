@@ -142,6 +142,7 @@ def _post_build_artifacts(area, rain_mm):
     step("roadgraph", roadgraph)                    # before canals: spiderweb needs streets
     step("canals", canals)
     step("storage", storage)
+    step("recharge", recharge_plan)                 # the Tier B point: metered m3 into the aquifer
     step("costbenefit", costbenefit)
     step("maps", maps)
     step("exposure", exposure)
