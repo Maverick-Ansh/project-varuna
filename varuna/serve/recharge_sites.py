@@ -116,7 +116,18 @@ def _ranked_candidates(dom, rain_mm, placeable, suit):
     return ys, xs, fnp[ys, xs], base
 
 
-def _recharge_for_sites(dom, ys, xs, depths, base, K, rain_mm, ksat_dom):
+def _land_runoff_m3(dom, base):
+    """The storm's would-be runoff ON LAND: final ponded volume excluding permanent water —
+    rain that fell on the Ganga or the harbour is not runoff anyone can recharge with."""
+    from ..build.landcover import NO_RECHARGE
+    h_end = np.asarray(base["frames"][-1])
+    wc = getattr(dom, "wc", None)
+    land = (~np.isin(np.asarray(wc), sorted(NO_RECHARGE))).astype("float64") \
+        if wc is not None else np.ones_like(h_end, dtype="float64")
+    return float((h_end * land).sum()) * dom.dx * dom.dx
+
+
+def _recharge_for_sites(dom, ys, xs, depths, base, K, rain_mm, ksat_dom, runoff_m3=None):
     """Place K cell-sized recharge basins (carve by pooled depth + open the soil to Ksat),
     re-simulate, and measure the ADDED m³ that entered the ground vs the baseline rollout."""
     cell = dom.dx * dom.dx
@@ -138,7 +149,7 @@ def _recharge_for_sites(dom, ys, xs, depths, base, K, rain_mm, ksat_dom):
     finally:
         dom.infil = keep
     added = (float(res["infil_grid"].sum()) - float(base["infil_grid"].sum())) * cell
-    would_be_runoff = max(float(base["volume"][-1]), 1.0)
+    would_be_runoff = max(runoff_m3 if runoff_m3 is not None else _land_runoff_m3(dom, base), 1.0)
     # flood co-benefit on built land, measured with the storage/flood threshold
     f0 = torch.relu(base["hmax"] - FLOOD_TAU) * dom.built
     f1 = torch.relu(res["hmax"] - FLOOD_TAU) * dom.built
@@ -186,10 +197,11 @@ def plan_recharge(rain_mm=None, work=None, device=None, site_counts=None,
     if n_cand == 0:
         log.warning("no placeable pooled cells at %.0f mm — nothing to plan", rain_mm)
     counts = sorted(set([k for k in (site_counts or _DEFAULT_COUNTS) if k < n_cand] + ([n_cand] if n_cand else [])))
-    would_be_runoff = float(base["volume"][-1])
+    would_be_runoff = _land_runoff_m3(dom, base)
     base_infil_m3 = float(base["infil_grid"].sum()) * cell
 
-    curve = _flag_unstable([_recharge_for_sites(dom, ys, xs, depths, base, K, rain_mm, ksat_dom)
+    curve = _flag_unstable([_recharge_for_sites(dom, ys, xs, depths, base, K, rain_mm, ksat_dom,
+                                                runoff_m3=would_be_runoff)
                             for K in counts])
     for c in curve:
         log.info("recharge %5d sites -> %8.0f m3 to aquifer (%5.1f%% of runoff)%s",
@@ -274,7 +286,8 @@ def plan_recharge(rain_mm=None, work=None, device=None, site_counts=None,
                        "depth with the soil opened to Ksat; the reported m³ is measured by "
                        "re-simulation and metered by per-cell soil capacity (metered=false "
                        "means the bundle predates the aquifer and numbers are an upper bound). "
-                       "reduction_pct = share of the storm's would-be runoff sent underground. "
+                       "reduction_pct = share of the storm's would-be runoff ON LAND (permanent "
+                       "water excluded) sent underground. "
                        "Sites sit on pervious ground only, buffered away from buildings. "
                        "Costs use an indicative percolation-structure rate — relative ROI, "
                        "not a bid. " + caveat)
