@@ -52,6 +52,10 @@ class Config:
     # --- differentiable twin (nb05) ---
     n_grid: int = 128
     dx: float = 60.0
+    # Soil storage (V3 aquifer): the unsaturated zone a storm can actually fill.
+    # capacity_m = porosity(sand, clay) * min(root_zone_m, gw_depth) * soil_avail_frac.
+    root_zone_m: float = 1.0                         # active storage depth on storm timescales
+    soil_avail_frac: float = 0.5                     # antecedent-moisture headroom (0=saturated, 1=dry)
     design_rain_mm: float = 100.0
     budget_m3: float = 150_000.0
     n_sites: int = 8
