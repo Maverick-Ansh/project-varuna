@@ -1,0 +1,270 @@
+{
+  "n_grid": 128,
+  "dx": 60.0,
+  "storm_hr": 1.5,
+  "total_hr": 3.0,
+  "counterfactual_infil_mm_hr": 1.0,
+  "entries": [
+    {
+      "rain_mm": 10.0,
+      "rain_m3": 589824,
+      "infiltrated_m3": 473138,
+      "infil_by_class": {
+        "vegetation": 437918,
+        "built": 30646,
+        "bare": 4573,
+        "water_wetland": 0,
+        "other": 1
+      },
+      "ponded_final_m3": 116692,
+      "ponded_peak_m3": 237445,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.001,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 3.6,
+      "ponded_if_all_built_m3": 431962,
+      "reduced_by_nature_m3": 315270
+    },
+    {
+      "rain_mm": 30.0,
+      "rain_m3": 1769472,
+      "infiltrated_m3": 543486,
+      "infil_by_class": {
+        "vegetation": 506541,
+        "built": 31952,
+        "bare": 4993,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 1225986,
+      "ponded_peak_m3": 1417079,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.0,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.1,
+      "ponded_if_all_built_m3": 1607473,
+      "reduced_by_nature_m3": 381487
+    },
+    {
+      "rain_mm": 50.0,
+      "rain_m3": 2949120,
+      "infiltrated_m3": 556385,
+      "infil_by_class": {
+        "vegetation": 519025,
+        "built": 32296,
+        "bare": 5064,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 2392738,
+      "ponded_peak_m3": 2596734,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.0,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.2,
+      "ponded_if_all_built_m3": 2786358,
+      "reduced_by_nature_m3": 393620
+    },
+    {
+      "rain_mm": 70.0,
+      "rain_m3": 4128768,
+      "infiltrated_m3": 562434,
+      "infil_by_class": {
+        "vegetation": 524855,
+        "built": 32477,
+        "bare": 5102,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 3567456,
+      "ponded_peak_m3": 3776382,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.027,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.3,
+      "ponded_if_all_built_m3": 3966173,
+      "reduced_by_nature_m3": 398717
+    },
+    {
+      "rain_mm": 90.0,
+      "rain_m3": 5308416,
+      "infiltrated_m3": 567101,
+      "infil_by_class": {
+        "vegetation": 529363,
+        "built": 32596,
+        "bare": 5142,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 4741810,
+      "ponded_peak_m3": 4956012,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.009,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.3,
+      "ponded_if_all_built_m3": 5145802,
+      "reduced_by_nature_m3": 403992
+    },
+    {
+      "rain_mm": 110.0,
+      "rain_m3": 6488064,
+      "infiltrated_m3": 569926,
+      "infil_by_class": {
+        "vegetation": 532081,
+        "built": 32683,
+        "bare": 5162,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 5918477,
+      "ponded_peak_m3": 6135679,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.005,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.3,
+      "ponded_if_all_built_m3": 6324062,
+      "reduced_by_nature_m3": 405585
+    },
+    {
+      "rain_mm": 130.0,
+      "rain_m3": 7667712,
+      "infiltrated_m3": 571856,
+      "infil_by_class": {
+        "vegetation": 533958,
+        "built": 32725,
+        "bare": 5173,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 7096255,
+      "ponded_peak_m3": 7315328,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.005,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.4,
+      "ponded_if_all_built_m3": 7505960,
+      "reduced_by_nature_m3": 409705
+    },
+    {
+      "rain_mm": 150.0,
+      "rain_m3": 8847360,
+      "infiltrated_m3": 573396,
+      "infil_by_class": {
+        "vegetation": 535473,
+        "built": 32731,
+        "bare": 5192,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 8274196,
+      "ponded_peak_m3": 8494957,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.003,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.4,
+      "ponded_if_all_built_m3": 8684443,
+      "reduced_by_nature_m3": 410247
+    },
+    {
+      "rain_mm": 170.0,
+      "rain_m3": 10027008,
+      "infiltrated_m3": 575203,
+      "infil_by_class": {
+        "vegetation": 537193,
+        "built": 32792,
+        "bare": 5218,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 9452705,
+      "ponded_peak_m3": 9674615,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.009,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.4,
+      "ponded_if_all_built_m3": 9862683,
+      "reduced_by_nature_m3": 409978
+    },
+    {
+      "rain_mm": 190.0,
+      "rain_m3": 11206656,
+      "infiltrated_m3": 576417,
+      "infil_by_class": {
+        "vegetation": 538338,
+        "built": 32858,
+        "bare": 5222,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 10630346,
+      "ponded_peak_m3": 10854269,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.001,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.4,
+      "ponded_if_all_built_m3": 11042229,
+      "reduced_by_nature_m3": 411883
+    },
+    {
+      "rain_mm": 210.0,
+      "rain_m3": 12386304,
+      "infiltrated_m3": 577762,
+      "infil_by_class": {
+        "vegetation": 539708,
+        "built": 32836,
+        "bare": 5219,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 11808621,
+      "ponded_peak_m3": 12033885,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.001,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.4,
+      "ponded_if_all_built_m3": 12222549,
+      "reduced_by_nature_m3": 413928
+    },
+    {
+      "rain_mm": 230.0,
+      "rain_m3": 13565952,
+      "infiltrated_m3": 578646,
+      "infil_by_class": {
+        "vegetation": 540542,
+        "built": 32873,
+        "bare": 5231,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 12987425,
+      "ponded_peak_m3": 13213564,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.001,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.4,
+      "ponded_if_all_built_m3": 13401446,
+      "reduced_by_nature_m3": 414021
+    },
+    {
+      "rain_mm": 250.0,
+      "rain_m3": 14745600,
+      "infiltrated_m3": 579318,
+      "infil_by_class": {
+        "vegetation": 541175,
+        "built": 32907,
+        "bare": 5236,
+        "water_wetland": 0,
+        "other": 0
+      },
+      "ponded_final_m3": 14168320,
+      "ponded_peak_m3": 14393203,
+      "runoff_out_m3": 0,
+      "closure_err_pct": 0.014,
+      "soil_capacity_m3": 13102789,
+      "soil_filled_pct": 4.4,
+      "ponded_if_all_built_m3": 14584264,
+      "reduced_by_nature_m3": 415944
+    }
+  ],
+  "note": "Closed-boundary storm budget: rain = infiltrated + ponded + runoff_out with runoff_out = 0 by construction. This closure is an accounting identity (a solver smoke test), NOT a validation against observations; ponded_final is the would-be runoff a real drainage path would export. Where soil data exists, infiltration is metered by per-cell soil storage capacity (V3 aquifer). 'reduced_by_nature' = extra final ponding if all ground infiltrated like built-up land."
+}

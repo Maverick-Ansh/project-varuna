@@ -1,0 +1,17 @@
+{
+  "rain_mm": 100.0,
+  "tau_m": 0.15,
+  "buildings": {
+    "total_in_domain": 0,
+    "at_risk": 0,
+    "at_risk_pct": 0.0,
+    "points": []
+  },
+  "roads": {
+    "total": 0,
+    "flooded": 0,
+    "flooded_lines": [],
+    "dry_lines": []
+  },
+  "note": "At-risk = flood depth > 0.15 m at the building/road (emulated). Dry roads are candidate evacuation routes. OSM footprints; not a life-safety certification."
+}
