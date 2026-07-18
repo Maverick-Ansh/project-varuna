@@ -65,32 +65,56 @@ def build_subcrop(area, n_samples=None, epochs=40, device=None):
     return meta
 
 
-def build_full(area, project_id=None, n_samples=None, epochs=40, device=None, steps=None):
-    """Full Earth Engine build for a brand-new area (sinks -> recharge -> twin)."""
+# Per-stage completion markers for the resume guard: the LAST artifact each stage writes.
+# A stage is only skipped when every marker exists — a half-finished stage re-runs.
+_STAGE_DONE = {
+    "sinks": ["dem.tif", "depth.tif", "catchment_labels.tif", "sinks.csv"],
+    "recharge": ["sand.tif", "clay.tif", "rsi.tif", "recharge_sites.csv"],
+    "twin": ["twin_meta.pt", "emulator.pt"],
+}
+
+
+def _stage_done(work, stage):
+    return all(os.path.exists(os.path.join(work, f)) for f in _STAGE_DONE[stage])
+
+
+def build_full(area, project_id=None, n_samples=None, epochs=40, device=None, steps=None,
+               force=False):
+    """Full Earth Engine build for a brand-new area (sinks -> recharge -> twin).
+
+    Idempotent: a stage whose completion markers already exist is skipped (Colab/Kaggle
+    sessions die mid-multi-tile-build; a rerun must resume, not redownload). `force=True`
+    reruns every requested stage regardless."""
     from . import sinks, recharge, twin
     work = area.work_dir()
     os.makedirs(work, exist_ok=True)
     steps = steps or ["sinks", "recharge", "twin"]
     aoi = list(area.aoi)
-    if "sinks" in steps:
-        sinks.run(work=work, aoi=aoi, project_id=project_id)
-    if "recharge" in steps:
-        recharge.run(work=work, aoi=aoi, project_id=project_id)
-    if "twin" in steps:
-        twin.train_twin(work=work, center=area.center, n_samples=n_samples, epochs=epochs,
-                        device=device, n_grid=area.n_grid, dx=area.dx)
-        _drop_dataset(work)
+    for stage in [s for s in ("sinks", "recharge", "twin") if s in steps]:
+        if not force and _stage_done(work, stage):
+            log.info("'%s' stage %s already complete — skipping (use force=True to rerun)",
+                     area.id, stage)
+            continue
+        if stage == "sinks":
+            sinks.run(work=work, aoi=aoi, project_id=project_id)
+        elif stage == "recharge":
+            recharge.run(work=work, aoi=aoi, project_id=project_id)
+        else:
+            twin.train_twin(work=work, center=area.center, n_samples=n_samples, epochs=epochs,
+                            device=device, n_grid=area.n_grid, dx=area.dx)
+            _drop_dataset(work)
     log.info("full build for '%s' complete -> %s", area.id, work)
     return work
 
 
-def build_area(area_id, project_id=None, n_samples=None, epochs=40, device=None, steps=None):
+def build_area(area_id, project_id=None, n_samples=None, epochs=40, device=None, steps=None,
+               force=False):
     """Build one area's bundle, dispatching to the sub-crop or full-EE path."""
     area = get_area(area_id)
     if area.source_work:
         return build_subcrop(area, n_samples=n_samples, epochs=epochs, device=device)
     return build_full(area, project_id=project_id, n_samples=n_samples, epochs=epochs,
-                      device=device, steps=steps)
+                      device=device, steps=steps, force=force)
 
 
 def build_all(**kw):

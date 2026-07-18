@@ -106,6 +106,18 @@ def _post_build_artifacts(area, rain_mm):
         os.makedirs(figdir, exist_ok=True)
         plot_storage_dose(rep, out=os.path.join(figdir, "storage_dose.png"))
 
+    def recharge_plan():
+        from varuna.serve.recharge_sites import plan_recharge, plot_recharge_dose
+        rep = plan_recharge(rain_mm=rain_mm, work=work)
+        figdir = os.path.join(work, "figures")
+        os.makedirs(figdir, exist_ok=True)
+        plot_recharge_dose(rep, out=os.path.join(figdir, "recharge_dose.png"))
+        best = max((c for c in rep["curve"] if not c["unstable"]),
+                   key=lambda c: c["recharge_m3"], default=None)
+        if best:
+            log.info("  recharge plan: up to %s m3 into the aquifer (%s%% of runoff)",
+                     best["recharge_m3"], best["reduction_pct"])
+
     def costbenefit():
         from varuna.serve.costbenefit import rank_interventions
         rank_interventions(rain_mm=rain_mm, work=work)
@@ -137,14 +149,15 @@ def _post_build_artifacts(area, rain_mm):
     step("gnn_data", gnn_data)                      # labels so the GNN can retrain over Mumbai
 
 
-def do_build(area_id, project_id, rain_mm, n_samples=None, epochs=40, skip_artifacts=False):
+def do_build(area_id, project_id, rain_mm, n_samples=None, epochs=40, skip_artifacts=False,
+             force=False):
     from varuna.areas import get_area
     from varuna.build.areas_build import build_area
     area = get_area(area_id)
     if not area.source_work:                       # full build -> Earth Engine
         from varuna.ee_auth import init_ee
         init_ee(project_id)
-    build_area(area_id, project_id=project_id, n_samples=n_samples, epochs=epochs)
+    build_area(area_id, project_id=project_id, n_samples=n_samples, epochs=epochs, force=force)
     if not skip_artifacts:
         _post_build_artifacts(area, rain_mm)
     log.info("build for '%s' complete -> %s", area_id, area.work_dir())
@@ -216,8 +229,11 @@ def main():
     ap = argparse.ArgumentParser(description="Varuna Phase 3 (Colab/Kaggle)")
     ap.add_argument("--exposure", action="store_true", help="cache exposure.json for built areas")
     ap.add_argument("--areas", nargs="+", default=None, help="area ids for --exposure")
-    ap.add_argument("--build", default=None, metavar="AREA_ID",
-                    help="build this registered area (bengaluru needs EE auth + GPU)")
+    ap.add_argument("--build", default=None, metavar="AREA_ID", nargs="+",
+                    help="build these registered areas in order (full areas need EE auth + GPU; "
+                         "stages already complete are skipped — resume-safe)")
+    ap.add_argument("--force", action="store_true",
+                    help="with --build: rerun stages even when their artifacts already exist")
     ap.add_argument("--project-id", default=os.environ.get("VARUNA_PROJECT_ID"),
                     help="Earth Engine project id (full builds)")
     ap.add_argument("--rain", type=float, default=100.0,
@@ -236,9 +252,10 @@ def main():
         raise SystemExit("nothing to do: pass --exposure and/or --build <area> and/or --push")
 
     if args.build:
-        do_build(args.build, args.project_id, args.rain,
-                 n_samples=args.n_samples, epochs=args.epochs,
-                 skip_artifacts=args.skip_artifacts)
+        for aid in args.build:
+            do_build(aid, args.project_id, args.rain,
+                     n_samples=args.n_samples, epochs=args.epochs,
+                     skip_artifacts=args.skip_artifacts, force=args.force)
     if args.exposure:
         summary = do_exposure(args.areas, args.rain)
         print("\nEXPOSURE SUMMARY")
