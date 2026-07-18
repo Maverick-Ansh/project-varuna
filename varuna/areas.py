@@ -84,6 +84,31 @@ _AREAS = [
          (19.2425, 72.8300), n_grid=256, city="mumbai",
          note="Malad subway, Kandivali, Borivali, Dahisar; Poisar & Dahisar rivers"),
 ]
+
+
+def _karnataka_tier_b():
+    """V3 Tier B: 60 m twins for the towns inside the Karnataka state screen's top
+    recharge-need districts (artifacts/karnataka/state_screen.json; Bangalore Urban's tile is
+    `bengaluru` above). Generated from a table, AOIs derived from the centre with a fixed pad —
+    never hand-typed (the Mumbai seam-gap lesson). Separate towns; no tessellation implied."""
+    towns = [
+        # id, name, (lat, lon) town centre, state-screen rank of the CGWB-2024 unit
+        ("doddaballapura", "Doddaballapura (Bangalore Rural)", (13.2957, 77.5364), 1),
+        ("ramanagara", "Ramanagara", (12.7217, 77.2812), 1),
+        ("chitradurga", "Chitradurga", (14.2264, 76.4008), 2),
+        ("chamarajanagara", "Chamarajanagara", (11.9236, 76.9456), 3),
+        ("kolar", "Kolar", (13.1367, 78.1292), 4),
+        ("chikkaballapur", "Chikkaballapur", (13.4355, 77.7315), 4),
+    ]
+    pad = 0.07                                     # deg; 128^2 @ 60 m needs ~0.035 + margin
+    return [Area(aid, name,
+                 (round(lon - pad, 3), round(lat - pad, 3), round(lon + pad, 3), round(lat + pad, 3)),
+                 (lat, lon),
+                 note=f"V3 Tier B recharge zoom — state-screen rank #{rank} district; EE build")
+            for aid, name, (lat, lon), rank in towns]
+
+
+_AREAS += _karnataka_tier_b()
 _REGISTRY = {a.id: a for a in _AREAS}
 
 # City groups for the aggregate dashboard view. Tiles tessellate exactly, so summing per-tile

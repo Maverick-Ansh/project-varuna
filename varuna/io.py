@@ -15,10 +15,13 @@ import numpy as np
 log = logging.getLogger("varuna.io")
 
 # Artifacts produced by the build stage. Required ones gate the serve/agent layers.
-REQUIRED_ARTIFACTS = ["dem.tif", "depth.tif", "worldcover.tif", "catchment_labels.tif", "sinks.csv"]
+# twin_meta.pt + emulator.pt are REQUIRED: a tile whose EE download succeeded but whose twin
+# training crashed must NOT report built:true, get committed, and then 500 in require_bundle.
+REQUIRED_ARTIFACTS = ["dem.tif", "depth.tif", "worldcover.tif", "catchment_labels.tif",
+                      "sinks.csv", "emulator.pt", "twin_meta.pt"]
 OPTIONAL_ARTIFACTS = [
     "acc.tif", "jrc_occurrence.tif", "sand.tif", "clay.tif", "rsi.tif", "recharge_sites.csv",
-    "waterlogging_frequency.tif", "validation_scores.json", "emulator.pt", "twin_meta.pt",
+    "waterlogging_frequency.tif", "validation_scores.json",
 ]
 
 
