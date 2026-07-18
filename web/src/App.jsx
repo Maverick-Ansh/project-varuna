@@ -7,6 +7,7 @@ import { api } from "./api.js";
 import { usePolling } from "./hooks.js";
 import {
   LivePanel, ReportPanel, WaterBalancePanel, AdvisoryPanel, NightLightsPanel, CityPanel, WB,
+  RechargePlanPanel, StateScreenPanel, NewsPanel, RECHARGE,
 } from "./components/panels.jsx";
 
 const LEVEL_COLOR = { RED: "#e23", AMBER: "#f90", GREEN: "#2a4" };
@@ -34,9 +35,10 @@ function Line({ c, dash }) {
   return <span className="lg-line" style={{ background: dash ? "none" : c, borderTop: dash ? `2px dashed ${c}` : "none" }} />;
 }
 
-function Legend({ show, canal, alerts, exposure, dig, route, reports, nightlights }) {
+function Legend({ show, canal, alerts, exposure, dig, route, reports, nightlights, rechargePlan }) {
   const rows = [];
   if (show.flood) rows.push([<span className="lg-flood" key="s" />, "flood depth"]);
+  if (show.recharge_plan && rechargePlan) rows.push([<Dot c={RECHARGE} key="s" />, "planned recharge basin"]);
   if (show.reports && reports?.length > 0) rows.push([<Dot c={{ color: "#fff", fillColor: "#3b82f6" }} key="s" />, "citizen report (darker = deeper)"]);
   if (show.nightlights && nightlights) rows.push([<span className="lg-line" key="s" style={{ background: "#ef4444", height: 8 }} />, "power outage (night lights)"]);
   if (show.canal && canal) {
@@ -162,10 +164,15 @@ export default function App() {
   const [citySummary, setCitySummary] = useState(null);
   const [learn, setLearn] = useState(null);
 
+  // v3 "Bhujal": metered recharge plan / state screen / quarantined news
+  const [rechargePlanData, setRechargePlanData] = useState(null);
+  const [stateScreenData, setStateScreenData] = useState(null);
+  const [news, setNews] = useState(null);
+
   const [show, setShow] = useState({
     flood: true, alerts: true, sinks: false, recharge: false, canal: true, dig: true,
     buildings: true, roads: true, route: true, reports: true, nightlights: true,
-    containers: false,
+    containers: false, recharge_plan: false,
   });
   const [chat, setChat] = useState([]);
   const [msg, setMsg] = useState("");
@@ -218,6 +225,7 @@ export default function App() {
     setCanal(null); setFlood(null); setStorage(null); setDig(null);
     setCost(null); setExposure(null); setReport(null);
     setWb(null); setStoragePlan(null); setNl(null); setAdv(null); setLearn(null);
+    setRechargePlanData(null); setNews(null);
     setReports([]); setReporting(false); setReportDraft(null); setReportStatus(null);
     api.meta(area).then(setMeta).catch((e) => setErr(String(e)));
     api.sinks(area).then(setSinks).catch(() => setSinks(null));
@@ -229,7 +237,14 @@ export default function App() {
     api.nightlights(area).then(setNl).catch(() => setNl(null));
     api.advisory(area).then(setAdv).catch(() => setAdv(null));
     api.learningLog(area).then(setLearn).catch(() => setLearn(null));
+    api.rechargePlan(area).then(setRechargePlanData).catch(() => setRechargePlanData(null));
+    api.news(area).then(setNews).catch(() => setNews(null));
   }, [area]);
+
+  // the Karnataka screen is state-level context, loaded once (independent of the area)
+  useEffect(() => {
+    api.stateScreen().then(setStateScreenData).catch(() => setStateScreenData(null));
+  }, []);
 
   useEffect(() => {
     if (!area) return;
@@ -379,6 +394,10 @@ export default function App() {
             <WaterBalancePanel wb={wb} plan={storagePlan} unitM3={unitM3} setUnitM3={setUnitM3}
                                eff={eff} setEff={setEff} rain={rain} />
 
+            <RechargePlanPanel plan={rechargePlanData} />
+            <StateScreenPanel screen={stateScreenData} areas={areas}
+                              onSelectArea={(aid) => setView(aid)} />
+
             <Panel title="Layers">
               {Object.keys(show).map((k) => (
                 <label key={k} className="chk"
@@ -473,6 +492,7 @@ export default function App() {
             </Panel>
 
             <AdvisoryPanel adv={adv} onRefresh={() => api.advisory(area).then(setAdv).catch(() => {})} />
+            <NewsPanel news={news} />
             <NightLightsPanel nl={nl} />
 
             <ValidationPanel v={validation} learn={learn} />
@@ -621,6 +641,17 @@ export default function App() {
             </CircleMarker>
           ))}
 
+          {/* planned recharge basins (v3): pervious ground only, lime = water INTO the aquifer */}
+          {!isCity && show.recharge_plan && rechargePlanData && rechargePlanData.sites &&
+            rechargePlanData.sites.filter((s) => s.latlon).slice(0, 800).map((s) => (
+            <CircleMarker key={`rb${s.rank}`} center={s.latlon}
+                          radius={Math.max(2.5, Math.min(9, 1.5 * Math.sqrt(s.site_m3 / 500)))}
+                          pathOptions={{ ...RECHARGE, fillOpacity: 0.75, weight: 1 }}>
+              <Tooltip>recharge basin #{s.rank} · {s.site_m3.toLocaleString()} m³
+                · Ksat {s.ksat_mm_hr} mm/hr</Tooltip>
+            </CircleMarker>
+          ))}
+
           {!isCity && show.dig && dig && dig.dig_plan && dig.dig_plan.map((s, i) => (
             <CircleMarker key={`d${i}`} center={[s.lat, s.lon]} radius={4 + 3 * s.dig_depth_m}
                           pathOptions={{ color: "#630", fillColor: "#c96", fillOpacity: 0.85 }}>
@@ -651,7 +682,8 @@ export default function App() {
         </MapContainer>
         {!isCity && (
           <Legend show={show} canal={canal} alerts={alerts} exposure={exposure} dig={dig}
-                  route={show.route && routeRes} reports={reports} nightlights={nl} />
+                  route={show.route && routeRes} reports={reports} nightlights={nl}
+                  rechargePlan={rechargePlanData} />
         )}
       </main>
     </div>

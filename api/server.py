@@ -51,18 +51,23 @@ def _cached(key, ttl_s, fn):
 
 # Citizen report store: memory + JSONL + HF-dataset persistence (see varuna/serve/reports.py).
 from varuna.serve.reports import ReportStore, ip_hash as _ip_hash  # noqa: E402
+# News store: PARALLEL to reports (news/ prefix, source="news", quarantined from the learner).
+from varuna.serve.news import NewsStore  # noqa: E402
 
 REPORTS = ReportStore()
+NEWS = NewsStore()
 
 
 @app.on_event("startup")
 def _startup():
     REPORTS.start()
+    NEWS.start()
 
 
 @app.on_event("shutdown")
 def _shutdown():
     REPORTS.flush()
+    NEWS.flush()
 
 
 def _work(area: str | None = None) -> str:
@@ -343,6 +348,41 @@ def storage_plan(area: str | None = None):
     if plan is None:
         raise HTTPException(404, "storage_sizing.json not in bundle — run plan_storage")
     return plan
+
+
+@app.get("/api/recharge_plan")
+def recharge_plan(area: str | None = None):
+    """The committed metered recharge-siting plan (m³ measured by re-simulation, Phase 3).
+
+    Read-only, like storage_plan: the Space never computes, it serves what Colab committed."""
+    plan = _load_json(_work(area), "recharge_plan.json")
+    if plan is None:
+        raise HTTPException(404, "recharge_plan.json not in bundle — run plan_recharge on Colab")
+    return plan
+
+
+@app.get("/api/state_screen")
+def state_screen(state: str = "karnataka"):
+    """Tier A recharge-opportunity screen: ranked admin units + sensitivity band.
+
+    A committed table (scripts/run_state_screen.py), never computed here. The payload's own
+    note says what it is: a screen, not a siting — it cannot say 'build here'."""
+    import re as _re
+    if not _re.fullmatch(r"[a-z][a-z0-9_]{1,40}", state):
+        raise HTTPException(400, "bad state id")
+    from varuna.areas import artifacts_root
+    js = _load_json(os.path.join(artifacts_root(), state), "state_screen.json")
+    if js is None:
+        raise HTTPException(404, f"no state screen for '{state}' — run run_state_screen.py")
+    return js
+
+
+@app.get("/api/news")
+def news(area: str | None = None, hours: float = 24):
+    """Quarantined public-news feed: every item carries source='news' and the payload says
+    trained_on=false — news is displayed, never used for training (see varuna/serve/news.py)."""
+    aid = area or default_area_id()
+    return NEWS.feed(aid, hours=min(max(hours, 1), 24 * 7))
 
 
 @app.get("/api/nightlights")

@@ -207,7 +207,8 @@ class ReportStore:
             raise ValueError("outside_area: the pin is outside this area's model window")
         now = _utcnow()
         self._check_limits(ip_hash, cell, now)
-        rep = dict(id=uuid.uuid4().hex[:12], area=area, lat=round(float(lat), 6),
+        rep = dict(id=uuid.uuid4().hex[:12], source="citizen", area=area,
+                   lat=round(float(lat), 6),
                    lon=round(float(lon), 6), depth_band=depth_band,
                    depth_m=DEPTH_M[depth_band], note=sanitize_note(note),
                    ts=_iso(now), client_ts=str(client_ts or "")[:32] or None,

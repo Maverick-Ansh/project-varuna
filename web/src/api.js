@@ -50,4 +50,9 @@ export const api = {
   city: (cityId, rain_mm) =>
     get(`/api/city?city=${encodeURIComponent(cityId)}${rain_mm != null ? `&rain_mm=${rain_mm}` : ""}`),
   imageUrl: (name, area) => `${BASE}/api/image/${name}${q(area)}`,
+
+  // v3 "Bhujal": metered recharge plan, state screen, quarantined news
+  rechargePlan: (area) => get(`/api/recharge_plan${q(area)}`),
+  stateScreen: (state = "karnataka") => get(`/api/state_screen?state=${encodeURIComponent(state)}`),
+  news: (area, hours = 24) => get(`/api/news${q(area)}${area ? "&" : "?"}hours=${hours}`),
 };

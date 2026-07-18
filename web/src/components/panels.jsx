@@ -291,6 +291,142 @@ export function NightLightsPanel({ nl }) {
   );
 }
 
+// ------------------------------------------------- v3 "Bhujal": metered recharge plan
+
+// Recharge palette: lime family — a NEW physical thing (water into the aquifer), so a new
+// hue; never reuses the storage pink or the RSI green.
+export const RECHARGE = { color: "#4d7c0f", fillColor: "#84cc16" };
+
+export function RechargePlanPanel({ plan }) {
+  if (!plan) return null;
+  const stable = (plan.curve || []).filter((c) => !c.unstable);
+  const best = stable.length ? stable[stable.length - 1] : null;
+  const sample = plan.gw_status?.sample;
+  return (
+    <Panel title={`Aquifer recharge plan @ ${plan.rain_mm} mm`}>
+      <p style={{ margin: 0 }}>
+        <span className="badge gnn">measured by re-simulation</span>
+        {sample && <span className="badge sample" title={plan.gw_status?.reason}> sample groundwater</span>}
+      </p>
+      {best && (
+        <p style={{ margin: "6px 0 0" }}>
+          <b>{best.sites.toLocaleString()}</b> recharge basins put{" "}
+          <b style={{ color: RECHARGE.fillColor }}>{fmtM3(best.recharge_m3)}</b> into the aquifer —{" "}
+          <b>{best.reduction_pct}%</b> of this storm's land runoff
+          <span className="muted"> (soil has room for {fmtM3(plan.soil_capacity_m3)})</span>
+        </p>
+      )}
+      <table className="cb">
+        <thead><tr><th>basins</th><th>recharged</th><th>% runoff</th><th>flood cut</th></tr></thead>
+        <tbody>
+          {(plan.curve || []).map((c) => (
+            <tr key={c.sites} style={{ opacity: c.unstable ? 0.45 : 1 }}>
+              <td>{c.sites.toLocaleString()}{c.unstable ? " ⚠" : ""}</td>
+              <td>{fmtM3(c.recharge_m3)}</td>
+              <td>{c.reduction_pct}%</td>
+              <td>{c.flood_cut_pct}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="muted" style={{ marginBottom: 0 }}>
+        Sites are pervious ground only, buffered off buildings; ⚠ = numerically unstable dose,
+        never recommended. Turn on the “recharge_plan” map layer to see the basins.
+        Cost ≈ ₹{(plan.recharge_inr_per_m3 || 2500).toLocaleString()}/m³ of basin.
+      </p>
+      <p className="muted" style={{ marginBottom: 0, marginTop: 6 }}>
+        {plan.gw_status?.caveat || "Water-quality + geotechnical screening required before construction."}
+      </p>
+    </Panel>
+  );
+}
+
+// ------------------------------------------------- v3 "Bhujal": state recharge screen
+
+export function StateScreenPanel({ screen, areas, onSelectArea }) {
+  if (!screen) return null;
+  const blocks = [...(screen.blocks || [])].sort((a, b) => (a.rank ?? 1e9) - (b.rank ?? 1e9));
+  // a screen row can zoom to a built Tier B tile when one exists in/near that district
+  const tileFor = (b) => areas.find((a) => a.built && !a.city
+    && (a.name.toLowerCase().includes(String(b.unit).toLowerCase().slice(0, 6))
+        || a.name.toLowerCase().includes(String(b.district || "").toLowerCase().slice(0, 6))));
+  const CAT = { "Over-exploited": "#e23", Critical: "#f90", "Semi-critical": "#fc6", Safe: "#2a4" };
+  return (
+    <Panel title={`${screen.state} recharge screen`}>
+      <p style={{ margin: 0 }}>
+        <span className="badge emulator">{screen.admin_level}-level</span>{" "}
+        <span className="muted">screen, not a siting — it cannot say “build here”.</span>
+      </p>
+      <table className="cb">
+        <thead><tr><th>#</th><th>unit</th><th>status</th><th>ROI</th><th>rank band</th></tr></thead>
+        <tbody>
+          {blocks.slice(0, 10).map((b) => {
+            const tile = tileFor(b);
+            return (
+              <tr key={b.unit} style={{ cursor: tile ? "pointer" : "default" }}
+                  onClick={() => tile && onSelectArea(tile.id)}
+                  title={tile ? `open the ${tile.name} 60 m twin` : undefined}>
+                <td>{b.rank}</td>
+                <td>{b.unit}{tile ? " ▸" : ""}</td>
+                <td style={{ color: CAT[b.category] || "inherit" }}>{b.category}</td>
+                <td>{Number(b.roi).toFixed(2)}</td>
+                <td className="muted">{b.rank_p5}–{b.rank_p95}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p className="muted" style={{ marginBottom: 0 }}>
+        rank band = 5th–95th percentile under weight perturbations (a rank that dissolves
+        under plausible weights should not drive a budget). ▸ = a built 60 m twin exists —
+        click to zoom; only that tier earns m³ claims.
+      </p>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------- v3: quarantined news feed
+
+const COVERAGE = {
+  reported: { label: "flooding in the news", color: "#e23" },
+  not_reported: { label: "checked — no flood coverage", color: "#2a4" },
+  unknown: { label: "could not check the news", color: "#888" },
+};
+
+export function NewsPanel({ news }) {
+  if (!news) return null;
+  const cov = COVERAGE[news.coverage] || COVERAGE.unknown;
+  return (
+    <Panel title="In the news">
+      <p style={{ margin: 0 }}>
+        <span className="badge" style={{ background: cov.color + "33", color: cov.color }}>
+          {cov.label}
+        </span>{" "}
+        <span className="badge emulator" title={news.note}>never trains the model</span>
+      </p>
+      {news.items?.length > 0 && (
+        <ul className="news-list" style={{ margin: "6px 0 0", paddingLeft: 16 }}>
+          {news.items.slice(0, 6).map((it) => (
+            <li key={it.id} style={{ marginBottom: 4 }}>
+              {it.url ? <a href={it.url} target="_blank" rel="noreferrer">{it.title}</a> : it.title}
+              <span className="muted"> — {it.outlet || "news"}{it.ts ? ` · ${ago(it.ts)}` : ""}</span>
+              {it.depth_band && <span className="badge sample"> ~{it.depth_band}-deep</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {news.coverage === "unknown" && (
+        <p className="muted" style={{ margin: "6px 0 0" }}>
+          No fresh fetch within {Math.round(30)} h — absence of news here means “could not
+          check”, never “no flooding”.</p>
+      )}
+      <p className="muted" style={{ marginBottom: 0, marginTop: 6 }}>
+        Headlines are media attention, not water depth — displayed for awareness, quarantined
+        from learning. Citizen pins on the map are the only training signal.</p>
+    </Panel>
+  );
+}
+
 // ---------------------------------------------------------------- city aggregate
 
 export function CityPanel({ city, onSelectTile }) {

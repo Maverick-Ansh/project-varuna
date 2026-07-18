@@ -133,6 +133,37 @@ def learn_area(aid, work, reports, skip_train=False):
     return entry["accepted"], entry
 
 
+def update_all_news(ids, token, dry_run):
+    """Stage 2.5: fetch + triage news per area into the QUARANTINED news/ store.
+
+    Runs after fetch_state and before any learning, and its output never joins `reports` —
+    news is displayed, not trained on (varuna.learn.news_labels enforces the same boundary
+    on the report list itself). One dataset commit for all areas, mirroring push_lineage.
+    """
+    from varuna.serve.news import NewsStore, update_news
+    store = NewsStore(root=tempfile.mkdtemp(prefix="varuna_news_"))
+    store.hydrate(token=token)                        # dedupe against what the dataset holds
+    total_new = 0
+    for aid in ids:
+        try:
+            total_new += update_news(aid, store=store)["new_items"]
+        except Exception as e:  # noqa: BLE001
+            log.warning("%s: news update failed: %s", aid, e)
+    if dry_run or total_new == 0:
+        log.info("news: %d new item(s)%s", total_new, " [dry-run — not pushed]" if dry_run else "")
+        return total_new
+    try:
+        from huggingface_hub import HfApi
+        HfApi(token=token).upload_folder(
+            folder_path=os.path.join(store.root, "news"), repo_id=DATASET_ID,
+            repo_type="dataset", path_in_repo="news",
+            commit_message=f"nightly {_dt.date.today()}: {total_new} news item(s)")
+        log.info("news: pushed %d new item(s) to %s", total_new, DATASET_ID)
+    except Exception as e:  # noqa: BLE001
+        log.warning("news: dataset push failed: %s", e)
+    return total_new
+
+
 def refresh_area(aid, work, ee_ready):
     """Non-learning refreshes: night lights + live alerts + (if model changed) ladder."""
     from varuna.areas import get_area
@@ -190,6 +221,7 @@ def main():
     ap.add_argument("--areas", nargs="+", default=["all"])
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--skip-ee", action="store_true")
+    ap.add_argument("--skip-news", action="store_true")
     ap.add_argument("--skip-train", action="store_true")
     args = ap.parse_args()
 
@@ -204,6 +236,14 @@ def main():
     from varuna.areas import list_areas, is_built
     ids = ([a.id for a in list_areas() if is_built(a.id)]
            if args.areas == ["all"] else args.areas)
+
+    # Quarantine gate: only citizen pins may become labels. News (stage 2.5 below) lives in
+    # a parallel store and is never concatenated into `reports`.
+    from varuna.learn.news_labels import filter_reports_for_learning
+    reports = filter_reports_for_learning(reports)
+
+    if not args.skip_news:
+        update_all_news(ids, token, args.dry_run)
 
     ee_ready = False
     if not args.skip_ee:

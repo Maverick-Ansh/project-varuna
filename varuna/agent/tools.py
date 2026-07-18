@@ -110,6 +110,44 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "recharge_plan",
+            "description": ("Metered recharge-siting plan for this area: m3 actually infiltrated "
+                            "into the aquifer per number of recharge structures, MEASURED by "
+                            "re-simulation (not a score). Includes soil capacity and groundwater "
+                            "provenance."),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "top_sites": {"type": "integer",
+                                  "description": "How many best sites to include (default 10)."},
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "state_screen",
+            "description": ("State-wide recharge-opportunity screen (Tier A): admin units ranked "
+                            "by groundwater need x runoff x soil x pervious land, with a "
+                            "sensitivity band. A screen, not a siting — it cannot say 'build "
+                            "here'."),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "state": {"type": "string",
+                              "description": "State id (default 'karnataka')."},
+                    "top_n": {"type": "integer",
+                              "description": "How many top units to return (default 10)."},
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "validation_scores",
             "description": "Model accuracy vs Sentinel-1 radar observations (POD/FAR/CSI).",
             "parameters": {"type": "object", "properties": {}, "required": []},
@@ -170,6 +208,43 @@ def _recharge_sites(top_n=10, **_):
             "caveat": status["caveat"]}
 
 
+def _recharge_plan(top_sites=10, **_):
+    from ..io import load_json
+    js = load_json(CFG.path("recharge_plan.json"))
+    if js is None:
+        return {"error": "No recharge_plan.json in this bundle — run plan_recharge (Colab GPU)."}
+    best = max((c for c in js["curve"] if not c.get("unstable")),
+               key=lambda c: c.get("recharge_m3", 0), default=None)
+    return {"rain_mm": js["rain_mm"], "metered": js.get("metered", True),
+            "would_be_runoff_m3": js.get("would_be_runoff_m3"),
+            "soil_capacity_m3": js.get("soil_capacity_m3"),
+            "curve": js["curve"],
+            "best_dose": best,
+            "top_sites": js.get("sites", [])[:int(top_sites)],
+            "phases": js.get("phases"),
+            "gw_status": js.get("gw_status"), "note": js.get("note")}
+
+
+def _state_screen(state="karnataka", top_n=10, **_):
+    import os
+    import re
+    from ..areas import artifacts_root
+    from ..io import load_json
+    if not re.fullmatch(r"[a-z][a-z0-9_]{1,40}", str(state)):
+        return {"error": f"bad state id '{state}'"}
+    js = load_json(os.path.join(artifacts_root(), str(state), "state_screen.json"))
+    if js is None:
+        return {"error": f"No state screen for '{state}' — run scripts/run_state_screen.py."}
+    blocks = sorted(js.get("blocks", []), key=lambda b: b.get("rank", 1e9))
+    keep = ["unit", "district", "rank", "roi", "category", "stage_pct", "gws_trend_mm_yr",
+            "ksat_mm_hr", "pervious_frac", "rank_p5", "rank_p95", "top10_freq"]
+    return {"state": js["state"], "admin_level": js["admin_level"],
+            "weights": js.get("weights"),
+            "top": [{k: b.get(k) for k in keep} for b in blocks[:int(top_n)]],
+            "sensitivity": js.get("sensitivity"),
+            "note": js.get("note"), "caveat": js.get("caveat")}
+
+
 def _validation_scores(**_):
     from ..io import load_json
     s = load_json(CFG.path("validation_scores.json"))
@@ -185,6 +260,8 @@ _HANDLERS = {
     "optimize_design": _optimize_design,
     "plan_canals": _plan_canals,
     "recharge_sites": _recharge_sites,
+    "recharge_plan": _recharge_plan,
+    "state_screen": _state_screen,
     "validation_scores": _validation_scores,
 }
 
