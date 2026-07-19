@@ -1,0 +1,1098 @@
+{
+  "rain_mm": 100.0,
+  "total_flood_m3": 213675,
+  "max_sites": 101,
+  "unit_m3": 50.0,
+  "curve": [
+    {
+      "sites": 50,
+      "reduction_pct": 15.9,
+      "storage_m3": 196797,
+      "median_site_m3": 2156,
+      "unstable": false
+    },
+    {
+      "sites": 100,
+      "reduction_pct": 30.9,
+      "storage_m3": 213674,
+      "median_site_m3": 871,
+      "unstable": false
+    },
+    {
+      "sites": 101,
+      "reduction_pct": 100.0,
+      "storage_m3": 213675,
+      "median_site_m3": 859,
+      "unstable": false
+    }
+  ],
+  "targets": {
+    "30%": {
+      "sites": 97,
+      "storage_m3": 212661,
+      "equiv_units": 4253
+    },
+    "50%": {
+      "sites": 100,
+      "storage_m3": 213674,
+      "equiv_units": 4273
+    },
+    "70%": {
+      "sites": 100,
+      "storage_m3": 213674,
+      "equiv_units": 4273
+    }
+  },
+  "sites": [
+    {
+      "rank": 1,
+      "row": 123,
+      "col": 68,
+      "site_m3": 16441,
+      "latlon": [
+        13.26398,
+        77.53844
+      ]
+    },
+    {
+      "rank": 2,
+      "row": 125,
+      "col": 70,
+      "site_m3": 15500,
+      "latlon": [
+        13.26291,
+        77.53952
+      ]
+    },
+    {
+      "rank": 3,
+      "row": 124,
+      "col": 70,
+      "site_m3": 15464,
+      "latlon": [
+        13.26345,
+        77.53952
+      ]
+    },
+    {
+      "rank": 4,
+      "row": 121,
+      "col": 69,
+      "site_m3": 15408,
+      "latlon": [
+        13.26506,
+        77.53898
+      ]
+    },
+    {
+      "rank": 5,
+      "row": 120,
+      "col": 68,
+      "site_m3": 14691,
+      "latlon": [
+        13.2656,
+        77.53844
+      ]
+    },
+    {
+      "rank": 6,
+      "row": 126,
+      "col": 59,
+      "site_m3": 11195,
+      "latlon": [
+        13.26237,
+        77.53359
+      ]
+    },
+    {
+      "rank": 7,
+      "row": 126,
+      "col": 58,
+      "site_m3": 8814,
+      "latlon": [
+        13.26237,
+        77.53305
+      ]
+    },
+    {
+      "rank": 8,
+      "row": 121,
+      "col": 76,
+      "site_m3": 8597,
+      "latlon": [
+        13.26506,
+        77.54275
+      ]
+    },
+    {
+      "rank": 9,
+      "row": 126,
+      "col": 57,
+      "site_m3": 7703,
+      "latlon": [
+        13.26237,
+        77.53251
+      ]
+    },
+    {
+      "rank": 10,
+      "row": 120,
+      "col": 76,
+      "site_m3": 4331,
+      "latlon": [
+        13.2656,
+        77.54275
+      ]
+    },
+    {
+      "rank": 11,
+      "row": 83,
+      "col": 80,
+      "site_m3": 3915,
+      "latlon": [
+        13.28554,
+        77.54491
+      ]
+    },
+    {
+      "rank": 12,
+      "row": 126,
+      "col": 56,
+      "site_m3": 3832,
+      "latlon": [
+        13.26237,
+        77.53198
+      ]
+    },
+    {
+      "rank": 13,
+      "row": 108,
+      "col": 71,
+      "site_m3": 3808,
+      "latlon": [
+        13.27207,
+        77.54006
+      ]
+    },
+    {
+      "rank": 14,
+      "row": 85,
+      "col": 82,
+      "site_m3": 3449,
+      "latlon": [
+        13.28447,
+        77.54599
+      ]
+    },
+    {
+      "rank": 15,
+      "row": 79,
+      "col": 80,
+      "site_m3": 3108,
+      "latlon": [
+        13.2877,
+        77.54491
+      ]
+    },
+    {
+      "rank": 16,
+      "row": 82,
+      "col": 79,
+      "site_m3": 3081,
+      "latlon": [
+        13.28608,
+        77.54437
+      ]
+    },
+    {
+      "rank": 17,
+      "row": 107,
+      "col": 71,
+      "site_m3": 2936,
+      "latlon": [
+        13.27261,
+        77.54006
+      ]
+    },
+    {
+      "rank": 18,
+      "row": 83,
+      "col": 79,
+      "site_m3": 2844,
+      "latlon": [
+        13.28554,
+        77.54437
+      ]
+    },
+    {
+      "rank": 19,
+      "row": 88,
+      "col": 74,
+      "site_m3": 2818,
+      "latlon": [
+        13.28285,
+        77.54168
+      ]
+    },
+    {
+      "rank": 20,
+      "row": 86,
+      "col": 88,
+      "site_m3": 2789,
+      "latlon": [
+        13.28393,
+        77.54922
+      ]
+    },
+    {
+      "rank": 21,
+      "row": 87,
+      "col": 74,
+      "site_m3": 2689,
+      "latlon": [
+        13.28339,
+        77.54168
+      ]
+    },
+    {
+      "rank": 22,
+      "row": 87,
+      "col": 73,
+      "site_m3": 2355,
+      "latlon": [
+        13.28339,
+        77.54114
+      ]
+    },
+    {
+      "rank": 23,
+      "row": 88,
+      "col": 73,
+      "site_m3": 2305,
+      "latlon": [
+        13.28285,
+        77.54114
+      ]
+    },
+    {
+      "rank": 24,
+      "row": 86,
+      "col": 90,
+      "site_m3": 2222,
+      "latlon": [
+        13.28393,
+        77.5503
+      ]
+    },
+    {
+      "rank": 25,
+      "row": 86,
+      "col": 74,
+      "site_m3": 2198,
+      "latlon": [
+        13.28393,
+        77.54168
+      ]
+    },
+    {
+      "rank": 26,
+      "row": 54,
+      "col": 77,
+      "site_m3": 2113,
+      "latlon": [
+        13.30117,
+        77.54329
+      ]
+    },
+    {
+      "rank": 27,
+      "row": 83,
+      "col": 78,
+      "site_m3": 2008,
+      "latlon": [
+        13.28554,
+        77.54383
+      ]
+    },
+    {
+      "rank": 28,
+      "row": 103,
+      "col": 76,
+      "site_m3": 1949,
+      "latlon": [
+        13.27476,
+        77.54275
+      ]
+    },
+    {
+      "rank": 29,
+      "row": 125,
+      "col": 58,
+      "site_m3": 1920,
+      "latlon": [
+        13.26291,
+        77.53305
+      ]
+    },
+    {
+      "rank": 30,
+      "row": 86,
+      "col": 73,
+      "site_m3": 1906,
+      "latlon": [
+        13.28393,
+        77.54114
+      ]
+    },
+    {
+      "rank": 31,
+      "row": 53,
+      "col": 77,
+      "site_m3": 1815,
+      "latlon": [
+        13.30171,
+        77.54329
+      ]
+    },
+    {
+      "rank": 32,
+      "row": 46,
+      "col": 84,
+      "site_m3": 1750,
+      "latlon": [
+        13.30549,
+        77.54707
+      ]
+    },
+    {
+      "rank": 33,
+      "row": 87,
+      "col": 90,
+      "site_m3": 1479,
+      "latlon": [
+        13.28339,
+        77.5503
+      ]
+    },
+    {
+      "rank": 34,
+      "row": 121,
+      "col": 95,
+      "site_m3": 1440,
+      "latlon": [
+        13.26506,
+        77.553
+      ]
+    },
+    {
+      "rank": 35,
+      "row": 55,
+      "col": 77,
+      "site_m3": 1400,
+      "latlon": [
+        13.30064,
+        77.54329
+      ]
+    },
+    {
+      "rank": 36,
+      "row": 52,
+      "col": 78,
+      "site_m3": 1374,
+      "latlon": [
+        13.30225,
+        77.54383
+      ]
+    },
+    {
+      "rank": 37,
+      "row": 52,
+      "col": 5,
+      "site_m3": 1373,
+      "latlon": [
+        13.30225,
+        77.50449
+      ]
+    },
+    {
+      "rank": 38,
+      "row": 78,
+      "col": 80,
+      "site_m3": 1257,
+      "latlon": [
+        13.28824,
+        77.54491
+      ]
+    },
+    {
+      "rank": 39,
+      "row": 49,
+      "col": 84,
+      "site_m3": 1236,
+      "latlon": [
+        13.30387,
+        77.54707
+      ]
+    },
+    {
+      "rank": 40,
+      "row": 121,
+      "col": 94,
+      "site_m3": 1210,
+      "latlon": [
+        13.26506,
+        77.55246
+      ]
+    },
+    {
+      "rank": 41,
+      "row": 89,
+      "col": 73,
+      "site_m3": 1138,
+      "latlon": [
+        13.28231,
+        77.54114
+      ]
+    },
+    {
+      "rank": 42,
+      "row": 85,
+      "col": 74,
+      "site_m3": 1100,
+      "latlon": [
+        13.28447,
+        77.54168
+      ]
+    },
+    {
+      "rank": 43,
+      "row": 120,
+      "col": 96,
+      "site_m3": 1056,
+      "latlon": [
+        13.2656,
+        77.55353
+      ]
+    },
+    {
+      "rank": 44,
+      "row": 106,
+      "col": 71,
+      "site_m3": 1029,
+      "latlon": [
+        13.27315,
+        77.54006
+      ]
+    },
+    {
+      "rank": 45,
+      "row": 79,
+      "col": 79,
+      "site_m3": 1025,
+      "latlon": [
+        13.2877,
+        77.54437
+      ]
+    },
+    {
+      "rank": 46,
+      "row": 54,
+      "col": 76,
+      "site_m3": 1020,
+      "latlon": [
+        13.30117,
+        77.54275
+      ]
+    },
+    {
+      "rank": 47,
+      "row": 49,
+      "col": 85,
+      "site_m3": 996,
+      "latlon": [
+        13.30387,
+        77.54761
+      ]
+    },
+    {
+      "rank": 48,
+      "row": 87,
+      "col": 72,
+      "site_m3": 935,
+      "latlon": [
+        13.28339,
+        77.5406
+      ]
+    },
+    {
+      "rank": 49,
+      "row": 56,
+      "col": 77,
+      "site_m3": 891,
+      "latlon": [
+        13.3001,
+        77.54329
+      ]
+    },
+    {
+      "rank": 50,
+      "row": 110,
+      "col": 105,
+      "site_m3": 884,
+      "latlon": [
+        13.27099,
+        77.55839
+      ]
+    },
+    {
+      "rank": 51,
+      "row": 87,
+      "col": 91,
+      "site_m3": 859,
+      "latlon": [
+        13.28339,
+        77.55084
+      ]
+    },
+    {
+      "rank": 52,
+      "row": 84,
+      "col": 78,
+      "site_m3": 849,
+      "latlon": [
+        13.28501,
+        77.54383
+      ]
+    },
+    {
+      "rank": 53,
+      "row": 109,
+      "col": 70,
+      "site_m3": 840,
+      "latlon": [
+        13.27153,
+        77.53952
+      ]
+    },
+    {
+      "rank": 54,
+      "row": 114,
+      "col": 99,
+      "site_m3": 796,
+      "latlon": [
+        13.26884,
+        77.55515
+      ]
+    },
+    {
+      "rank": 55,
+      "row": 85,
+      "col": 73,
+      "site_m3": 696,
+      "latlon": [
+        13.28447,
+        77.54114
+      ]
+    },
+    {
+      "rank": 56,
+      "row": 87,
+      "col": 92,
+      "site_m3": 694,
+      "latlon": [
+        13.28339,
+        77.55138
+      ]
+    },
+    {
+      "rank": 57,
+      "row": 52,
+      "col": 77,
+      "site_m3": 693,
+      "latlon": [
+        13.30225,
+        77.54329
+      ]
+    },
+    {
+      "rank": 58,
+      "row": 57,
+      "col": 77,
+      "site_m3": 620,
+      "latlon": [
+        13.29956,
+        77.54329
+      ]
+    },
+    {
+      "rank": 59,
+      "row": 53,
+      "col": 76,
+      "site_m3": 617,
+      "latlon": [
+        13.30171,
+        77.54275
+      ]
+    },
+    {
+      "rank": 60,
+      "row": 126,
+      "col": 74,
+      "site_m3": 616,
+      "latlon": [
+        13.26237,
+        77.54168
+      ]
+    },
+    {
+      "rank": 61,
+      "row": 48,
+      "col": 86,
+      "site_m3": 611,
+      "latlon": [
+        13.30441,
+        77.54814
+      ]
+    },
+    {
+      "rank": 62,
+      "row": 106,
+      "col": 110,
+      "site_m3": 596,
+      "latlon": [
+        13.27315,
+        77.56108
+      ]
+    },
+    {
+      "rank": 63,
+      "row": 120,
+      "col": 99,
+      "site_m3": 584,
+      "latlon": [
+        13.2656,
+        77.55515
+      ]
+    },
+    {
+      "rank": 64,
+      "row": 109,
+      "col": 106,
+      "site_m3": 577,
+      "latlon": [
+        13.27153,
+        77.55892
+      ]
+    },
+    {
+      "rank": 65,
+      "row": 110,
+      "col": 106,
+      "site_m3": 572,
+      "latlon": [
+        13.27099,
+        77.55892
+      ]
+    },
+    {
+      "rank": 66,
+      "row": 125,
+      "col": 90,
+      "site_m3": 566,
+      "latlon": [
+        13.26291,
+        77.5503
+      ]
+    },
+    {
+      "rank": 67,
+      "row": 112,
+      "col": 102,
+      "site_m3": 552,
+      "latlon": [
+        13.26991,
+        77.55677
+      ]
+    },
+    {
+      "rank": 68,
+      "row": 108,
+      "col": 107,
+      "site_m3": 372,
+      "latlon": [
+        13.27207,
+        77.55946
+      ]
+    },
+    {
+      "rank": 69,
+      "row": 125,
+      "col": 57,
+      "site_m3": 356,
+      "latlon": [
+        13.26291,
+        77.53251
+      ]
+    },
+    {
+      "rank": 70,
+      "row": 109,
+      "col": 107,
+      "site_m3": 328,
+      "latlon": [
+        13.27153,
+        77.55946
+      ]
+    },
+    {
+      "rank": 71,
+      "row": 52,
+      "col": 0,
+      "site_m3": 325,
+      "latlon": [
+        13.30225,
+        77.50179
+      ]
+    },
+    {
+      "rank": 72,
+      "row": 86,
+      "col": 72,
+      "site_m3": 301,
+      "latlon": [
+        13.28393,
+        77.5406
+      ]
+    },
+    {
+      "rank": 73,
+      "row": 106,
+      "col": 108,
+      "site_m3": 296,
+      "latlon": [
+        13.27315,
+        77.56
+      ]
+    },
+    {
+      "rank": 74,
+      "row": 108,
+      "col": 108,
+      "site_m3": 282,
+      "latlon": [
+        13.27207,
+        77.56
+      ]
+    },
+    {
+      "rank": 75,
+      "row": 109,
+      "col": 105,
+      "site_m3": 250,
+      "latlon": [
+        13.27153,
+        77.55839
+      ]
+    },
+    {
+      "rank": 76,
+      "row": 80,
+      "col": 68,
+      "site_m3": 242,
+      "latlon": [
+        13.28716,
+        77.53844
+      ]
+    },
+    {
+      "rank": 77,
+      "row": 86,
+      "col": 83,
+      "site_m3": 217,
+      "latlon": [
+        13.28393,
+        77.54653
+      ]
+    },
+    {
+      "rank": 78,
+      "row": 105,
+      "col": 113,
+      "site_m3": 208,
+      "latlon": [
+        13.27369,
+        77.5627
+      ]
+    },
+    {
+      "rank": 79,
+      "row": 79,
+      "col": 91,
+      "site_m3": 204,
+      "latlon": [
+        13.2877,
+        77.55084
+      ]
+    },
+    {
+      "rank": 80,
+      "row": 105,
+      "col": 114,
+      "site_m3": 187,
+      "latlon": [
+        13.27369,
+        77.56324
+      ]
+    },
+    {
+      "rank": 81,
+      "row": 107,
+      "col": 107,
+      "site_m3": 179,
+      "latlon": [
+        13.27261,
+        77.55946
+      ]
+    },
+    {
+      "rank": 82,
+      "row": 105,
+      "col": 116,
+      "site_m3": 169,
+      "latlon": [
+        13.27369,
+        77.56431
+      ]
+    },
+    {
+      "rank": 83,
+      "row": 110,
+      "col": 104,
+      "site_m3": 162,
+      "latlon": [
+        13.27099,
+        77.55785
+      ]
+    },
+    {
+      "rank": 84,
+      "row": 108,
+      "col": 106,
+      "site_m3": 161,
+      "latlon": [
+        13.27207,
+        77.55892
+      ]
+    },
+    {
+      "rank": 85,
+      "row": 108,
+      "col": 70,
+      "site_m3": 155,
+      "latlon": [
+        13.27207,
+        77.53952
+      ]
+    },
+    {
+      "rank": 86,
+      "row": 105,
+      "col": 112,
+      "site_m3": 152,
+      "latlon": [
+        13.27369,
+        77.56216
+      ]
+    },
+    {
+      "rank": 87,
+      "row": 49,
+      "col": 81,
+      "site_m3": 146,
+      "latlon": [
+        13.30387,
+        77.54545
+      ]
+    },
+    {
+      "rank": 88,
+      "row": 46,
+      "col": 82,
+      "site_m3": 112,
+      "latlon": [
+        13.30549,
+        77.54599
+      ]
+    },
+    {
+      "rank": 89,
+      "row": 54,
+      "col": 75,
+      "site_m3": 108,
+      "latlon": [
+        13.30117,
+        77.54222
+      ]
+    },
+    {
+      "rank": 90,
+      "row": 83,
+      "col": 100,
+      "site_m3": 107,
+      "latlon": [
+        13.28554,
+        77.55569
+      ]
+    },
+    {
+      "rank": 91,
+      "row": 110,
+      "col": 107,
+      "site_m3": 96,
+      "latlon": [
+        13.27099,
+        77.55946
+      ]
+    },
+    {
+      "rank": 92,
+      "row": 81,
+      "col": 69,
+      "site_m3": 95,
+      "latlon": [
+        13.28662,
+        77.53898
+      ]
+    },
+    {
+      "rank": 93,
+      "row": 125,
+      "col": 77,
+      "site_m3": 61,
+      "latlon": [
+        13.26291,
+        77.54329
+      ]
+    },
+    {
+      "rank": 94,
+      "row": 72,
+      "col": 90,
+      "site_m3": 61,
+      "latlon": [
+        13.29147,
+        77.5503
+      ]
+    },
+    {
+      "rank": 95,
+      "row": 82,
+      "col": 70,
+      "site_m3": 55,
+      "latlon": [
+        13.28608,
+        77.53952
+      ]
+    },
+    {
+      "rank": 96,
+      "row": 57,
+      "col": 71,
+      "site_m3": 38,
+      "latlon": [
+        13.29956,
+        77.54006
+      ]
+    },
+    {
+      "rank": 97,
+      "row": 49,
+      "col": 80,
+      "site_m3": 36,
+      "latlon": [
+        13.30387,
+        77.54491
+      ]
+    },
+    {
+      "rank": 98,
+      "row": 105,
+      "col": 111,
+      "site_m3": 34,
+      "latlon": [
+        13.27369,
+        77.56162
+      ]
+    },
+    {
+      "rank": 99,
+      "row": 45,
+      "col": 83,
+      "site_m3": 25,
+      "latlon": [
+        13.30603,
+        77.54653
+      ]
+    },
+    {
+      "rank": 100,
+      "row": 55,
+      "col": 76,
+      "site_m3": 19,
+      "latlon": [
+        13.30064,
+        77.54275
+      ]
+    },
+    {
+      "rank": 101,
+      "row": 12,
+      "col": 60,
+      "site_m3": 1,
+      "latlon": [
+        13.32381,
+        77.53413
+      ]
+    }
+  ],
+  "phases": [
+    {
+      "phase": 1,
+      "target_cut_pct": 10,
+      "reachable": true,
+      "cumulative_sites": 50,
+      "cumulative_storage_m3": 196797,
+      "add_sites": 50,
+      "add_storage_m3": 196797,
+      "add_units": 3936,
+      "add_cost_inr": 1180782000,
+      "add_cost_crore_inr": 118.08
+    },
+    {
+      "phase": 2,
+      "target_cut_pct": 20,
+      "reachable": true,
+      "cumulative_sites": 63,
+      "cumulative_storage_m3": 201185,
+      "add_sites": 13,
+      "add_storage_m3": 4388,
+      "add_units": 88,
+      "add_cost_inr": 26328120,
+      "add_cost_crore_inr": 2.63
+    },
+    {
+      "phase": 3,
+      "target_cut_pct": 40,
+      "reachable": true,
+      "cumulative_sites": 100,
+      "cumulative_storage_m3": 213674,
+      "add_sites": 37,
+      "add_storage_m3": 12489,
+      "add_units": 250,
+      "add_cost_inr": 74933880,
+      "add_cost_crore_inr": 7.49
+    }
+  ],
+  "storage_inr_per_m3": 6000.0,
+  "note": "Each storage site sized to its local pooled depth (dynamic, non-linear by geography); sites ranked by gradient-pooled depth = local minima, deepest first. Sites are placed only where buildable: building footprints and permanent water are excluded; under-street detention is allowed. Phase costs use the indicative RCC detention rate \u2014 relative ROI, not a bid."
+}
