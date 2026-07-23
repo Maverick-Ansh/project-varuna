@@ -1,0 +1,209 @@
+==============================================================================
+PROJECT VARUNA / FLOODTWIN  -  UPCOMING WORK LIST
+Open problems + 30 forward-looking ideas (backlog to choose from)
+Compiled: 2026-07-23
+==============================================================================
+
+Effort tags are relative to a free-tier T4 GPU + modest laptop.
+G# = which open problem (Section A) the idea helps close.
+(*) = strongest impact-to-effort picks.
+
+
+------------------------------------------------------------------------------
+SECTION A - WHAT IS STILL UNSOLVED (the honest gaps)
+------------------------------------------------------------------------------
+
+G1.  Co-location on flats is unsolved. The twin predicts flooded AREA but not
+     WHICH street (CSI ~ 0.033). We proved WHY (DEM noise > relief) but have
+     not BEATEN it.
+G2.  No storm-sewer network or pumping is modelled. Predictions over-estimate
+     flooding near working drains - the biggest physics gap.
+G3.  60 m hydraulics are coarser than the street graph. Carved "drains" are
+     full 60 m cells, so absolute excavation/volume numbers are artifacts.
+G4.  Groundwater/recharge still runs on SAMPLE data for most areas - rankings
+     mean nothing until real CGWB / India-WRIS data goes in (only V3
+     Karnataka has metered plans).
+G5.  No aquifer response model. We route water TOWARD recharge but never
+     simulate the water-table RISE - the flood-to-drought loop is open.
+G6.  Mumbai physics incomplete: closed-boundary tiles, no cross-seam flow, no
+     tidal / storm-surge coupling (usually THE binding constraint for Mumbai
+     outfalls). SAR + DEM-ensemble validation never run for Mumbai.
+G7.  FloodGNN only distills the twin -> inherits its biases; never trained on
+     real observed street water.
+G8.  The nightly citizen-learning loop has never actually run on real reports
+     (deployed but unexercised).
+G9.  Intervention DELTAS are never validated against before/after SAR where
+     cities actually built drainage - benefit is only simulated.
+G10. Costs are a single indicative RCC rate - no land, utilities, O&M, or
+     damage-avoided / ROI accounting.
+G11. No real-time nowcasting - everything is design-storm / hindcast.
+G12. The paper is done but unsubmitted - no venue, no benchmark release.
+
+
+------------------------------------------------------------------------------
+SECTION B - 30 IDEAS TO CHOOSE FROM
+------------------------------------------------------------------------------
+
+--- Close the honest gaps (turn admissions into contributions) ---
+
+1.(*) Robust / uncertainty-aware planning. Optimise interventions to be robust
+      across the DEM ensemble (CVaR / min-regret). Turns the negative result
+      into a method: "can't co-locate, so plan for the distribution."
+      Effort: Med | G1
+
+2.(*) Probabilistic per-street flood maps. Ship flood PROBABILITY per street
+      (from the ensemble) instead of one deterministic map. Honest and far
+      more decision-useful.
+      Effort: Med | G1
+
+3.    1D sewer + 2D surface dual drainage. Couple a lightweight SWMM-style 1D
+      pipe network to the 2D twin - the missing storm-sewer layer.
+      Effort: High | G2
+
+4.(*) Sub-grid street conveyance. Treat streets as 1D channels WITHIN 60 m
+      cells so carved drains stop being full-cell artifacts.
+      Effort: High | G3
+
+5.    CartoDEM / LiDAR co-location experiment. Rebuild one ward on 10 m
+      CartoDEM (or drone photogrammetry) and test whether finer relief
+      RESOLVES co-location. A clean, publishable test of our own thesis.
+      Effort: Med | G1
+
+6.(*) SAR-supervised FloodGNN. Train the GNN directly on observed Sentinel-1
+      street water, removing the "distills the twin" caveat. Potentially the
+      biggest single scientific upgrade.
+      Effort: Med | G7
+
+7.    Validate intervention deltas vs before/after SAR. Find a city that
+      actually built drainage; score the CHANGE, not just state.
+      Effort: Med | G9
+
+8.    Tidal / storm-surge boundary for coastal tiles. Add a tide/surge
+      boundary (global tide model + gauge) for Mumbai outfalls.
+      Effort: High | G6
+
+9.    Run Mumbai SAR + DEM-ensemble validation. Finish the validation we
+      already have machinery for, on the tiles we skipped.
+      Effort: Low | G6
+
+--- The recharge / flood-to-drought thesis (our most distinctive claim) ---
+
+10.(*) Real groundwater data + aquifer response model. Ingest India-WRIS/CGWB,
+       then couple a MODFLOW-lite / analytical model to simulate water-table
+       RISE from recharge - closes the flood->drought loop quantitatively.
+       Effort: High | G4/G5
+
+11.    Flood-cut <-> recharge Pareto optimiser. Multi-objective siting:
+       maximise flood reduction AND aquifer recharge jointly.
+       Effort: Med | G4
+
+12.    Arsenic / water-quality risk layer. A safety gate on recharge siting
+       (Bihar shallow alluvium) - flagged as needed but not modelled.
+       Effort: Low | G4
+
+13.    Metered recharge accounting nationwide. Extend V3's Karnataka metered
+       recharge plans to all areas with a real water-balance ledger.
+       Effort: Med | G4
+
+--- ML / GNN frontiers ---
+
+14.(*) End-to-end differentiable portfolio design. Use the DIFFERENTIABLE twin:
+       gradient-optimise drainage + storage jointly under a budget for a
+       target cut. A true end-to-end design few prior works can do.
+       Effort: Med | G3
+
+15.    FloodGNN -> cross-city foundation model. Pretrain on many cities,
+       few-shot a new one. Scale the zero-shot transfer result.
+       Effort: High
+
+16.    Physics-informed (mass-conserving) emulator loss. Add conservation
+       constraints to the U-Net / GNN to see if co-location improves.
+       Effort: Med | G1
+
+17.    Optimal IoT sensor placement. Active-learning / D-optimal design: where
+       to put N cheap water-level sensors to shrink twin uncertainty most.
+       Effort: Med | G8
+
+18.    Generative super-resolution of depth. Diffusion/CNN upsampling of 60 m
+       depth to street scale conditioned on high-res features. Risky,
+       out-of-box, potentially striking.
+       Effort: High | G3
+
+--- Deployment, participation & real-world use ---
+
+19.(*) Real-time nowcasting. Ingest live IMD radar / GPM IMERG / Open-Meteo
+       nowcast -> run the emulator live for "next 3 hours." Turns a research
+       demo into an operational alert system.
+       Effort: Med | G11
+
+20.    Actually run the nightly citizen loop. Seed real reports (even a small
+       pilot), let the reward gate fire once, report the first accepted /
+       refused update - the most interesting experiment not yet run.
+       Effort: Low | G8
+
+21.    CV flood-depth from citizen photos. Estimate depth from uploaded street
+       photos (reference objects: curbs, tyres) - richer than depth bands.
+       Effort: Med | G8
+
+22.    News / social auto-event detection. Finish the "news stage 2.5" hook:
+       scrape flood mentions to auto-trigger validation and harvest ground
+       truth.
+       Effort: Med | G8/G9
+
+23.    Drainage-maintenance prioritiser. Simulate "this drain is 50% clogged"
+       -> which drains, if cleaned, cut the most flooding. Cheap, actionable,
+       exactly what a municipality can do tomorrow.
+       Effort: Low | G2
+
+24.    Offline PWA: report -> instant reroute. Mobile app with offline tiles:
+       drop a report, get a flood-safe route immediately.
+       Effort: Med
+
+--- Genuinely out-of-the-box / moonshots ---
+
+25.(*) Damage-avoided ROI engine. Depth-damage curves x OSM building exposure
+       -> rupees of damage avoided vs cost. Rank interventions by RETURN, not
+       m3. Speaks the language decision-makers actually use.
+       Effort: Med | G10
+
+26.    Equity-weighted planning. Overlay slum / census / vulnerability data ->
+       prioritise by WHO is most exposed, not just water volume. A justice
+       angle almost no flood model has.
+       Effort: Med
+
+27.    Flood + heat co-benefit optimiser. Green-blue infrastructure that cuts
+       BOTH flooding and urban heat (WorldCover / LST) - multi-hazard design.
+       Effort: High
+
+28.    Climate-2050 stress test. Re-run interventions under CMIP-downscaled
+       future design storms - do they still hold?
+       Effort: Med
+
+29.    Development-permit screening ("what if we pave this?"). Simulate a
+       WorldCover change (green patch -> concrete) and show the flood delta.
+       A regulatory-grade what-if tool.
+       Effort: Low
+
+30.    Agent-based evacuation + shelter siting. Put people/traffic on the
+       flooded street graph (SUMO / mesa), find where they get stuck,
+       optimise shelter locations.
+       Effort: High
+
+--- Bonus (community / impact, not R&D) ---
+
+B.     Release the flat-city honest-negative as a public benchmark + finally
+       submit the paper. Low effort, high credibility. | G12
+
+
+------------------------------------------------------------------------------
+IF I HAD TO PICK 5 (best impact-to-effort on the current setup)
+------------------------------------------------------------------------------
+#2  Probabilistic maps
+#6  SAR-supervised GNN
+#14 Differentiable portfolio design
+#19 Real-time nowcasting
+#25 Damage-avoided ROI engine
+
+Together these move Varuna from "honest research demo" to "operational,
+decision-grade, and scientifically upgraded."
+==============================================================================
