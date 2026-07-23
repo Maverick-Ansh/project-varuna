@@ -1,0 +1,12 @@
+# Treat binary artifacts as binary so line-ending conversion never corrupts them
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.tif   binary
+*.tiff  binary
+*.npy   binary
+*.npz   binary
+*.pt    binary
+*.pkl   binary
+*.zip   binary
