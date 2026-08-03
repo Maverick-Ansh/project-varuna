@@ -9,6 +9,9 @@ import {
   LivePanel, ReportPanel, WaterBalancePanel, AdvisoryPanel, NightLightsPanel, CityPanel, WB,
   RechargePlanPanel, StateScreenPanel, NewsPanel, RECHARGE,
 } from "./components/panels.jsx";
+import {
+  Basemap, BASEMAPS, DangerPanel, DangerPins, FlowArrows, SATELLITE_ZOOM, SEVERITY, useMapZoom,
+} from "./components/flowlayers.jsx";
 
 const LEVEL_COLOR = { RED: "#e23", AMBER: "#f90", GREEN: "#2a4" };
 
@@ -35,9 +38,16 @@ function Line({ c, dash }) {
   return <span className="lg-line" style={{ background: dash ? "none" : c, borderTop: dash ? `2px dashed ${c}` : "none" }} />;
 }
 
-function Legend({ show, canal, alerts, exposure, dig, route, reports, nightlights, rechargePlan }) {
+function Legend({ show, canal, alerts, exposure, dig, route, reports, nightlights, rechargePlan,
+                  zones, flow }) {
   const rows = [];
   if (show.flood) rows.push([<span className="lg-flood" key="s" />, "flood depth"]);
+  if (show.zones && zones && zones.length > 0) {
+    rows.push([<Dot c={SEVERITY.EXTREME} key="s" />, "danger zone (size = severity)"]);
+  }
+  if ((show.street_flow || show.flow) && flow) {
+    rows.push([<span className="lg-arrow" key="s">➤</span>, "flow direction (darker = deeper)"]);
+  }
   if (show.recharge_plan && rechargePlan) rows.push([<Dot c={RECHARGE} key="s" />, "planned recharge basin"]);
   if (show.reports && reports?.length > 0) rows.push([<Dot c={{ color: "#fff", fillColor: "#3b82f6" }} key="s" />, "citizen report (darker = deeper)"]);
   if (show.nightlights && nightlights) rows.push([<span className="lg-line" key="s" style={{ background: "#ef4444", height: 8 }} />, "power outage (night lights)"]);
@@ -93,6 +103,14 @@ function Recenter({ center, zoom }) {
   return null;
 }
 
+// Zoom lives inside the map but drives the sidebar (basemap mode) and arrow density, so it is
+// lifted into App state.
+function ZoomWatch({ onZoom }) {
+  const z = useMapZoom(12);
+  useEffect(() => { onZoom(z); }, [z]);
+  return null;
+}
+
 function ValidationPanel({ v, learn }) {
   if (!v) return <Panel title="Validation"><p className="muted">loading…</p></Panel>;
   const stat = v.static_depth_vs_sar;
@@ -143,9 +161,16 @@ export default function App() {
   const [report, setReport] = useState(null);
 
   const [rain, setRain] = useState(100);
-  const [flood, setFlood] = useState(null);     // {overlay_png, bounds, summary}
+  const [flood, setFlood] = useState(null);     // {overlay_png, bounds, summary, zones}
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+
+  // v4 "living map": flow direction, named danger zones, imagery basemap
+  const [flow, setFlow] = useState(null);       // {arrows, road_flow, max_speed_ms}
+  const [basemap, setBasemap] = useState("auto");
+  const [zoom, setZoom] = useState(12);
+  const mapRef = useRef(null);
+  const flowDebounce = useRef(null);
 
   // v2: live weather / citizen reports / water budget / advisory / night lights / city
   const [live, setLive] = useState(false);
@@ -170,7 +195,8 @@ export default function App() {
   const [news, setNews] = useState(null);
 
   const [show, setShow] = useState({
-    flood: true, alerts: true, sinks: false, recharge: false, canal: true, dig: true,
+    flood: true, zones: true, street_flow: true, flow: false,
+    alerts: true, sinks: false, recharge: false, canal: true, dig: true,
     buildings: true, roads: true, route: true, reports: true, nightlights: true,
     containers: false, recharge_plan: false,
   });
@@ -255,6 +281,22 @@ export default function App() {
     }, 350);
     return () => clearTimeout(debounce.current);
   }, [rain, area]);
+
+  // flow direction follows the same storm, on its own (slower) debounce so dragging the slider
+  // does not queue a field rebuild per step; skipped entirely while both arrow layers are off
+  const wantFlow = show.flow || show.street_flow;
+  useEffect(() => {
+    if (!area || !wantFlow) { setFlow(null); return undefined; }
+    if (flowDebounce.current) clearTimeout(flowDebounce.current);
+    flowDebounce.current = setTimeout(() => {
+      api.flowfield(rain, area, { roads: show.street_flow }).then(setFlow).catch(() => setFlow(null));
+    }, 600);
+    return () => clearTimeout(flowDebounce.current);
+  }, [rain, area, wantFlow, show.street_flow]);
+
+  function flyToZone(z) {
+    if (mapRef.current && z && z.latlon) mapRef.current.flyTo(z.latlon, Math.max(zoom, 15));
+  }
 
   // water budget follows the storm slider (read-only interpolation — cheap)
   useEffect(() => {
@@ -391,6 +433,57 @@ export default function App() {
               <p className="muted">Live U-Net emulator (milliseconds).</p>
             </Panel>
 
+            <Panel title={`Danger zones @ ${rain} mm`}>
+              <DangerPanel zones={flood && flood.zones} rain={rain} onFly={flyToZone} />
+              {flood && flood.zones && flood.zones.length > 0 && (
+                <p className="muted" style={{ marginBottom: 0 }}>
+                  Ranked by water standing on built-up land. Click a row to zoom.
+                  {flood.zones.some((z) => !z.named) && " “?” = nearest place name is over 1.2 km away."}
+                </p>
+              )}
+            </Panel>
+
+            <Panel title="Water movement">
+              <label className="chk">
+                <input type="checkbox" checked={show.street_flow}
+                       onChange={() => toggle("street_flow")} /> arrows on streets
+              </label>
+              <label className="chk">
+                <input type="checkbox" checked={show.flow}
+                       onChange={() => toggle("flow")} /> overland field
+              </label>
+              {flow && (
+                <div className="kv">
+                  <div>Street arrows</div><div>{(flow.road_flow || []).length}</div>
+                  <div>Fastest flow</div><div>{flow.max_speed_ms} m/s</div>
+                  {flow.depth_rmse_m != null && (
+                    <><div>Depth error</div><div>± {Math.round(flow.depth_rmse_m * 1000)} mm</div></>
+                  )}
+                </div>
+              )}
+              {wantFlow && !flow && <p className="muted">computing flow…</p>}
+              <p className="muted" style={{ marginBottom: 0 }}>
+                Direction is steepest descent of the water surface; speed is Manning steady flow.
+                A peak-conditions sketch, not a time-resolved velocity field.
+              </p>
+            </Panel>
+
+            <Panel title="Basemap">
+              <div className="row">
+                {["auto", "map", "satellite"].map((m) => (
+                  <button key={m} className={basemap === m ? "sel" : "ghost"}
+                          onClick={() => setBasemap(m)}>
+                    {m === "auto" ? "Auto" : BASEMAPS[m].label}
+                  </button>
+                ))}
+              </div>
+              <p className="muted" style={{ marginBottom: 0 }}>
+                {basemap === "auto"
+                  ? `Switches to imagery at zoom ${SATELLITE_ZOOM} (now ${zoom}).`
+                  : BASEMAPS[basemap].attribution}
+              </p>
+            </Panel>
+
             <WaterBalancePanel wb={wb} plan={storagePlan} unitM3={unitM3} setUnitM3={setUnitM3}
                                eff={eff} setEff={setEff} rain={rain} />
 
@@ -514,12 +607,13 @@ export default function App() {
       </aside>
 
       <main className="map">
-        <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }}
+                      ref={mapRef}>
           <Recenter center={center} zoom={isCity ? 11 : undefined} />
           <MapClicks reporting={reporting} picking={picking} onPick={pickPoint}
                      onReportPin={(pt) => { setReportDraft(pt); setReporting(false); }} />
-          <TileLayer attribution="© OpenStreetMap"
-                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <ZoomWatch onZoom={setZoom} />
+          <Basemap mode={basemap} zoom={zoom} />
 
           {/* city aggregate: one rectangle per tile, shaded by flooded volume */}
           {isCity && citySummary && citySummary.tiles.filter((t) => t.built && t.bounds).map((t) => (
@@ -536,6 +630,20 @@ export default function App() {
 
           {!isCity && show.flood && flood && (
             <ImageOverlay url={flood.overlay_png} bounds={flood.bounds} opacity={0.75} />
+          )}
+
+          {/* which way the water runs: overland field, then the street-projected arrows on top */}
+          {!isCity && show.flow && flow && (
+            <FlowArrows arrows={flow.arrows} zoom={zoom} rain={rain} rmse={flow.depth_rmse_m} />
+          )}
+          {!isCity && show.street_flow && flow && (
+            <FlowArrows arrows={flow.road_flow} zoom={zoom} rain={rain} street
+                        rmse={flow.depth_rmse_m} />
+          )}
+
+          {/* named danger zones — the worst few keep a permanent label */}
+          {!isCity && show.zones && flood && (
+            <DangerPins zones={flood.zones} rain={rain} />
           )}
 
           {/* night-lights power outages (red = dark vs 90-day normal) */}
@@ -683,7 +791,7 @@ export default function App() {
         {!isCity && (
           <Legend show={show} canal={canal} alerts={alerts} exposure={exposure} dig={dig}
                   route={show.route && routeRes} reports={reports} nightlights={nl}
-                  rechargePlan={rechargePlanData} />
+                  rechargePlan={rechargePlanData} zones={flood && flood.zones} flow={flow} />
         )}
       </main>
     </div>

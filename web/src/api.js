@@ -27,6 +27,7 @@ export const api = {
   validation: (area) => get(`/api/validation${q(area)}`),
   canalPlan: (area) => get(`/api/canal_plan${q(area)}`),
   whatif: (rain_mm, dig_sites, area) => post("/api/whatif", { rain_mm, dig_sites, area }),
+  flowfield: (rain_mm, area, opts = {}) => post("/api/flowfield", { rain_mm, area, ...opts }),
   canals: (rain_mm, n_canals, area) => post("/api/canals", { rain_mm, n_canals, area }),
   storage: (rain_mm, area) => post("/api/storage", { rain_mm, area }),
   optimize: (design_rain, budget_m3, area) => post("/api/optimize", { design_rain, budget_m3, area }),

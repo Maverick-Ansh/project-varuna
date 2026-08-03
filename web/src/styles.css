@@ -82,3 +82,26 @@ button.sel { background: var(--accent); }
 
 .depth-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
 .depth-btns button { font-size: 12px; padding: 6px 4px; }
+
+/* --- v4 living map: flow arrows + named danger pins ---------------------------------------- */
+.flow-arrow { background: none; border: 0; pointer-events: auto; }
+.flow-arrow svg { display: block; filter: drop-shadow(0 0 1.5px rgba(255,255,255,.9)); }
+.lg-arrow { font-size: 13px; line-height: 1; color: #1d4ed8; flex: none; width: 16px; }
+
+/* Zone labels sit permanently on the map for the worst few, so they must stay readable over
+   both the street basemap and satellite imagery. */
+.leaflet-tooltip.zone-tip { background: rgba(15,20,32,.92); color: #e6ecf5; border: 0;
+  border-left: 3px solid #64748b; box-shadow: 0 1px 6px rgba(0,0,0,.5); font-size: 12px;
+  padding: 3px 7px; white-space: nowrap; }
+.leaflet-tooltip.zone-tip::before { display: none; }
+.leaflet-tooltip.zone-tip.sev-extreme { border-left-color: #dc2626; }
+.leaflet-tooltip.zone-tip.sev-high { border-left-color: #ea580c; }
+.leaflet-tooltip.zone-tip.sev-moderate { border-left-color: #f59e0b; }
+.leaflet-tooltip.zone-tip.sev-low { border-left-color: #3b82f6; }
+.zone-sev { color: #9fb0c6; }
+.zone-near { color: #8a98ab; font-size: 11px; }
+
+table.cb.zones tr { cursor: pointer; }
+table.cb.zones tr:hover td { background: #1d2636; }
+table.cb.zones td:first-child { color: var(--muted); width: 18px; }
+.warn-tip { color: #f0c078; font-size: 11px; }
