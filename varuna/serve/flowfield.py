@@ -206,7 +206,7 @@ def road_segments(net, shape):
 
 
 def road_flow(net, u, v, h, min_depth=MIN_DEPTH_M, min_speed=0.02, max_arrows=800,
-              segments=None):
+              segments=None, exclude=None, flag=None):
     """Which way does the water run ALONG the streets — one arrow per 60 m cell.
 
     Each street edge samples the field at its midpoint cell and projects the velocity onto the
@@ -219,7 +219,15 @@ def road_flow(net, u, v, h, min_depth=MIN_DEPTH_M, min_speed=0.02, max_arrows=80
     information to justify more than one arrow per cell. The reported bearing is already
     sign-corrected, so a renderer can point the arrow at `bearing` and be done.
 
-    Pass `segments` (from `road_segments`) to skip rebuilding the static geometry.
+    Pass `segments` (from `road_segments`) to skip rebuilding the static geometry, `exclude` (a
+    boolean grid) to drop cells that are not street at all — permanent water above all — and
+    `flag` to mark cells whose depth should not be read as a street depth with `near_water`.
+
+    The distinction matters and is not cosmetic. In Bengaluru the tanks ARE the low points, so a
+    road on a tank bund sits one 60 m cell from four metres of water and inherits a depth that is
+    the lake's, not the street's. Deleting those arrows would hide real flooding; reporting them
+    unqualified would claim a road is chest-deep when it is the tank beside it. So they are
+    served, and marked.
     """
     seg = road_segments(net, h.shape) if segments is None else segments
     if len(seg["row"]) == 0:
@@ -229,6 +237,8 @@ def road_flow(net, u, v, h, min_depth=MIN_DEPTH_M, min_speed=0.02, max_arrows=80
     along = np.asarray(u)[r, c] * seg["east"] + np.asarray(v)[r, c] * seg["north"]
     speed = np.abs(along)
     keep = (depth >= min_depth) & (speed >= min_speed)
+    if exclude is not None:
+        keep &= ~np.asarray(exclude, dtype=bool)[r, c]
     if not keep.any():
         return []
 
@@ -240,17 +250,21 @@ def road_flow(net, u, v, h, min_depth=MIN_DEPTH_M, min_speed=0.02, max_arrows=80
     for i in idx:
         best[(int(r[i]), int(c[i]))] = int(i)
 
+    flagged = None if flag is None else np.asarray(flag, dtype=bool)[r, c]
     sign = np.where(along >= 0, 1.0, -1.0)                   # flip the arrow to follow the water
     out = []
     for i in best.values():
-        out.append({
+        entry = {
             "latlon": [round(float(seg["lat"][i]), 6), round(float(seg["lon"][i]), 6)],
             "bearing": round(bearing_deg(sign[i] * seg["east"][i], sign[i] * seg["north"][i]), 1),
             "speed_ms": round(float(speed[i]), 3),
             "depth_m": round(float(depth[i]), 3),
             "flux_m2s": round(float(flux[i]), 4),
             "length_m": round(float(seg["length_m"][i]), 1),
-        })
+        }
+        if flagged is not None and bool(flagged[i]):
+            entry["near_water"] = True
+        out.append(entry)
     out.sort(key=lambda e: e["flux_m2s"], reverse=True)
     return out[:max_arrows]
 
@@ -294,15 +308,24 @@ def flow_for_area(rain_mm, work=None, step=4, max_arrows=1200, with_roads=True,
     bounds = [[min(lat_nw, lat_se), min(lon_nw, lon_se)],
               [max(lat_nw, lat_se), max(lon_nw, lon_se)]]
 
+    # The emulator's own held-out error, shipped with every depth so nothing downstream can
+    # render "0.69 m" as if it were surveyed. Bundles report both a whole-grid and a flooded-cell
+    # RMSE; the flooded-cell one is the honest bar for a number about standing water.
+    meta = b["meta"]
+    rmse = meta.get("flooded_rmse_m") or meta.get("val_rmse_m")
+
     res = {
         "rain_mm": float(rain_mm),
         "summary": summary,
         "bounds": bounds,
         "arrows": arrow_points(u, v, hmax, latlon, step=step, max_arrows=max_arrows),
         "max_speed_ms": round(float(np.hypot(u, v).max()), 3),
+        "depth_rmse_m": None if rmse is None else round(float(rmse), 3),
         "note": ("Direction is steepest descent of the water surface (z+h); speed is Manning "
                  "steady-flow. Depth is the storm maximum per cell, so this is a peak-conditions "
-                 "sketch of the flow, not a time-resolved velocity field."),
+                 "sketch of the flow, not a time-resolved velocity field. Depths carry the "
+                 "emulator's held-out RMSE and are least trustworthy in the deep tail, which no "
+                 "validation covers."),
     }
     if with_layer:
         res["velocity_layer"] = velocity_layer(u, v, bounds)
@@ -310,10 +333,60 @@ def flow_for_area(rain_mm, work=None, step=4, max_arrows=1200, with_roads=True,
         try:
             net, seg = _road_net(work, dom, z, T)
             if net is not None:
-                res["road_flow"] = road_flow(net, u, v, hmax, segments=seg)
+                water = _permanent_water(dom)
+                arrows = road_flow(net, u, v, hmax, segments=seg, exclude=water,
+                                   flag=_dilate(water))
+                res["road_flow"] = _name_streets(arrows, work)
+                res["n_near_water"] = sum(1 for a in res["road_flow"] if a.get("near_water"))
         except Exception as e:  # noqa: BLE001 — arrows still render without street projection
             log.warning("road flow unavailable: %s", e)
     return res
+
+
+def _permanent_water(dom):
+    """Cells that are lake/river/sea in WorldCover — never a "flooded street".
+
+    `build_domain` stashes the per-cell WorldCover class on the domain; the canonical
+    permanently-wet classes live in build.landcover.NO_RECHARGE (80 water, 90 wetland, 95
+    mangrove). Returns None when the domain predates the `wc` attribute.
+    """
+    wc = getattr(dom, "wc", None)
+    if wc is None:
+        return None
+    from ..build.landcover import NO_RECHARGE
+    return np.isin(np.asarray(wc), list(NO_RECHARGE))
+
+
+def _dilate(mask, iterations=1):
+    """Grow a mask by `iterations` cells — the neighbours that inherit its water."""
+    if mask is None:
+        return None
+    from scipy import ndimage
+    return ndimage.binary_dilation(mask, iterations=iterations)
+
+
+def _name_streets(arrows, work):
+    """Attach the nearest named road to each street arrow, so a hover can say WHERE.
+
+    `roadnet`'s cached graph deliberately keeps only node chains — way names are dropped — so the
+    names come from the naming anchors that the danger-zone pins already use. Arrows with no road
+    anchor within range keep `street: None` rather than borrowing a name from streets away.
+    """
+    if not arrows:
+        return arrows
+    try:
+        from .zones import load_places, nearest_names
+    except Exception as e:  # noqa: BLE001
+        log.debug("street naming unavailable: %s", e)
+        return arrows
+    places = load_places(work)
+    if not places:
+        return arrows
+    names = nearest_names([a["latlon"][0] for a in arrows],
+                          [a["latlon"][1] for a in arrows], places)
+    for a, nm in zip(arrows, names):
+        a["street"] = nm
+    return arrows
 
 
 def _road_net(work, dom, z, T):

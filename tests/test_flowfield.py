@@ -215,6 +215,33 @@ def test_road_flow_skips_dry_streets():
     assert road_flow(net, u, v, h) == []
 
 
+def test_road_flow_excludes_masked_cells():
+    """A street arrow sitting ON permanent water is not a flooded street — drop it."""
+    h = np.full((8, 8), 0.4)
+    u = np.full((8, 8), 1.0)
+    v = np.zeros((8, 8))
+    net = _Net([25.60, 25.60], [85.10, 85.11], [(4, 3), (4, 5)])
+    assert len(road_flow(net, u, v, h)) == 1
+    water = np.zeros((8, 8), dtype=bool)
+    water[4, 4] = True                                       # the segment's midpoint cell
+    assert road_flow(net, u, v, h, exclude=water) == []
+
+
+def test_road_flow_flags_but_keeps_cells_next_to_water():
+    """Lakeside roads are SERVED and MARKED, never silently deleted: dropping them would hide
+    real flooding, reporting them bare would claim the lake's depth is the street's."""
+    h = np.full((8, 8), 0.4)
+    u = np.full((8, 8), 1.0)
+    v = np.zeros((8, 8))
+    net = _Net([25.60, 25.60], [85.10, 85.11], [(4, 3), (4, 5)])
+    near = np.zeros((8, 8), dtype=bool)
+    near[4, 4] = True
+    got = road_flow(net, u, v, h, flag=near)
+    assert len(got) == 1
+    assert got[0]["near_water"] is True
+    assert "near_water" not in road_flow(net, u, v, h)[0]     # absent, not False, when clean
+
+
 def test_road_flow_is_one_arrow_per_cell():
     """Many OSM vertices inside one 60 m cell must collapse to a single arrow — the velocity
     field has no sub-cell information, so drawing more would be invented precision."""

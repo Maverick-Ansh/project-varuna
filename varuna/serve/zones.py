@@ -331,6 +331,32 @@ def _partition_large(mask, hmax, min_cells, max_cells, min_depth):
     return [(owner == i) & mask for i in range(1, len(cores) + 1)]
 
 
+def nearest_names(lats, lons, places, kinds=LANDMARK_KINDS, max_km=0.35):
+    """Vectorised nearest-anchor lookup: name for every point, or None if nothing is close.
+
+    Used to label street arrows, where the question is narrower than `name_for`'s — "which road
+    am I standing on?" — so it defaults to road/station anchors and a tight radius. Anything
+    further than `max_km` gets None rather than a guess: a wrong street name on a depth readout
+    is worse than no street name.
+    """
+    lats = np.asarray(lats, dtype="float64")
+    lons = np.asarray(lons, dtype="float64")
+    pool = [p for p in (places or []) if kinds is None or p["kind"] in kinds]
+    if not pool or lats.size == 0:
+        return [None] * int(lats.size)
+    plat = np.array([p["lat"] for p in pool])
+    plon = np.array([p["lon"] for p in pool])
+    # equirectangular approximation — exact enough at sub-kilometre scale and ~100x faster
+    # than haversine over the full cross product
+    mlat = np.radians(lats.mean())
+    dx_km = (lons[:, None] - plon[None, :]) * 111.320 * math.cos(mlat)
+    dy_km = (lats[:, None] - plat[None, :]) * 110.574
+    d2 = dx_km ** 2 + dy_km ** 2
+    idx = d2.argmin(axis=1)
+    close = d2[np.arange(len(idx)), idx] <= max_km ** 2
+    return [pool[int(i)]["name"] if ok else None for i, ok in zip(idx, close)]
+
+
 def danger_zones(hmax, built, latlon, places=None, dx=None, min_depth=None, max_zones=12,
                  min_cells=2, max_zone_km2=MAX_ZONE_KM2):
     """Connected wet regions ranked by the volume of water standing on BUILT land.
