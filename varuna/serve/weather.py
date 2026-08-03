@@ -40,6 +40,34 @@ def historical_rain_mm(lat, lon, start_date, end_date):
     return total
 
 
+def hourly_rain_series(lat, lon, start_date, end_date):
+    """Hourly precipitation (mm) over [start_date, end_date] inclusive -> (times, precip).
+
+    `historical_rain_mm` sums the whole range, which is all the SAR calibration needs. Scoring a
+    point observation needs the shape kept: "how much rain had fallen in the six hours BEFORE
+    this person waded through it" is a different question from the daily total.
+
+    The ERA5 archive lags roughly five days, so recent dates come from the forecast endpoint's
+    `past_days` window instead. Both return the same hourly schema; the caller cannot tell.
+    """
+    import datetime as _dt
+    lag_days = (_dt.date.today() - _dt.date.fromisoformat(str(end_date))).days
+    if lag_days >= 6:
+        url = ("https://archive-api.open-meteo.com/v1/archive"
+               f"?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}"
+               "&hourly=precipitation&timezone=Asia/Kolkata")
+    else:
+        past = min(92, max(1, (_dt.date.today() - _dt.date.fromisoformat(str(start_date))).days + 1))
+        url = ("https://api.open-meteo.com/v1/forecast"
+               f"?latitude={lat}&longitude={lon}&hourly=precipitation"
+               f"&past_days={past}&forecast_days=1&timezone=Asia/Kolkata")
+    js = http_get_json(url, timeout=60)
+    h = js.get("hourly") or {}
+    times = h.get("time") or []
+    precip = [float(v or 0) for v in (h.get("precipitation") or [])]
+    return times, precip
+
+
 def aoi_max_rain(aoi=None, hours=24):
     """Sample centre + 4 corners of the AOI and take the max (conservative for alerts)."""
     aoi = aoi or CFG.aoi

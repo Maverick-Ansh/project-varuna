@@ -10,7 +10,8 @@ import {
   RechargePlanPanel, StateScreenPanel, NewsPanel, RECHARGE,
 } from "./components/panels.jsx";
 import {
-  Basemap, BASEMAPS, DangerPanel, DangerPins, FlowArrows, SATELLITE_ZOOM, SEVERITY, useMapZoom,
+  Basemap, BASEMAPS, DangerPanel, DangerPins, DepthValidationPanel, FlowArrows,
+  SATELLITE_ZOOM, SEVERITY, useMapZoom,
 } from "./components/flowlayers.jsx";
 
 const LEVEL_COLOR = { RED: "#e23", AMBER: "#f90", GREEN: "#2a4" };
@@ -167,6 +168,7 @@ export default function App() {
 
   // v4 "living map": flow direction, named danger zones, imagery basemap
   const [flow, setFlow] = useState(null);       // {arrows, road_flow, max_speed_ms}
+  const [depthVal, setDepthVal] = useState(null);
   const [basemap, setBasemap] = useState("auto");
   const [zoom, setZoom] = useState(12);
   const mapRef = useRef(null);
@@ -265,6 +267,7 @@ export default function App() {
     api.learningLog(area).then(setLearn).catch(() => setLearn(null));
     api.rechargePlan(area).then(setRechargePlanData).catch(() => setRechargePlanData(null));
     api.news(area).then(setNews).catch(() => setNews(null));
+    api.depthValidation(area).then(setDepthVal).catch(() => setDepthVal(null));
   }, [area]);
 
   // the Karnataka screen is state-level context, loaded once (independent of the area)
@@ -587,6 +590,10 @@ export default function App() {
             <AdvisoryPanel adv={adv} onRefresh={() => api.advisory(area).then(setAdv).catch(() => {})} />
             <NewsPanel news={news} />
             <NightLightsPanel nl={nl} />
+
+            <Panel title="Validation vs reported depths">
+              <DepthValidationPanel v={depthVal} area={area} />
+            </Panel>
 
             <ValidationPanel v={validation} learn={learn} />
 

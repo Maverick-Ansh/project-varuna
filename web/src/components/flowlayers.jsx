@@ -183,3 +183,48 @@ export function DangerPanel({ zones, rain, onFly }) {
     </table>
   );
 }
+
+// --- depth validation ------------------------------------------------------------------------
+
+/**
+ * The twin scored against REAL reported depths (DEPTH_VALIDATION.md). This panel exists to put
+ * the unflattering number in front of anyone using the map: the model currently has NEGATIVE
+ * skill on point depths, and a dashboard that shows a confident blue overlay without saying so
+ * is misleading by omission.
+ */
+export function DepthValidationPanel({ v, area }) {
+  if (!v) return <p className="muted">no depth validation run yet.</p>;
+  const m = (v.area_metrics && v.area_metrics.n ? v.area_metrics : v.overall) || {};
+  const scope = v.area_metrics && v.area_metrics.n ? area : "all areas";
+  if (!m.n) return <p className="muted">no observations scored.</p>;
+  const skill = m.skill_vs_best_baseline;
+  const good = skill > 0;
+  const d = v.subgrid_dilution;
+  return (
+    <>
+      <div className="kv">
+        <div>Observations</div><div>{m.n} <span className="muted">({scope})</span></div>
+        <div>Mean abs error</div><div>{(m.model.mae_m * 100).toFixed(0)} cm</div>
+        <div>Bias</div>
+        <div>{m.model.bias_m > 0 ? "+" : ""}{(m.model.bias_m * 100).toFixed(0)} cm
+          <span className="muted"> {m.model.bias_m < 0 ? "(under-predicts)" : "(over-predicts)"}</span></div>
+        <div>Skill</div>
+        <div><b style={{ color: good ? "#2a4" : "#f77" }}>{skill}</b>
+          <span className="muted"> {good ? "beats" : "worse than"} a flat guess</span></div>
+        <div>Rank correlation</div><div>{m.correlation}</div>
+      </div>
+      {d && (
+        <p className="muted" style={{ marginTop: 8 }}>
+          Depths read <b>{d.median_observed_over_predicted}×</b> shallower than reported: a 60 m
+          cell averages a pond of about <b>{d.implied_ponding_area_m2.toLocaleString()} m²</b>
+          {" "}({d.implied_ponding_span_m} m across) over {d.cell_area_m2.toLocaleString()} m² of ground.
+        </p>
+      )}
+      <p className="muted" style={{ marginBottom: 0 }}>
+        Scored against real crowdsourced depth reports, forced with the rain that actually fell.
+        Negative skill means the depth numbers on this map are not yet trustworthy per street —
+        treat the map as relative risk, not measurement. See DEPTH_VALIDATION.md.
+      </p>
+    </>
+  );
+}

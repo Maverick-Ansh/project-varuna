@@ -48,6 +48,7 @@ export const api = {
   storagePlan: (area) => get(`/api/storage_plan${q(area)}`),
   nightlights: (area) => get(`/api/nightlights${q(area)}`),
   learningLog: (area) => get(`/api/learning_log${q(area)}`),
+  depthValidation: (area) => get(`/api/depth_validation${q(area)}`),
   city: (cityId, rain_mm) =>
     get(`/api/city?city=${encodeURIComponent(cityId)}${rain_mm != null ? `&rain_mm=${rain_mm}` : ""}`),
   imageUrl: (name, area) => `${BASE}/api/image/${name}${q(area)}`,
