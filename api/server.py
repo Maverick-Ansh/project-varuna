@@ -385,6 +385,32 @@ def news(area: str | None = None, hours: float = 24):
     return NEWS.feed(aid, hours=min(max(hours, 1), 24 * 7))
 
 
+@app.get("/api/depth_validation")
+def depth_validation(area: str | None = None):
+    """The twin scored against REAL observed depths (see DEPTH_VALIDATION.md).
+
+    Global artifact, not per-area — the observations are Mumbai crowdsourced reports — but an
+    `area` narrows the payload to that tile's numbers. The per-row detail is dropped: it is large
+    and the dashboard only needs the verdict.
+    """
+    import os as _os
+    from varuna.areas import artifacts_root
+    path = _os.path.join(artifacts_root(), "depth_validation.json")
+    rep = None
+    if _os.path.exists(path):
+        import json as _json
+        with open(path, encoding="utf-8") as f:
+            rep = _json.load(f)
+    if not rep:
+        raise HTTPException(404, "no depth validation run yet "
+                                 "(python scripts/run_depth_validation.py)")
+    out = {k: v for k, v in rep.items() if k != "rows"}
+    if area:
+        out["area"] = area
+        out["area_metrics"] = (rep.get("by_area") or {}).get(area)
+    return out
+
+
 @app.get("/api/nightlights")
 def nightlights(area: str | None = None):
     """VIIRS Black Marble power-outage summary (written by the nightly job)."""

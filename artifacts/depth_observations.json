@@ -1,0 +1,1337 @@
+{
+ "observations": [
+  {
+   "lat": 19.1114795,
+   "lon": 72.928021,
+   "ts": "2026-07-04T09:54:01.653780+05:30",
+   "depth_m": 0.691,
+   "source": "mumbaiflood_cs",
+   "source_id": "432",
+   "place": "vikhroli",
+   "area": null,
+   "meta": {
+    "reported": "2 ft 3 in",
+    "body_fraction": 0.4
+   }
+  },
+  {
+   "lat": 19.117096054839738,
+   "lon": 72.89912169211195,
+   "ts": "2026-07-04T10:01:02.188081+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "433",
+   "place": "D P Road No 9, Lumbini Buddha Vihar",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.117189461862107,
+   "lon": 72.89480887452456,
+   "ts": "2026-07-04T11:15:25.047199+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "434",
+   "place": "19.11719, 72.89481",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.118815670137078,
+   "lon": 72.89353899994173,
+   "ts": "2026-07-04T11:15:46.287116+05:30",
+   "depth_m": 0.63,
+   "source": "mumbaiflood_cs",
+   "source_id": "435",
+   "place": "19.11882, 72.89354",
+   "area": null,
+   "meta": {
+    "reported": "2 ft 1 in",
+    "body_fraction": 0.4
+   }
+  },
+  {
+   "lat": 19.1326186,
+   "lon": 72.9149702,
+   "ts": "2026-07-04T11:18:47.171402+05:30",
+   "depth_m": 0.671,
+   "source": "mumbaiflood_cs",
+   "source_id": "436",
+   "place": "iit bombay",
+   "area": null,
+   "meta": {
+    "reported": "2 ft 2 in",
+    "body_fraction": 0.4
+   }
+  },
+  {
+   "lat": 19.116921709019632,
+   "lon": 72.89531093074993,
+   "ts": "2026-07-04T11:19:33.598798+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "437",
+   "place": "Raheja Vihar Circular Road, Chandivali",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.1248397,
+   "lon": 72.9215897,
+   "ts": "2026-07-04T11:22:08.035085+05:30",
+   "depth_m": 0.305,
+   "source": "mumbaiflood_cs",
+   "source_id": "438",
+   "place": "Nana Palshikar Marg, Ramabai Ambedkar Nagar",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.11448331608084,
+   "lon": 72.89815416583332,
+   "ts": "2026-07-04T11:24:35.155186+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "439",
+   "place": "Chandvali Farm Road, Lumbini Buddha Vihar",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.11864585488714,
+   "lon": 72.89941088195432,
+   "ts": "2026-07-04T11:28:03.525427+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "441",
+   "place": "D P Road No 9, Lumbini Buddha Vihar",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.11960065605664,
+   "lon": 72.90280797027276,
+   "ts": "2026-07-04T11:28:18.278442+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "442",
+   "place": "Jogeshwari-Vikhroli Link Road, Powai",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.11960065605664,
+   "lon": 72.90280797027276,
+   "ts": "2026-07-04T11:28:30.918921+05:30",
+   "depth_m": 0.63,
+   "source": "mumbaiflood_cs",
+   "source_id": "443",
+   "place": "Jogeshwari-Vikhroli Link Road, Powai",
+   "area": null,
+   "meta": {
+    "reported": "2 ft 1 in",
+    "body_fraction": 0.4
+   }
+  },
+  {
+   "lat": 19.120089784000886,
+   "lon": 72.90583906051044,
+   "ts": "2026-07-04T11:31:01.229110+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "444",
+   "place": "Jogeshwari-Vikhroli Link Road, Powai",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.1378317,
+   "lon": 72.9130349,
+   "ts": "2026-07-04T11:31:13.628522+05:30",
+   "depth_m": 0.315,
+   "source": "mumbaiflood_cs",
+   "source_id": "445",
+   "place": "Green Wheels Along Blue Lines, Lok Rachna",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 0 in",
+    "body_fraction": 0.2
+   }
+  },
+  {
+   "lat": 19.123773273332212,
+   "lon": 72.91271016405159,
+   "ts": "2026-07-04T11:34:17.352074+05:30",
+   "depth_m": 0.63,
+   "source": "mumbaiflood_cs",
+   "source_id": "447",
+   "place": "Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "2 ft 1 in",
+    "body_fraction": 0.4
+   }
+  },
+  {
+   "lat": 19.122388701097652,
+   "lon": 72.91297065062031,
+   "ts": "2026-07-04T11:36:56.109467+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "448",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.122388701097652,
+   "lon": 72.91297065062031,
+   "ts": "2026-07-04T11:37:18.527983+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "449",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.188486287431306,
+   "lon": 72.86262816097701,
+   "ts": "2026-07-04T11:39:31.699804+05:30",
+   "depth_m": 0.072,
+   "source": "mumbaiflood_cs",
+   "source_id": "450",
+   "place": "Kurar",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.11978,
+   "lon": 72.9081358,
+   "ts": "2026-07-04T11:40:47.808395+05:30",
+   "depth_m": 0.077,
+   "source": "mumbaiflood_cs",
+   "source_id": "451",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.11532979635829,
+   "lon": 72.90850135808451,
+   "ts": "2026-07-04T11:45:07.794629+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "453",
+   "place": "Forest Street, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1158835,
+   "lon": 72.854202,
+   "ts": "2026-07-04T11:45:54.364534+05:30",
+   "depth_m": 0.073,
+   "source": "mumbaiflood_cs",
+   "source_id": "454",
+   "place": "Andheri east",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.119753135682455,
+   "lon": 72.90803461350228,
+   "ts": "2026-07-04T11:51:53.657843+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "455",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.119751,
+   "lon": 72.9081234,
+   "ts": "2026-07-04T11:54:05.127742+05:30",
+   "depth_m": 0.077,
+   "source": "mumbaiflood_cs",
+   "source_id": "457",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1216956,
+   "lon": 72.9164035,
+   "ts": "2026-07-04T12:09:07.879125+05:30",
+   "depth_m": 0.485,
+   "source": "mumbaiflood_cs",
+   "source_id": "462",
+   "place": "Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.119706162543967,
+   "lon": 72.90878937119673,
+   "ts": "2026-07-04T12:20:06.522905+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "463",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.119345633937407,
+   "lon": 72.90872535518281,
+   "ts": "2026-07-04T12:24:21.213458+05:30",
+   "depth_m": 0.449,
+   "source": "mumbaiflood_cs",
+   "source_id": "464",
+   "place": "Orchard Avenue, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 6 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.119345633937407,
+   "lon": 72.90872535518281,
+   "ts": "2026-07-04T12:27:01.924919+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "465",
+   "place": "Orchard Avenue, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1223526,
+   "lon": 72.8719002,
+   "ts": "2026-07-04T12:29:56.579230+05:30",
+   "depth_m": 0.08,
+   "source": "mumbaiflood_cs",
+   "source_id": "466",
+   "place": "Kondivita Village",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.119614245375445,
+   "lon": 72.91316942047125,
+   "ts": "2026-07-04T12:37:07.501021+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "467",
+   "place": "Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.122456174336634,
+   "lon": 72.91297113288971,
+   "ts": "2026-07-04T12:45:31.513859+05:30",
+   "depth_m": 0.449,
+   "source": "mumbaiflood_cs",
+   "source_id": "468",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 6 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.12344412477779,
+   "lon": 72.91273666344517,
+   "ts": "2026-07-04T12:46:09.485350+05:30",
+   "depth_m": 0.961,
+   "source": "mumbaiflood_cs",
+   "source_id": "469",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "3 ft 2 in",
+    "body_fraction": 0.61
+   }
+  },
+  {
+   "lat": 19.1234836,
+   "lon": 72.9193885,
+   "ts": "2026-07-04T12:47:25.262154+05:30",
+   "depth_m": 0.079,
+   "source": "mumbaiflood_cs",
+   "source_id": "470",
+   "place": "Near BJP Powai office",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.101928365645428,
+   "lon": 72.84944332301913,
+   "ts": "2026-07-04T12:59:14.664097+05:30",
+   "depth_m": 0.492,
+   "source": "mumbaiflood_cs",
+   "source_id": "471",
+   "place": "Andheri East",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1003991,
+   "lon": 72.8818314,
+   "ts": "2026-07-04T13:20:55.466491+05:30",
+   "depth_m": 0.79,
+   "source": "mumbaiflood_cs",
+   "source_id": "472",
+   "place": "Sakinaka",
+   "area": null,
+   "meta": {
+    "reported": "2 ft 7 in",
+    "body_fraction": 0.61
+   }
+  },
+  {
+   "lat": 19.09354,
+   "lon": 73.0209338,
+   "ts": "2026-07-04T13:34:55.746959+05:30",
+   "depth_m": 0.521,
+   "source": "mumbaiflood_cs",
+   "source_id": "473",
+   "place": "Turbhe midc",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 9 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1187195,
+   "lon": 72.9073476,
+   "ts": "2026-07-04T13:41:23.684382+05:30",
+   "depth_m": 0.507,
+   "source": "mumbaiflood_cs",
+   "source_id": "474",
+   "place": "Powai",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 8 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1057616,
+   "lon": 72.9146708,
+   "ts": "2026-07-04T14:13:37.803956+05:30",
+   "depth_m": 0.045,
+   "source": "mumbaiflood_cs",
+   "source_id": "475",
+   "place": "Anandgadh",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 2 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1290943,
+   "lon": 72.9257667,
+   "ts": "2026-07-04T14:15:26.919989+05:30",
+   "depth_m": 0.478,
+   "source": "mumbaiflood_cs",
+   "source_id": "476",
+   "place": "Lal Bahadur Shastri Marg, Kanjur West",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1013485,
+   "lon": 72.8276242,
+   "ts": "2026-07-04T14:28:32.065401+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "477",
+   "place": "Khwaja Abbas Marg, Juhu",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1011542,
+   "lon": 72.8277127,
+   "ts": "2026-07-04T14:46:33.983441+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "478",
+   "place": "Juhu Tara Road, Ashok Nagar",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.0990990990991,
+   "lon": 72.87641589189367,
+   "ts": "2026-07-04T15:22:00.287401+05:30",
+   "depth_m": 0.449,
+   "source": "mumbaiflood_cs",
+   "source_id": "479",
+   "place": "Sahar Elevated Road, Saki Naka",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 6 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.135135135135133,
+   "lon": 73.08302260462833,
+   "ts": "2026-07-04T16:45:02.644829+05:30",
+   "depth_m": 0.074,
+   "source": "mumbaiflood_cs",
+   "source_id": "480",
+   "place": null,
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.018519525770877,
+   "lon": 72.84662800041191,
+   "ts": "2026-07-04T19:12:13.885721+05:30",
+   "depth_m": 0.08,
+   "source": "mumbaiflood_cs",
+   "source_id": "482",
+   "place": "Tilak Road, Matunga East",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.0328675,
+   "lon": 72.8587371,
+   "ts": "2026-07-04T19:57:48.000381+05:30",
+   "depth_m": 0.514,
+   "source": "mumbaiflood_cs",
+   "source_id": "483",
+   "place": "Gandhi market",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 8 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1245727,
+   "lon": 72.9160881,
+   "ts": "2026-07-04T19:57:57.650827+05:30",
+   "depth_m": 0.074,
+   "source": "mumbaiflood_cs",
+   "source_id": "484",
+   "place": "Adi Sankaracharya Marg, Tirandaz Village",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1878962,
+   "lon": 72.8365955,
+   "ts": "2026-07-04T20:06:56.437569+05:30",
+   "depth_m": 0.521,
+   "source": "mumbaiflood_cs",
+   "source_id": "485",
+   "place": "Mira road",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 9 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1187195,
+   "lon": 72.9073476,
+   "ts": "2026-07-04T20:11:04.011812+05:30",
+   "depth_m": 0.075,
+   "source": "mumbaiflood_cs",
+   "source_id": "486",
+   "place": "Powai",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.034426852678422,
+   "lon": 73.068075734689,
+   "ts": "2026-07-04T20:22:30.517047+05:30",
+   "depth_m": 0.442,
+   "source": "mumbaiflood_cs",
+   "source_id": "487",
+   "place": "Kharghar",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 5 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.0396,
+   "lon": 72.8693,
+   "ts": "2026-07-04T20:41:40.066802+05:30",
+   "depth_m": 0.261,
+   "source": "mumbaiflood_cs",
+   "source_id": "489",
+   "place": "Pratiksha nagar",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 10 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1327584,
+   "lon": 72.9181793,
+   "ts": "2026-07-04T20:47:28.686714+05:30",
+   "depth_m": 0.082,
+   "source": "mumbaiflood_cs",
+   "source_id": "490",
+   "place": "Hillside Road, Jyotiba Phule Nagar",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1938816,
+   "lon": 72.8743651,
+   "ts": "2026-07-04T22:56:06.613786+05:30",
+   "depth_m": 0.067,
+   "source": "mumbaiflood_cs",
+   "source_id": "492",
+   "place": "Lokhandwala kandivali east",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.2560828,
+   "lon": 72.984703,
+   "ts": "2026-07-04T23:55:09.155170+05:30",
+   "depth_m": 0.478,
+   "source": "mumbaiflood_cs",
+   "source_id": "493",
+   "place": "Hiranandani Estate",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1239449,
+   "lon": 72.9167607,
+   "ts": "2026-07-05T00:06:43.578537+05:30",
+   "depth_m": 0.085,
+   "source": "mumbaiflood_cs",
+   "source_id": "494",
+   "place": "Padmavati Devi Marg, Tirandaz Village",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.0503534,
+   "lon": 72.8695089,
+   "ts": "2026-07-05T04:25:57.038207+05:30",
+   "depth_m": 0.514,
+   "source": "mumbaiflood_cs",
+   "source_id": "495",
+   "place": "Sion East",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 8 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.2407321,
+   "lon": 72.8498169,
+   "ts": "2026-07-05T10:37:58.638031+05:30",
+   "depth_m": 0.074,
+   "source": "mumbaiflood_cs",
+   "source_id": "500",
+   "place": "400103",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.050893814124098,
+   "lon": 72.87688912881096,
+   "ts": "2026-07-05T11:07:45.014948+05:30",
+   "depth_m": 0.463,
+   "source": "mumbaiflood_cs",
+   "source_id": "501",
+   "place": "Everard CHS, Everard Nagar, Sion",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 6 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.0192269,
+   "lon": 72.8428479,
+   "ts": "2026-07-05T11:38:04.229184+05:30",
+   "depth_m": 0.471,
+   "source": "mumbaiflood_cs",
+   "source_id": "502",
+   "place": "Dadar",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 18.99568,
+   "lon": 72.8302756,
+   "ts": "2026-07-05T12:59:57.207170+05:30",
+   "depth_m": 0.449,
+   "source": "mumbaiflood_cs",
+   "source_id": "503",
+   "place": "Lower parel",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 6 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.0652797,
+   "lon": 72.8793805,
+   "ts": "2026-07-05T14:22:46.742120+05:30",
+   "depth_m": 0.074,
+   "source": "mumbaiflood_cs",
+   "source_id": "504",
+   "place": "Kurla",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1585147,
+   "lon": 72.9994019,
+   "ts": "2026-07-05T16:08:00.720178+05:30",
+   "depth_m": 0.521,
+   "source": "mumbaiflood_cs",
+   "source_id": "505",
+   "place": "Airoli",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 9 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1302521,
+   "lon": 72.8213775,
+   "ts": "2026-07-05T16:54:59.789085+05:30",
+   "depth_m": 0.485,
+   "source": "mumbaiflood_cs",
+   "source_id": "506",
+   "place": "Versova",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.0549792,
+   "lon": 72.8402203,
+   "ts": "2026-07-05T18:01:36.703994+05:30",
+   "depth_m": 0.081,
+   "source": "mumbaiflood_cs",
+   "source_id": "507",
+   "place": "Bandra",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1162564,
+   "lon": 72.8618644,
+   "ts": "2026-07-05T18:31:21.565043+05:30",
+   "depth_m": 0.456,
+   "source": "mumbaiflood_cs",
+   "source_id": "508",
+   "place": "mahakali caves road",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 6 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1878962,
+   "lon": 72.8365955,
+   "ts": "2026-07-05T20:53:16.362651+05:30",
+   "depth_m": 0.073,
+   "source": "mumbaiflood_cs",
+   "source_id": "513",
+   "place": "Mira Road",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.2940605,
+   "lon": 72.8726203,
+   "ts": "2026-07-05T20:54:16.241446+05:30",
+   "depth_m": 0.074,
+   "source": "mumbaiflood_cs",
+   "source_id": "514",
+   "place": "19.29406, 72.87262",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.142757,
+   "lon": 72.9376543,
+   "ts": "2026-07-05T22:35:20.026213+05:30",
+   "depth_m": 0.073,
+   "source": "mumbaiflood_cs",
+   "source_id": "515",
+   "place": "Bhandup",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.16507722289307,
+   "lon": 72.93562313840982,
+   "ts": "2026-07-06T00:47:12.312606+05:30",
+   "depth_m": 0.082,
+   "source": "mumbaiflood_cs",
+   "source_id": "516",
+   "place": "Mulund Colony",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.2203815,
+   "lon": 72.8399977,
+   "ts": "2026-07-06T01:37:45.171773+05:30",
+   "depth_m": 0.478,
+   "source": "mumbaiflood_cs",
+   "source_id": "517",
+   "place": "R/C Ward",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1442573,
+   "lon": 72.8523789,
+   "ts": "2026-07-06T04:36:44.735313+05:30",
+   "depth_m": 0.082,
+   "source": "mumbaiflood_cs",
+   "source_id": "518",
+   "place": "Goregaon West",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1059458,
+   "lon": 73.0019799,
+   "ts": "2026-07-06T07:37:23.923869+05:30",
+   "depth_m": 0.514,
+   "source": "mumbaiflood_cs",
+   "source_id": "519",
+   "place": "Koparkhairane Village Rd, Kopar Khairne",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 8 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.0511604,
+   "lon": 72.9293364,
+   "ts": "2026-07-06T08:43:58.695290+05:30",
+   "depth_m": 0.499,
+   "source": "mumbaiflood_cs",
+   "source_id": "520",
+   "place": "Kalyan",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 8 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.2406745,
+   "lon": 72.8504616,
+   "ts": "2026-07-06T08:46:57.199063+05:30",
+   "depth_m": 0.499,
+   "source": "mumbaiflood_cs",
+   "source_id": "521",
+   "place": "Navi Mumbai",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 8 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.173535525158673,
+   "lon": 72.86922365455176,
+   "ts": "2026-07-06T08:48:33.235308+05:30",
+   "depth_m": 0.449,
+   "source": "mumbaiflood_cs",
+   "source_id": "522",
+   "place": "Gokuldham",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 6 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.0789383,
+   "lon": 72.8446344,
+   "ts": "2026-07-06T10:35:52.460396+05:30",
+   "depth_m": 0.471,
+   "source": "mumbaiflood_cs",
+   "source_id": "523",
+   "place": "Santacruz",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.1571982,
+   "lon": 72.9408187,
+   "ts": "2026-07-06T11:26:47.461715+05:30",
+   "depth_m": 0.073,
+   "source": "mumbaiflood_cs",
+   "source_id": "524",
+   "place": "Nahur",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1187195,
+   "lon": 72.9073476,
+   "ts": "2026-07-06T15:08:59.480769+05:30",
+   "depth_m": 0.081,
+   "source": "mumbaiflood_cs",
+   "source_id": "526",
+   "place": "Powai",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 18.9765535,
+   "lon": 72.8297716,
+   "ts": "2026-07-06T17:54:48.849404+05:30",
+   "depth_m": 0.08,
+   "source": "mumbaiflood_cs",
+   "source_id": "527",
+   "place": "G H Parundekar Marg, Agripada",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1430985,
+   "lon": 72.8246055,
+   "ts": "2026-07-06T22:38:03.892175+05:30",
+   "depth_m": 0.075,
+   "source": "mumbaiflood_cs",
+   "source_id": "528",
+   "place": "Lokhandwala",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.16182562688559,
+   "lon": 72.84012712095053,
+   "ts": "2026-07-07T00:50:54.943366+05:30",
+   "depth_m": 0.471,
+   "source": "mumbaiflood_cs",
+   "source_id": "529",
+   "place": "19.16183, 72.84013",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.177682,
+   "lon": 72.8607254,
+   "ts": "2026-07-07T07:14:10.040327+05:30",
+   "depth_m": 0.072,
+   "source": "mumbaiflood_cs",
+   "source_id": "530",
+   "place": "Malad East",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.0677245,
+   "lon": 72.8648464,
+   "ts": "2026-07-07T19:14:52.937848+05:30",
+   "depth_m": 0.073,
+   "source": "mumbaiflood_cs",
+   "source_id": "531",
+   "place": "BKC",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.0408236,
+   "lon": 72.9330061,
+   "ts": "2026-07-07T19:58:23.718792+05:30",
+   "depth_m": 0.072,
+   "source": "mumbaiflood_cs",
+   "source_id": "532",
+   "place": "Anushakti Nagar",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 18.9917641,
+   "lon": 72.8438525,
+   "ts": "2026-07-08T00:38:55.263839+05:30",
+   "depth_m": 0.075,
+   "source": "mumbaiflood_cs",
+   "source_id": "533",
+   "place": "Abhyudaya Nagar",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.148129287617323,
+   "lon": 73.00019718311516,
+   "ts": "2026-07-08T07:56:25.721277+05:30",
+   "depth_m": 0.071,
+   "source": "mumbaiflood_cs",
+   "source_id": "534",
+   "place": "Diva Koliwada Road, Airoli Sector 5",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.13731302217024,
+   "lon": 72.92884093513567,
+   "ts": "2026-07-09T09:49:53.509528+05:30",
+   "depth_m": 0.471,
+   "source": "mumbaiflood_cs",
+   "source_id": "536",
+   "place": "Lal Bahadur Shastri Marg, Bhandup East",
+   "area": null,
+   "meta": {
+    "reported": "1 ft 7 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.0117388,
+   "lon": 72.8178706,
+   "ts": "2026-07-09T19:18:17.312334+05:30",
+   "depth_m": 1.42,
+   "source": "mumbaiflood_cs",
+   "source_id": "537",
+   "place": "Worli",
+   "area": null,
+   "meta": {
+    "reported": "4 ft 8 in",
+    "body_fraction": 0.86
+   }
+  },
+  {
+   "lat": 19.1239767,
+   "lon": 72.9138881,
+   "ts": "2026-07-20T20:58:21.398549+05:30",
+   "depth_m": 0.077,
+   "source": "mumbaiflood_cs",
+   "source_id": "539",
+   "place": "Hiranandani Gardens",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.0314768,
+   "lon": 72.8468509,
+   "ts": "2026-07-22T07:29:17.823120+05:30",
+   "depth_m": 0.282,
+   "source": "mumbaiflood_cs",
+   "source_id": "555",
+   "place": "Matunga",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 11 in",
+    "body_fraction": 0.285
+   }
+  },
+  {
+   "lat": 19.100419,
+   "lon": 72.8826122,
+   "ts": "2026-07-22T08:34:58.655000+05:30",
+   "depth_m": 0.082,
+   "source": "mumbaiflood_cs",
+   "source_id": "556",
+   "place": "Sakinaka",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1201503,
+   "lon": 72.9169343,
+   "ts": "2026-07-23T00:11:58.092893+05:30",
+   "depth_m": 1.023,
+   "source": "mumbaiflood_cs",
+   "source_id": "557",
+   "place": "Hiranandani hospital",
+   "area": null,
+   "meta": {
+    "reported": "3 ft 4 in",
+    "body_fraction": 0.61
+   }
+  },
+  {
+   "lat": 19.2192428,
+   "lon": 72.8363592,
+   "ts": "2026-07-23T08:01:38.818890+05:30",
+   "depth_m": 0.079,
+   "source": "mumbaiflood_cs",
+   "source_id": "565",
+   "place": "Bandra",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.2140139,
+   "lon": 72.8372919,
+   "ts": "2026-07-25T10:33:52.040348+05:30",
+   "depth_m": 1.147,
+   "source": "mumbaiflood_cs",
+   "source_id": "569",
+   "place": "Kandivali West",
+   "area": null,
+   "meta": {
+    "reported": "3 ft 9 in",
+    "body_fraction": 0.61
+   }
+  },
+  {
+   "lat": 19.1307543,
+   "lon": 72.9166116,
+   "ts": "2026-07-27T11:02:49.371954+05:30",
+   "depth_m": 0.08,
+   "source": "mumbaiflood_cs",
+   "source_id": "570",
+   "place": "Infinite Corridoor, Jyotiba Phule Nagar",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.1276167,
+   "lon": 72.9298,
+   "ts": "2026-07-30T20:24:17.436357+05:30",
+   "depth_m": 0.073,
+   "source": "mumbaiflood_cs",
+   "source_id": "571",
+   "place": "Kanjumarg Station Road, Kanjur West",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  },
+  {
+   "lat": 19.21210254257271,
+   "lon": 72.82333009365672,
+   "ts": "2026-08-03T01:24:16.821923+05:30",
+   "depth_m": 0.075,
+   "source": "mumbaiflood_cs",
+   "source_id": "572",
+   "place": "Charkop",
+   "area": null,
+   "meta": {
+    "reported": "0 ft 3 in",
+    "body_fraction": 0.045
+   }
+  }
+ ],
+ "rejected": {
+  "no_depth_reported": 38,
+  "outside_region": 15
+ },
+ "meta": {
+  "source": "mumbaiflood_cs",
+  "n_raw": 147,
+  "days": 365,
+  "bbox": [
+   18.85,
+   72.7,
+   19.35,
+   73.1
+  ],
+  "api": "https://api.mumbaiflood.in"
+ },
+ "n": 94
+}

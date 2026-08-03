@@ -1,0 +1,1835 @@
+{
+ "generated": "2026-08-03T16:13:28+00:00",
+ "overall": {
+  "n": 83,
+  "observed": {
+   "mean_m": 0.2791,
+   "median_m": 0.082,
+   "max_m": 1.147,
+   "n_wet": 38
+  },
+  "predicted": {
+   "mean_m": 0.1172,
+   "median_m": 0.099,
+   "max_m": 0.5,
+   "n_wet": 18
+  },
+  "model": {
+   "mae_m": 0.207,
+   "rmse_m": 0.3102,
+   "bias_m": -0.1619,
+   "median_abs_err_m": 0.119
+  },
+  "baselines": {
+   "always_dry": {
+    "mae_m": 0.2791,
+    "rmse_m": 0.3794,
+    "bias_m": -0.2791,
+    "median_abs_err_m": 0.082
+   },
+   "observed_mean": {
+    "mae_m": 0.2222,
+    "rmse_m": 0.257,
+    "bias_m": 0.0,
+    "median_abs_err_m": 0.2051
+   },
+   "observed_median": {
+    "mae_m": 0.2052,
+    "rmse_m": 0.3239,
+    "bias_m": -0.1971,
+    "median_abs_err_m": 0.011
+   }
+  },
+  "skill_vs_best_baseline": -0.4569,
+  "binary": {
+   "tp": 11,
+   "fp": 7,
+   "fn": 27,
+   "tn": 38,
+   "csi": 0.2444,
+   "pod": 0.2895,
+   "far": 0.3889,
+   "threshold_m": 0.15
+  },
+  "correlation": 0.0545
+ },
+ "by_area": {
+  "mumbai_east": {
+   "n": 40,
+   "observed": {
+    "mean_m": 0.2698,
+    "median_m": 0.0805,
+    "max_m": 1.023,
+    "n_wet": 16
+   },
+   "predicted": {
+    "mean_m": 0.0878,
+    "median_m": 0.087,
+    "max_m": 0.235,
+    "n_wet": 2
+   },
+   "model": {
+    "mae_m": 0.2003,
+    "rmse_m": 0.322,
+    "bias_m": -0.182,
+    "median_abs_err_m": 0.032
+   },
+   "baselines": {
+    "always_dry": {
+     "mae_m": 0.2698,
+     "rmse_m": 0.3808,
+     "bias_m": -0.2698,
+     "median_abs_err_m": 0.0805
+    },
+    "observed_mean": {
+     "mae_m": 0.2351,
+     "rmse_m": 0.2687,
+     "bias_m": -0.0,
+     "median_abs_err_m": 0.1988
+    },
+    "observed_median": {
+     "mae_m": 0.1977,
+     "rmse_m": 0.3287,
+     "bias_m": -0.1893,
+     "median_abs_err_m": 0.0095
+    }
+   },
+   "skill_vs_best_baseline": -0.4361,
+   "binary": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 14,
+    "tn": 24,
+    "csi": 0.125,
+    "pod": 0.125,
+    "far": 0.0,
+    "threshold_m": 0.15
+   },
+   "correlation": 0.1489
+  },
+  "mumbai_north": {
+   "n": 12,
+   "observed": {
+    "mean_m": 0.2692,
+    "median_m": 0.0745,
+    "max_m": 1.147,
+    "n_wet": 4
+   },
+   "predicted": {
+    "mean_m": 0.1365,
+    "median_m": 0.0925,
+    "max_m": 0.5,
+    "n_wet": 4
+   },
+   "model": {
+    "mae_m": 0.2692,
+    "rmse_m": 0.3984,
+    "bias_m": -0.1328,
+    "median_abs_err_m": 0.166
+   },
+   "baselines": {
+    "always_dry": {
+     "mae_m": 0.2692,
+     "rmse_m": 0.4191,
+     "bias_m": -0.2692,
+     "median_abs_err_m": 0.0745
+    },
+    "observed_mean": {
+     "mae_m": 0.2613,
+     "rmse_m": 0.3211,
+     "bias_m": -0.0,
+     "median_abs_err_m": 0.1972
+    },
+    "observed_median": {
+     "mae_m": 0.1973,
+     "rmse_m": 0.3756,
+     "bias_m": -0.1948,
+     "median_abs_err_m": 0.0035
+    }
+   },
+   "skill_vs_best_baseline": -0.5394,
+   "binary": {
+    "tp": 1,
+    "fp": 3,
+    "fn": 3,
+    "tn": 5,
+    "csi": 0.1429,
+    "pod": 0.25,
+    "far": 0.75,
+    "threshold_m": 0.15
+   },
+   "correlation": -0.2205
+  },
+  "mumbai_south": {
+   "n": 7,
+   "observed": {
+    "mean_m": 0.2787,
+    "median_m": 0.282,
+    "max_m": 0.514,
+    "n_wet": 4
+   },
+   "predicted": {
+    "mean_m": 0.1074,
+    "median_m": 0.061,
+    "max_m": 0.288,
+    "n_wet": 1
+   },
+   "model": {
+    "mae_m": 0.1761,
+    "rmse_m": 0.2379,
+    "bias_m": -0.1713,
+    "median_abs_err_m": 0.161
+   },
+   "baselines": {
+    "always_dry": {
+     "mae_m": 0.2787,
+     "rmse_m": 0.335,
+     "bias_m": -0.2787,
+     "median_abs_err_m": 0.282
+    },
+    "observed_mean": {
+     "mae_m": 0.1718,
+     "rmse_m": 0.1859,
+     "bias_m": 0.0,
+     "median_abs_err_m": 0.1987
+    },
+    "observed_median": {
+     "mae_m": 0.1713,
+     "rmse_m": 0.1859,
+     "bias_m": 0.0033,
+     "median_abs_err_m": 0.202
+    }
+   },
+   "skill_vs_best_baseline": -0.6377,
+   "binary": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 3,
+    "tn": 3,
+    "csi": 0.25,
+    "pod": 0.25,
+    "far": 0.0,
+    "threshold_m": 0.15
+   },
+   "correlation": 0.4608
+  },
+  "mumbai_west": {
+   "n": 24,
+   "observed": {
+    "mean_m": 0.2995,
+    "median_m": 0.315,
+    "max_m": 0.79,
+    "n_wet": 14
+   },
+   "predicted": {
+    "mean_m": 0.1594,
+    "median_m": 0.143,
+    "max_m": 0.299,
+    "n_wet": 11
+   },
+   "model": {
+    "mae_m": 0.1962,
+    "rmse_m": 0.253,
+    "bias_m": -0.1401,
+    "median_abs_err_m": 0.173
+   },
+   "baselines": {
+    "always_dry": {
+     "mae_m": 0.2995,
+     "rmse_m": 0.3682,
+     "bias_m": -0.2995,
+     "median_abs_err_m": 0.315
+    },
+    "observed_mean": {
+     "mae_m": 0.1893,
+     "rmse_m": 0.2142,
+     "bias_m": -0.0,
+     "median_abs_err_m": 0.216
+    },
+    "observed_median": {
+     "mae_m": 0.188,
+     "rmse_m": 0.2147,
+     "bias_m": 0.0155,
+     "median_abs_err_m": 0.216
+    }
+   },
+   "skill_vs_best_baseline": -0.3951,
+   "binary": {
+    "tp": 7,
+    "fp": 4,
+    "fn": 7,
+    "tn": 6,
+    "csi": 0.3889,
+    "pod": 0.5,
+    "far": 0.3636,
+    "threshold_m": 0.15
+   },
+   "correlation": 0.2069
+  }
+ },
+ "n_scored": 83,
+ "rain_source": "open-meteo (ERA5 archive / forecast past_days)",
+ "note": "Depth is compared where and when it was observed. The emulator is forced with the observed rainfall TOTAL over the window and internally assumes a 1.5 h design storm, so disagreement can come from storm shape as well as terrain. Observations are scoring-only and never train the model.",
+ "skipped": {
+  "rain_too_low_to_be_pluvial": 2
+ },
+ "quality_control": {
+  "rejected": {
+   "no_depth_reported": 38,
+   "outside_region": 15
+  },
+  "kept": 94,
+  "source": "mumbaiflood_cs",
+  "n_raw": 147,
+  "days": 365,
+  "bbox": [
+   18.85,
+   72.7,
+   19.35,
+   73.1
+  ],
+  "api": "https://api.mumbaiflood.in"
+ },
+ "subgrid_dilution": {
+  "n": 38,
+  "median_observed_over_predicted": 4.446,
+  "cell_area_m2": 3600,
+  "implied_ponding_area_m2": 810,
+  "implied_ponding_span_m": 28.5,
+  "note": "Point observation vs cell mean. The ratio implies the sub-cell area the water occupies; it is a resolution effect, not evidence the model has the volume wrong."
+ },
+ "window_h": 24,
+ "min_rain_mm": 10.0,
+ "rows": [
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "432",
+   "area": "mumbai_east",
+   "lat": 19.1114795,
+   "lon": 72.928021,
+   "ts": "2026-07-04T09:54:01.653780+05:30",
+   "place": "vikhroli",
+   "observed_m": 0.691,
+   "predicted_m": 0.04,
+   "rain_mm": 53.2,
+   "window_h": 24,
+   "cell": [
+    114,
+    39
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "434",
+   "area": "mumbai_west",
+   "lat": 19.117189461862107,
+   "lon": 72.89480887452456,
+   "ts": "2026-07-04T11:15:25.047199+05:30",
+   "place": "19.11719, 72.89481",
+   "observed_m": 0.315,
+   "predicted_m": 0.098,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    103,
+    248
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "435",
+   "area": "mumbai_west",
+   "lat": 19.118815670137078,
+   "lon": 72.89353899994173,
+   "ts": "2026-07-04T11:15:46.287116+05:30",
+   "place": "19.11882, 72.89354",
+   "observed_m": 0.63,
+   "predicted_m": 0.098,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    100,
+    246
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "436",
+   "area": "mumbai_east",
+   "lat": 19.1326186,
+   "lon": 72.9149702,
+   "ts": "2026-07-04T11:18:47.171402+05:30",
+   "place": "iit bombay",
+   "observed_m": 0.671,
+   "predicted_m": 0.063,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    75,
+    14
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "437",
+   "area": "mumbai_west",
+   "lat": 19.116921709019632,
+   "lon": 72.89531093074993,
+   "ts": "2026-07-04T11:19:33.598798+05:30",
+   "place": "Raheja Vihar Circular Road, Chandivali",
+   "observed_m": 0.315,
+   "predicted_m": 0.114,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    104,
+    249
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "438",
+   "area": "mumbai_east",
+   "lat": 19.1248397,
+   "lon": 72.9215897,
+   "ts": "2026-07-04T11:22:08.035085+05:30",
+   "place": "Nana Palshikar Marg, Ramabai Ambedkar Nagar",
+   "observed_m": 0.305,
+   "predicted_m": 0.136,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    89,
+    27
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "439",
+   "area": "mumbai_west",
+   "lat": 19.11448331608084,
+   "lon": 72.89815416583332,
+   "ts": "2026-07-04T11:24:35.155186+05:30",
+   "place": "Chandvali Farm Road, Lumbini Buddha Vihar",
+   "observed_m": 0.315,
+   "predicted_m": 0.168,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    108,
+    254
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "445",
+   "area": "mumbai_east",
+   "lat": 19.1378317,
+   "lon": 72.9130349,
+   "ts": "2026-07-04T11:31:13.628522+05:30",
+   "place": "Green Wheels Along Blue Lines, Lok Rachna",
+   "observed_m": 0.315,
+   "predicted_m": 0.05,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    65,
+    11
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "447",
+   "area": "mumbai_east",
+   "lat": 19.123773273332212,
+   "lon": 72.91271016405159,
+   "ts": "2026-07-04T11:34:17.352074+05:30",
+   "place": "Hiranandani Gardens",
+   "observed_m": 0.63,
+   "predicted_m": 0.105,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    91,
+    10
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "448",
+   "area": "mumbai_east",
+   "lat": 19.122388701097652,
+   "lon": 72.91297065062031,
+   "ts": "2026-07-04T11:36:56.109467+05:30",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "observed_m": 0.071,
+   "predicted_m": 0.095,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    94,
+    11
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "449",
+   "area": "mumbai_east",
+   "lat": 19.122388701097652,
+   "lon": 72.91297065062031,
+   "ts": "2026-07-04T11:37:18.527983+05:30",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "observed_m": 0.071,
+   "predicted_m": 0.095,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    94,
+    11
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "450",
+   "area": "mumbai_north",
+   "lat": 19.188486287431306,
+   "lon": 72.86262816097701,
+   "ts": "2026-07-04T11:39:31.699804+05:30",
+   "place": "Kurar",
+   "observed_m": 0.072,
+   "predicted_m": 0.041,
+   "rain_mm": 75.9,
+   "window_h": 24,
+   "cell": [
+    228,
+    188
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "451",
+   "area": "mumbai_east",
+   "lat": 19.11978,
+   "lon": 72.9081358,
+   "ts": "2026-07-04T11:40:47.808395+05:30",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "observed_m": 0.077,
+   "predicted_m": 0.087,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    99,
+    2
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "453",
+   "area": "mumbai_east",
+   "lat": 19.11532979635829,
+   "lon": 72.90850135808451,
+   "ts": "2026-07-04T11:45:07.794629+05:30",
+   "place": "Forest Street, Hiranandani Gardens",
+   "observed_m": 0.071,
+   "predicted_m": 0.025,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    107,
+    2
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "454",
+   "area": "mumbai_west",
+   "lat": 19.1158835,
+   "lon": 72.854202,
+   "ts": "2026-07-04T11:45:54.364534+05:30",
+   "place": "Andheri east",
+   "observed_m": 0.073,
+   "predicted_m": 0.129,
+   "rain_mm": 71.6,
+   "window_h": 24,
+   "cell": [
+    106,
+    173
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "455",
+   "area": "mumbai_east",
+   "lat": 19.119753135682455,
+   "lon": 72.90803461350228,
+   "ts": "2026-07-04T11:51:53.657843+05:30",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "observed_m": 0.071,
+   "predicted_m": 0.087,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    99,
+    2
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "457",
+   "area": "mumbai_east",
+   "lat": 19.119751,
+   "lon": 72.9081234,
+   "ts": "2026-07-04T11:54:05.127742+05:30",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "observed_m": 0.077,
+   "predicted_m": 0.087,
+   "rain_mm": 59.4,
+   "window_h": 24,
+   "cell": [
+    99,
+    2
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "462",
+   "area": "mumbai_east",
+   "lat": 19.1216956,
+   "lon": 72.9164035,
+   "ts": "2026-07-04T12:09:07.879125+05:30",
+   "place": "Hiranandani Gardens",
+   "observed_m": 0.485,
+   "predicted_m": 0.076,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    95,
+    17
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "463",
+   "area": "mumbai_east",
+   "lat": 19.119706162543967,
+   "lon": 72.90878937119673,
+   "ts": "2026-07-04T12:20:06.522905+05:30",
+   "place": "Lake Blvd Road, Hiranandani Gardens",
+   "observed_m": 0.071,
+   "predicted_m": 0.101,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    99,
+    3
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "464",
+   "area": "mumbai_east",
+   "lat": 19.119345633937407,
+   "lon": 72.90872535518281,
+   "ts": "2026-07-04T12:24:21.213458+05:30",
+   "place": "Orchard Avenue, Hiranandani Gardens",
+   "observed_m": 0.449,
+   "predicted_m": 0.101,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    99,
+    3
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "465",
+   "area": "mumbai_east",
+   "lat": 19.119345633937407,
+   "lon": 72.90872535518281,
+   "ts": "2026-07-04T12:27:01.924919+05:30",
+   "place": "Orchard Avenue, Hiranandani Gardens",
+   "observed_m": 0.071,
+   "predicted_m": 0.101,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    99,
+    3
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "466",
+   "area": "mumbai_west",
+   "lat": 19.1223526,
+   "lon": 72.8719002,
+   "ts": "2026-07-04T12:29:56.579230+05:30",
+   "place": "Kondivita Village",
+   "observed_m": 0.08,
+   "predicted_m": 0.139,
+   "rain_mm": 76.9,
+   "window_h": 24,
+   "cell": [
+    94,
+    206
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "467",
+   "area": "mumbai_east",
+   "lat": 19.119614245375445,
+   "lon": 72.91316942047125,
+   "ts": "2026-07-04T12:37:07.501021+05:30",
+   "place": "Hiranandani Gardens",
+   "observed_m": 0.071,
+   "predicted_m": 0.063,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    99,
+    11
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "468",
+   "area": "mumbai_east",
+   "lat": 19.122456174336634,
+   "lon": 72.91297113288971,
+   "ts": "2026-07-04T12:45:31.513859+05:30",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "observed_m": 0.449,
+   "predicted_m": 0.101,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    94,
+    11
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "469",
+   "area": "mumbai_east",
+   "lat": 19.12344412477779,
+   "lon": 72.91273666344517,
+   "ts": "2026-07-04T12:46:09.485350+05:30",
+   "place": "Central Avenue, Hiranandani Gardens",
+   "observed_m": 0.961,
+   "predicted_m": 0.117,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    92,
+    10
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "470",
+   "area": "mumbai_east",
+   "lat": 19.1234836,
+   "lon": 72.9193885,
+   "ts": "2026-07-04T12:47:25.262154+05:30",
+   "place": "Near BJP Powai office",
+   "observed_m": 0.079,
+   "predicted_m": 0.06,
+   "rain_mm": 64.8,
+   "window_h": 24,
+   "cell": [
+    92,
+    23
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "471",
+   "area": "mumbai_west",
+   "lat": 19.101928365645428,
+   "lon": 72.84944332301913,
+   "ts": "2026-07-04T12:59:14.664097+05:30",
+   "place": "Andheri East",
+   "observed_m": 0.492,
+   "predicted_m": 0.147,
+   "rain_mm": 76.9,
+   "window_h": 24,
+   "cell": [
+    132,
+    164
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "472",
+   "area": "mumbai_west",
+   "lat": 19.1003991,
+   "lon": 72.8818314,
+   "ts": "2026-07-04T13:20:55.466491+05:30",
+   "place": "Sakinaka",
+   "observed_m": 0.79,
+   "predicted_m": 0.112,
+   "rain_mm": 79.0,
+   "window_h": 24,
+   "cell": [
+    135,
+    224
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "473",
+   "area": "mumbai_east",
+   "lat": 19.09354,
+   "lon": 73.0209338,
+   "ts": "2026-07-04T13:34:55.746959+05:30",
+   "place": "Turbhe midc",
+   "observed_m": 0.521,
+   "predicted_m": 0.07,
+   "rain_mm": 54.7,
+   "window_h": 24,
+   "cell": [
+    147,
+    211
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "474",
+   "area": "mumbai_east",
+   "lat": 19.1187195,
+   "lon": 72.9073476,
+   "ts": "2026-07-04T13:41:23.684382+05:30",
+   "place": "Powai",
+   "observed_m": 0.507,
+   "predicted_m": 0.106,
+   "rain_mm": 65.5,
+   "window_h": 24,
+   "cell": [
+    101,
+    0
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "475",
+   "area": "mumbai_east",
+   "lat": 19.1057616,
+   "lon": 72.9146708,
+   "ts": "2026-07-04T14:13:37.803956+05:30",
+   "place": "Anandgadh",
+   "observed_m": 0.045,
+   "predicted_m": 0.042,
+   "rain_mm": 64.9,
+   "window_h": 24,
+   "cell": [
+    125,
+    14
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "476",
+   "area": "mumbai_east",
+   "lat": 19.1290943,
+   "lon": 72.9257667,
+   "ts": "2026-07-04T14:15:26.919989+05:30",
+   "place": "Lal Bahadur Shastri Marg, Kanjur West",
+   "observed_m": 0.478,
+   "predicted_m": 0.051,
+   "rain_mm": 67.1,
+   "window_h": 24,
+   "cell": [
+    81,
+    34
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "477",
+   "area": "mumbai_west",
+   "lat": 19.1013485,
+   "lon": 72.8276242,
+   "ts": "2026-07-04T14:28:32.065401+05:30",
+   "place": "Khwaja Abbas Marg, Juhu",
+   "observed_m": 0.071,
+   "predicted_m": 0.047,
+   "rain_mm": 80.3,
+   "window_h": 24,
+   "cell": [
+    133,
+    123
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "478",
+   "area": "mumbai_west",
+   "lat": 19.1011542,
+   "lon": 72.8277127,
+   "ts": "2026-07-04T14:46:33.983441+05:30",
+   "place": "Juhu Tara Road, Ashok Nagar",
+   "observed_m": 0.071,
+   "predicted_m": 0.079,
+   "rain_mm": 80.3,
+   "window_h": 24,
+   "cell": [
+    133,
+    124
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "479",
+   "area": "mumbai_west",
+   "lat": 19.0990990990991,
+   "lon": 72.87641589189367,
+   "ts": "2026-07-04T15:22:00.287401+05:30",
+   "place": "Sahar Elevated Road, Saki Naka",
+   "observed_m": 0.449,
+   "predicted_m": 0.138,
+   "rain_mm": 82.7,
+   "window_h": 24,
+   "cell": [
+    137,
+    214
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "482",
+   "area": "mumbai_south",
+   "lat": 19.018519525770877,
+   "lon": 72.84662800041191,
+   "ts": "2026-07-04T19:12:13.885721+05:30",
+   "place": "Tilak Road, Matunga East",
+   "observed_m": 0.08,
+   "predicted_m": 0.061,
+   "rain_mm": 92.4,
+   "window_h": 24,
+   "cell": [
+    29,
+    159
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "483",
+   "area": "mumbai_south",
+   "lat": 19.0328675,
+   "lon": 72.8587371,
+   "ts": "2026-07-04T19:57:48.000381+05:30",
+   "place": "Gandhi market",
+   "observed_m": 0.514,
+   "predicted_m": 0.058,
+   "rain_mm": 92.4,
+   "window_h": 24,
+   "cell": [
+    3,
+    181
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "484",
+   "area": "mumbai_east",
+   "lat": 19.1245727,
+   "lon": 72.9160881,
+   "ts": "2026-07-04T19:57:57.650827+05:30",
+   "place": "Adi Sankaracharya Marg, Tirandaz Village",
+   "observed_m": 0.074,
+   "predicted_m": 0.09,
+   "rain_mm": 65.4,
+   "window_h": 24,
+   "cell": [
+    90,
+    17
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "485",
+   "area": "mumbai_north",
+   "lat": 19.1878962,
+   "lon": 72.8365955,
+   "ts": "2026-07-04T20:06:56.437569+05:30",
+   "place": "Mira road",
+   "observed_m": 0.521,
+   "predicted_m": 0.195,
+   "rain_mm": 82.1,
+   "window_h": 24,
+   "cell": [
+    229,
+    140
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "486",
+   "area": "mumbai_east",
+   "lat": 19.1187195,
+   "lon": 72.9073476,
+   "ts": "2026-07-04T20:11:04.011812+05:30",
+   "place": "Powai",
+   "observed_m": 0.075,
+   "predicted_m": 0.106,
+   "rain_mm": 65.5,
+   "window_h": 24,
+   "cell": [
+    101,
+    0
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "489",
+   "area": "mumbai_west",
+   "lat": 19.0396,
+   "lon": 72.8693,
+   "ts": "2026-07-04T20:41:40.066802+05:30",
+   "place": "Pratiksha nagar",
+   "observed_m": 0.261,
+   "predicted_m": 0.182,
+   "rain_mm": 92.0,
+   "window_h": 24,
+   "cell": [
+    247,
+    201
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "490",
+   "area": "mumbai_east",
+   "lat": 19.1327584,
+   "lon": 72.9181793,
+   "ts": "2026-07-04T20:47:28.686714+05:30",
+   "place": "Hillside Road, Jyotiba Phule Nagar",
+   "observed_m": 0.082,
+   "predicted_m": 0.102,
+   "rain_mm": 65.5,
+   "window_h": 24,
+   "cell": [
+    75,
+    20
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "492",
+   "area": "mumbai_north",
+   "lat": 19.1938816,
+   "lon": 72.8743651,
+   "ts": "2026-07-04T22:56:06.613786+05:30",
+   "place": "Lokhandwala kandivali east",
+   "observed_m": 0.067,
+   "predicted_m": 0.022,
+   "rain_mm": 65.8,
+   "window_h": 24,
+   "cell": [
+    218,
+    210
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "494",
+   "area": "mumbai_east",
+   "lat": 19.1239449,
+   "lon": 72.9167607,
+   "ts": "2026-07-05T00:06:43.578537+05:30",
+   "place": "Padmavati Devi Marg, Tirandaz Village",
+   "observed_m": 0.085,
+   "predicted_m": 0.083,
+   "rain_mm": 63.8,
+   "window_h": 24,
+   "cell": [
+    91,
+    18
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "495",
+   "area": "mumbai_west",
+   "lat": 19.0503534,
+   "lon": 72.8695089,
+   "ts": "2026-07-05T04:25:57.038207+05:30",
+   "place": "Sion East",
+   "observed_m": 0.514,
+   "predicted_m": 0.273,
+   "rain_mm": 105.3,
+   "window_h": 24,
+   "cell": [
+    227,
+    201
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "500",
+   "area": "mumbai_north",
+   "lat": 19.2407321,
+   "lon": 72.8498169,
+   "ts": "2026-07-05T10:37:58.638031+05:30",
+   "place": "400103",
+   "observed_m": 0.074,
+   "predicted_m": 0.01,
+   "rain_mm": 98.6,
+   "window_h": 24,
+   "cell": [
+    131,
+    165
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "501",
+   "area": "mumbai_west",
+   "lat": 19.050893814124098,
+   "lon": 72.87688912881096,
+   "ts": "2026-07-05T11:07:45.014948+05:30",
+   "place": "Everard CHS, Everard Nagar, Sion",
+   "observed_m": 0.463,
+   "predicted_m": 0.299,
+   "rain_mm": 114.6,
+   "window_h": 24,
+   "cell": [
+    226,
+    215
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "502",
+   "area": "mumbai_south",
+   "lat": 19.0192269,
+   "lon": 72.8428479,
+   "ts": "2026-07-05T11:38:04.229184+05:30",
+   "place": "Dadar",
+   "observed_m": 0.471,
+   "predicted_m": 0.142,
+   "rain_mm": 114.6,
+   "window_h": 24,
+   "cell": [
+    28,
+    152
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "503",
+   "area": "mumbai_south",
+   "lat": 18.99568,
+   "lon": 72.8302756,
+   "ts": "2026-07-05T12:59:57.207170+05:30",
+   "place": "Lower parel",
+   "observed_m": 0.449,
+   "predicted_m": 0.288,
+   "rain_mm": 113.3,
+   "window_h": 24,
+   "cell": [
+    72,
+    128
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "504",
+   "area": "mumbai_west",
+   "lat": 19.0652797,
+   "lon": 72.8793805,
+   "ts": "2026-07-05T14:22:46.742120+05:30",
+   "place": "Kurla",
+   "observed_m": 0.074,
+   "predicted_m": 0.164,
+   "rain_mm": 99.8,
+   "window_h": 24,
+   "cell": [
+    200,
+    219
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "505",
+   "area": "mumbai_east",
+   "lat": 19.1585147,
+   "lon": 72.9994019,
+   "ts": "2026-07-05T16:08:00.720178+05:30",
+   "place": "Airoli",
+   "observed_m": 0.521,
+   "predicted_m": 0.151,
+   "rain_mm": 57.2,
+   "window_h": 24,
+   "cell": [
+    27,
+    171
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "506",
+   "area": "mumbai_west",
+   "lat": 19.1302521,
+   "lon": 72.8213775,
+   "ts": "2026-07-05T16:54:59.789085+05:30",
+   "place": "Versova",
+   "observed_m": 0.485,
+   "predicted_m": 0.132,
+   "rain_mm": 96.5,
+   "window_h": 24,
+   "cell": [
+    79,
+    112
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "507",
+   "area": "mumbai_west",
+   "lat": 19.0549792,
+   "lon": 72.8402203,
+   "ts": "2026-07-05T18:01:36.703994+05:30",
+   "place": "Bandra",
+   "observed_m": 0.081,
+   "predicted_m": 0.2,
+   "rain_mm": 112.6,
+   "window_h": 24,
+   "cell": [
+    219,
+    147
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "508",
+   "area": "mumbai_west",
+   "lat": 19.1162564,
+   "lon": 72.8618644,
+   "ts": "2026-07-05T18:31:21.565043+05:30",
+   "place": "mahakali caves road",
+   "observed_m": 0.456,
+   "predicted_m": 0.217,
+   "rain_mm": 112.6,
+   "window_h": 24,
+   "cell": [
+    105,
+    187
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "513",
+   "area": "mumbai_north",
+   "lat": 19.1878962,
+   "lon": 72.8365955,
+   "ts": "2026-07-05T20:53:16.362651+05:30",
+   "place": "Mira Road",
+   "observed_m": 0.073,
+   "predicted_m": 0.282,
+   "rain_mm": 127.7,
+   "window_h": 24,
+   "cell": [
+    229,
+    140
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "514",
+   "area": "mumbai_north",
+   "lat": 19.2940605,
+   "lon": 72.8726203,
+   "ts": "2026-07-05T20:54:16.241446+05:30",
+   "place": "19.29406, 72.87262",
+   "observed_m": 0.074,
+   "predicted_m": 0.134,
+   "rain_mm": 92.9,
+   "window_h": 24,
+   "cell": [
+    32,
+    207
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "515",
+   "area": "mumbai_east",
+   "lat": 19.142757,
+   "lon": 72.9376543,
+   "ts": "2026-07-05T22:35:20.026213+05:30",
+   "place": "Bhandup",
+   "observed_m": 0.073,
+   "predicted_m": 0.058,
+   "rain_mm": 106.8,
+   "window_h": 24,
+   "cell": [
+    56,
+    57
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "516",
+   "area": "mumbai_east",
+   "lat": 19.16507722289307,
+   "lon": 72.93562313840982,
+   "ts": "2026-07-06T00:47:12.312606+05:30",
+   "place": "Mulund Colony",
+   "observed_m": 0.082,
+   "predicted_m": 0.099,
+   "rain_mm": 109.5,
+   "window_h": 24,
+   "cell": [
+    15,
+    53
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "517",
+   "area": "mumbai_north",
+   "lat": 19.2203815,
+   "lon": 72.8399977,
+   "ts": "2026-07-06T01:37:45.171773+05:30",
+   "place": "R/C Ward",
+   "observed_m": 0.478,
+   "predicted_m": 0.104,
+   "rain_mm": 129.9,
+   "window_h": 24,
+   "cell": [
+    169,
+    146
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "518",
+   "area": "mumbai_west",
+   "lat": 19.1442573,
+   "lon": 72.8523789,
+   "ts": "2026-07-06T04:36:44.735313+05:30",
+   "place": "Goregaon West",
+   "observed_m": 0.082,
+   "predicted_m": 0.193,
+   "rain_mm": 124.6,
+   "window_h": 24,
+   "cell": [
+    53,
+    169
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "519",
+   "area": "mumbai_east",
+   "lat": 19.1059458,
+   "lon": 73.0019799,
+   "ts": "2026-07-06T07:37:23.923869+05:30",
+   "place": "Koparkhairane Village Rd, Kopar Khairne",
+   "observed_m": 0.514,
+   "predicted_m": 0.084,
+   "rain_mm": 100.3,
+   "window_h": 24,
+   "cell": [
+    124,
+    176
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "520",
+   "area": "mumbai_east",
+   "lat": 19.0511604,
+   "lon": 72.9293364,
+   "ts": "2026-07-06T08:43:58.695290+05:30",
+   "place": "Kalyan",
+   "observed_m": 0.499,
+   "predicted_m": 0.235,
+   "rain_mm": 110.8,
+   "window_h": 24,
+   "cell": [
+    226,
+    41
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "521",
+   "area": "mumbai_north",
+   "lat": 19.2406745,
+   "lon": 72.8504616,
+   "ts": "2026-07-06T08:46:57.199063+05:30",
+   "place": "Navi Mumbai",
+   "observed_m": 0.499,
+   "predicted_m": 0.01,
+   "rain_mm": 120.1,
+   "window_h": 24,
+   "cell": [
+    131,
+    166
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "523",
+   "area": "mumbai_west",
+   "lat": 19.0789383,
+   "lon": 72.8446344,
+   "ts": "2026-07-06T10:35:52.460396+05:30",
+   "place": "Santacruz",
+   "observed_m": 0.471,
+   "predicted_m": 0.204,
+   "rain_mm": 126.3,
+   "window_h": 24,
+   "cell": [
+    174,
+    155
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "524",
+   "area": "mumbai_east",
+   "lat": 19.1571982,
+   "lon": 72.9408187,
+   "ts": "2026-07-06T11:26:47.461715+05:30",
+   "place": "Nahur",
+   "observed_m": 0.073,
+   "predicted_m": 0.138,
+   "rain_mm": 132.4,
+   "window_h": 24,
+   "cell": [
+    29,
+    62
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "526",
+   "area": "mumbai_east",
+   "lat": 19.1187195,
+   "lon": 72.9073476,
+   "ts": "2026-07-06T15:08:59.480769+05:30",
+   "place": "Powai",
+   "observed_m": 0.081,
+   "predicted_m": 0.136,
+   "rain_mm": 150.3,
+   "window_h": 24,
+   "cell": [
+    101,
+    0
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "527",
+   "area": "mumbai_south",
+   "lat": 18.9765535,
+   "lon": 72.8297716,
+   "ts": "2026-07-06T17:54:48.849404+05:30",
+   "place": "G H Parundekar Marg, Agripada",
+   "observed_m": 0.08,
+   "predicted_m": 0.097,
+   "rain_mm": 131.8,
+   "window_h": 24,
+   "cell": [
+    107,
+    127
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "528",
+   "area": "mumbai_west",
+   "lat": 19.1430985,
+   "lon": 72.8246055,
+   "ts": "2026-07-06T22:38:03.892175+05:30",
+   "place": "Lokhandwala",
+   "observed_m": 0.075,
+   "predicted_m": 0.257,
+   "rain_mm": 144.6,
+   "window_h": 24,
+   "cell": [
+    55,
+    118
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "529",
+   "area": "mumbai_west",
+   "lat": 19.16182562688559,
+   "lon": 72.84012712095053,
+   "ts": "2026-07-07T00:50:54.943366+05:30",
+   "place": "19.16183, 72.84013",
+   "observed_m": 0.471,
+   "predicted_m": 0.255,
+   "rain_mm": 143.6,
+   "window_h": 24,
+   "cell": [
+    21,
+    147
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "530",
+   "area": "mumbai_north",
+   "lat": 19.177682,
+   "lon": 72.8607254,
+   "ts": "2026-07-07T07:14:10.040327+05:30",
+   "place": "Malad East",
+   "observed_m": 0.072,
+   "predicted_m": 0.195,
+   "rain_mm": 139.5,
+   "window_h": 24,
+   "cell": [
+    248,
+    185
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "531",
+   "area": "mumbai_west",
+   "lat": 19.0677245,
+   "lon": 72.8648464,
+   "ts": "2026-07-07T19:14:52.937848+05:30",
+   "place": "BKC",
+   "observed_m": 0.073,
+   "predicted_m": 0.121,
+   "rain_mm": 60.7,
+   "window_h": 24,
+   "cell": [
+    195,
+    192
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "532",
+   "area": "mumbai_east",
+   "lat": 19.0408236,
+   "lon": 72.9330061,
+   "ts": "2026-07-07T19:58:23.718792+05:30",
+   "place": "Anushakti Nagar",
+   "observed_m": 0.072,
+   "predicted_m": 0.039,
+   "rain_mm": 63.4,
+   "window_h": 24,
+   "cell": [
+    245,
+    48
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "533",
+   "area": "mumbai_south",
+   "lat": 18.9917641,
+   "lon": 72.8438525,
+   "ts": "2026-07-08T00:38:55.263839+05:30",
+   "place": "Abhyudaya Nagar",
+   "observed_m": 0.075,
+   "predicted_m": 0.054,
+   "rain_mm": 53.3,
+   "window_h": 24,
+   "cell": [
+    79,
+    154
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "534",
+   "area": "mumbai_east",
+   "lat": 19.148129287617323,
+   "lon": 73.00019718311516,
+   "ts": "2026-07-08T07:56:25.721277+05:30",
+   "place": "Diva Koliwada Road, Airoli Sector 5",
+   "observed_m": 0.071,
+   "predicted_m": 0.089,
+   "rain_mm": 45.2,
+   "window_h": 24,
+   "cell": [
+    46,
+    173
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "539",
+   "area": "mumbai_east",
+   "lat": 19.1239767,
+   "lon": 72.9138881,
+   "ts": "2026-07-20T20:58:21.398549+05:30",
+   "place": "Hiranandani Gardens",
+   "observed_m": 0.077,
+   "predicted_m": 0.048,
+   "rain_mm": 36.6,
+   "window_h": 24,
+   "cell": [
+    91,
+    12
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "555",
+   "area": "mumbai_south",
+   "lat": 19.0314768,
+   "lon": 72.8468509,
+   "ts": "2026-07-22T07:29:17.823120+05:30",
+   "place": "Matunga",
+   "observed_m": 0.282,
+   "predicted_m": 0.052,
+   "rain_mm": 40.1,
+   "window_h": 24,
+   "cell": [
+    5,
+    159
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "556",
+   "area": "mumbai_west",
+   "lat": 19.100419,
+   "lon": 72.8826122,
+   "ts": "2026-07-22T08:34:58.655000+05:30",
+   "place": "Sakinaka",
+   "observed_m": 0.082,
+   "predicted_m": 0.06,
+   "rain_mm": 41.8,
+   "window_h": 24,
+   "cell": [
+    135,
+    225
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "557",
+   "area": "mumbai_east",
+   "lat": 19.1201503,
+   "lon": 72.9169343,
+   "ts": "2026-07-23T00:11:58.092893+05:30",
+   "place": "Hiranandani hospital",
+   "observed_m": 1.023,
+   "predicted_m": 0.073,
+   "rain_mm": 85.6,
+   "window_h": 24,
+   "cell": [
+    98,
+    18
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "565",
+   "area": "mumbai_north",
+   "lat": 19.2192428,
+   "lon": 72.8363592,
+   "ts": "2026-07-23T08:01:38.818890+05:30",
+   "place": "Bandra",
+   "observed_m": 0.079,
+   "predicted_m": 0.5,
+   "rain_mm": 148.7,
+   "window_h": 24,
+   "cell": [
+    171,
+    140
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "569",
+   "area": "mumbai_north",
+   "lat": 19.2140139,
+   "lon": 72.8372919,
+   "ts": "2026-07-25T10:33:52.040348+05:30",
+   "place": "Kandivali West",
+   "observed_m": 1.147,
+   "predicted_m": 0.064,
+   "rain_mm": 11.7,
+   "window_h": 24,
+   "cell": [
+    181,
+    141
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "570",
+   "area": "mumbai_east",
+   "lat": 19.1307543,
+   "lon": 72.9166116,
+   "ts": "2026-07-27T11:02:49.371954+05:30",
+   "place": "Infinite Corridoor, Jyotiba Phule Nagar",
+   "observed_m": 0.08,
+   "predicted_m": 0.073,
+   "rain_mm": 45.1,
+   "window_h": 24,
+   "cell": [
+    78,
+    18
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "571",
+   "area": "mumbai_east",
+   "lat": 19.1276167,
+   "lon": 72.9298,
+   "ts": "2026-07-30T20:24:17.436357+05:30",
+   "place": "Kanjumarg Station Road, Kanjur West",
+   "observed_m": 0.073,
+   "predicted_m": 0.05,
+   "rain_mm": 10.4,
+   "window_h": 24,
+   "cell": [
+    84,
+    42
+   ]
+  },
+  {
+   "source": "mumbaiflood_cs",
+   "source_id": "572",
+   "area": "mumbai_north",
+   "lat": 19.21210254257271,
+   "lon": 72.82333009365672,
+   "ts": "2026-08-03T01:24:16.821923+05:30",
+   "place": "Charkop",
+   "observed_m": 0.075,
+   "predicted_m": 0.081,
+   "rain_mm": 23.9,
+   "window_h": 24,
+   "cell": [
+    184,
+    115
+   ]
+  }
+ ],
+ "window_sweep": {
+  "3": {
+   "n": 46,
+   "rmse_m": 0.3628,
+   "mae_m": 0.2544,
+   "bias_m": -0.246,
+   "skill": -0.9307,
+   "correlation": -0.0956,
+   "csi": 0.0,
+   "pred_wet": 1,
+   "obs_wet": 22,
+   "pred_mean_m": 0.0507,
+   "mean_rain_mm": 17.8
+  },
+  "6": {
+   "n": 77,
+   "rmse_m": 0.3268,
+   "mae_m": 0.2277,
+   "bias_m": -0.2157,
+   "skill": -0.8266,
+   "correlation": 0.0121,
+   "csi": 0.027,
+   "pred_wet": 2,
+   "obs_wet": 36,
+   "pred_mean_m": 0.0596,
+   "mean_rain_mm": 26.4
+  },
+  "12": {
+   "n": 81,
+   "rmse_m": 0.3091,
+   "mae_m": 0.2099,
+   "bias_m": -0.1882,
+   "skill": -0.6532,
+   "correlation": 0.0473,
+   "csi": 0.1,
+   "pred_wet": 7,
+   "obs_wet": 37,
+   "pred_mean_m": 0.0827,
+   "mean_rain_mm": 47.3
+  },
+  "24": {
+   "n": 83,
+   "rmse_m": 0.3102,
+   "mae_m": 0.207,
+   "bias_m": -0.1619,
+   "skill": -0.4569,
+   "correlation": 0.0545,
+   "csi": 0.2444,
+   "pred_wet": 18,
+   "obs_wet": 38,
+   "pred_mean_m": 0.1172,
+   "mean_rain_mm": 80.1
+  },
+  "48": {
+   "n": 85,
+   "rmse_m": 0.376,
+   "mae_m": 0.2491,
+   "bias_m": -0.075,
+   "skill": -0.7677,
+   "correlation": -0.0566,
+   "csi": 0.3929,
+   "pred_wet": 38,
+   "obs_wet": 40,
+   "pred_mean_m": 0.2197,
+   "mean_rain_mm": 142.7
+  }
+ },
+ "neighbourhood": {
+  "0": {
+   "box_m": 60,
+   "mae_m": 0.207,
+   "rmse_m": 0.3102,
+   "bias_m": -0.1619,
+   "median_abs_err_m": 0.1186,
+   "predicted_mean_m": 0.1172,
+   "correlation": 0.0549,
+   "correlation_wet_only": -0.2253
+  },
+  "1": {
+   "box_m": 180,
+   "mae_m": 0.2065,
+   "rmse_m": 0.3079,
+   "bias_m": -0.134,
+   "median_abs_err_m": 0.1362,
+   "predicted_mean_m": 0.145,
+   "correlation": -0.0247,
+   "correlation_wet_only": -0.3731
+  },
+  "2": {
+   "box_m": 300,
+   "mae_m": 0.2152,
+   "rmse_m": 0.31,
+   "bias_m": -0.1031,
+   "median_abs_err_m": 0.1362,
+   "predicted_mean_m": 0.176,
+   "correlation": -0.1006,
+   "correlation_wet_only": -0.4535
+  },
+  "3": {
+   "box_m": 420,
+   "mae_m": 0.2297,
+   "rmse_m": 0.3158,
+   "bias_m": -0.0601,
+   "median_abs_err_m": 0.1771,
+   "predicted_mean_m": 0.219,
+   "correlation": -0.1479,
+   "correlation_wet_only": -0.4199
+  },
+  "4": {
+   "box_m": 540,
+   "mae_m": 0.2387,
+   "rmse_m": 0.3333,
+   "bias_m": -0.0037,
+   "median_abs_err_m": 0.1505,
+   "predicted_mean_m": 0.2754,
+   "correlation": -0.0383,
+   "correlation_wet_only": -0.1475
+  }
+ }
+}
