@@ -484,11 +484,14 @@ class WhatIf(BaseModel):
     rain_mm: float = 100.0
     dig_sites: dict | None = None
     area: str | None = None
+    zones: bool = True          # named danger zones, ranked by flood volume on built land
+    max_zones: int = 12
 
 
 @app.post("/api/whatif")
 def whatif(req: WhatIf):
-    """Live emulator what-if: returns flood stats + a depth overlay PNG (data URL) + bounds."""
+    """Live emulator what-if: flood stats, a depth overlay PNG (data URL), bounds, and the
+    ranked list of named danger zones for the map's pins."""
     work = _work(req.area)
     try:
         from varuna.serve.emulator import whatif_grid
@@ -498,8 +501,50 @@ def whatif(req: WhatIf):
         hmax, _dig, summary = whatif_grid(req.rain_mm, req.dig_sites, work=work)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(500, f"emulator failed: {e}")
-    return {"summary": summary, "bounds": _domain_bounds(work, _center(req.area)),
-            "overlay_png": _flood_png(hmax, CFG.min_depth_m)}
+    out = {"summary": summary, "bounds": _domain_bounds(work, _center(req.area)),
+           "overlay_png": _flood_png(hmax, CFG.min_depth_m)}
+    if req.zones:
+        try:
+            from varuna.serve.zones import zones_for_grid
+            out["zones"] = zones_for_grid(hmax, work=work, max_zones=int(req.max_zones))
+        except Exception as e:  # noqa: BLE001 — the overlay is still worth serving without pins
+            out["zones"] = []
+            out["zones_error"] = str(e)
+    return out
+
+
+class FlowReq(BaseModel):
+    rain_mm: float = 100.0
+    area: str | None = None
+    step: int = 4               # grid thinning for the field arrows (cells)
+    max_arrows: int = 1200
+    roads: bool = True          # project the field onto the street graph
+    particles: bool = False     # animated-particle grid (heaviest part of the payload)
+
+
+@app.post("/api/flowfield")
+def flowfield(req: FlowReq):
+    """Which way the water runs: field arrows, per-street arrows and an optional particle grid.
+
+    Direction is steepest descent of the water surface (z+h), speed is Manning steady flow — a
+    peak-conditions sketch, not a time-resolved velocity field (see varuna/serve/flowfield.py).
+    """
+    work = _work(req.area)
+    try:
+        from varuna.serve.flowfield import flow_for_area
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(503, f"flow field unavailable (need torch+rasterio+bundle): {e}")
+
+    def build():
+        try:
+            return flow_for_area(req.rain_mm, work=work, step=max(1, int(req.step)),
+                                 max_arrows=int(req.max_arrows), with_roads=bool(req.roads),
+                                 with_layer=bool(req.particles))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(500, f"flow field failed: {e}")
+
+    return _cached(("flow", work, round(float(req.rain_mm), 1), int(req.step),
+                    int(req.max_arrows), bool(req.roads), bool(req.particles)), 300, build)
 
 
 class CanalReq(BaseModel):
