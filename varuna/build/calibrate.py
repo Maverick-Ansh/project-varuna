@@ -152,9 +152,15 @@ def valid_mask(work, dom):
     return (occ < 50).float()
 
 
-def _rain_for_date(date, window_days=2, center=None):
-    """Total ERA5 archive rain (mm) over the `window_days` ending on the SAR overpass date."""
+def _rain_for_date(date, window_days=2, center=None, work=None):
+    """Total ERA5 archive rain (mm) over the `window_days` ending on the SAR overpass date.
+
+    Rain is looked up at the BUNDLE's own centre (twin_meta.pt) when `work` is given — falling
+    back to CFG.center silently priced Patna rain into every other city's calibration."""
     from ..serve.weather import historical_rain_mm
+    if center is None and work is not None:
+        from .twin import _bundle_meta
+        center = _bundle_meta(work).get("center")
     center = center or CFG.center
     d1 = _dt.date.fromisoformat(date)
     d0 = d1 - _dt.timedelta(days=window_days)
@@ -175,7 +181,7 @@ def score_twin(date, work=None, tau=None, rain_mm=None, window_days=2,
     work = work or CFG.work
     tau = CFG.min_depth_m if tau is None else tau
     dom = build_domain(work, device=device)
-    rain = _rain_for_date(date, window_days) if rain_mm is None else float(rain_mm)
+    rain = _rain_for_date(date, window_days, work=work) if rain_mm is None else float(rain_mm)
     sar = align_sar(work, date, dom)
     valid = valid_mask(work, dom)
     with torch.no_grad():
@@ -208,7 +214,7 @@ def calibrate(dates_train, dates_test=None, work=None, iters=40, lr=0.05, lam=1e
     def prep(dates):
         out = []
         for d in dates:
-            rain = _rain_for_date(d, window_days)
+            rain = _rain_for_date(d, window_days, work=work)
             sar = align_sar(work, d, dom)
             if rain < 1.0:
                 log.warning("date %s has ~no antecedent rain (%.1f mm) — weak calibration signal", d, rain)
