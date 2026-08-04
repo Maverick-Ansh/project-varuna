@@ -120,42 +120,60 @@ bounds**.
 Summed over the four tiles, per real storm: **2.6 – 4.5 million m³**, tracking storm size
 (2025-09-04, 21 mm: 2.64 Mm³ · 2026-07-08, 213 mm: 4.48 Mm³).
 
-On the stitched city domain (below), with design storms:
+On the complete six-tile city domain, with design storms:
 
-| storm | inferred surface outflow |
-|---|---|
-| 50 mm | ≥ 4.74 million m³ |
-| 100 mm | ≥ 5.27 million m³ |
-| 200 mm | ≥ 5.45 million m³ |
-
-**The outflow saturates.** Quadrupling the rain adds 15% to the drained volume, because the field is
-*rate*-limited: once streets are wet for the whole storm, extra rainfall cannot leave faster — it
-ponds. That is a concrete, falsifiable statement about Mumbai's drainage ceiling, and the obvious
-next step is to check it against BMC/BRIMSTOWAD published pumping capacities.
-
-Inferred capacities are physically plausible for urban drainage: mean 0.6 – 3.0 mm/h over built
-land, peaking at 5 – 50 mm/h; 52 – 71% of built cells carry more than 1 mm/h.
-
-## Result 5 — one Mumbai (tile-join prototype)
-
-The four tiles mosaic onto one grid — **817 × 586 at 60 m**, covering 70.9% of the union bounding
-box (the rest is sea), 15.4% built — and a storm runs on the whole city in **under 3 seconds** on a
-T4. Water crosses the former tile seams instead of hitting four closed boundaries.
-
-Seam audit (100 mm storm, city domain vs the four individual tiles, land cells only):
-
-| tile | mean Δh in the 600 m edge band | mean Δh interior | p99 Δh |
+| storm | inferred surface outflow | flooded land | of which built |
 |---|---|---|---|
-| mumbai_south | 4.64 cm | 3.23 cm | 35 cm |
-| mumbai_west | 5.55 cm | 4.00 cm | 48 cm |
-| mumbai_east | 5.36 cm | 3.53 cm | 55 cm |
-| mumbai_north | 7.48 cm | 4.03 cm | 68 cm |
+| 25 mm | ≥ 3.48 million m³ | — | — |
+| 50 mm | ≥ 4.63 million m³ | 70.7 km² | 20.2 km² |
+| 100 mm | ≥ 5.21 million m³ | 151.1 km² | 44.8 km² |
+| 200 mm | ≥ 5.41 million m³ | 241.5 km² | 76.7 km² |
 
-Depths near former boundaries disagree with the tiled model **40–85% more than in the interior** —
-the measured cost of closed tile boundaries, and the argument for the city domain. Honest caveat:
-the interior disagreement is not zero either (3–4 cm), because mosaicking re-samples the DEM at a
-slightly different sub-pixel phase (mean |Δz| 0.44–1.40 m between the two croppings). The seam
-signal is the *difference* between edge and interior, not the absolute number.
+**The outflow saturates.** Eight times the rain (25 → 200 mm) buys 56% more drained water, and the
+last doubling (100 → 200 mm) buys 4%. The field is *rate*-limited: once streets are wet for the
+whole storm, extra rainfall cannot leave any faster — it ponds. That is a concrete, falsifiable
+statement about Mumbai's drainage ceiling (~5.4 million m³ per storm, however hard it rains), and
+the obvious next step is to check it against BMC/BRIMSTOWAD published pumping capacities.
+
+Note how differently the two columns behave: drained volume flattens while flooded area keeps
+climbing. That *is* the mechanism — beyond the drainage ceiling, additional rain has nowhere to go
+but outward across the ground.
+
+Inferred capacities are physically plausible for urban drainage: mean 0.3 – 3.0 mm/h over built
+land, peaking at 4 – 50 mm/h.
+
+## Result 5 — one Mumbai, complete
+
+The tiles turned out to be a **2 × 3 grid with two cells empty**: the eastern column had no
+northern row (Mulund, Nahur, the Bhandup pumping station, Thane creek) and no southern row
+(Trombay, Mahul, Mankhurd, Sewri, Vashi creek). Nothing announced this — the mosaic simply filled
+both with sea, which is why the four-tile city was only 70.9% real coverage. Both are now built
+(`mumbai_northeast`, `mumbai_harbour`; emulator val RMSE 22.9 cm and 9.0 cm) and a test asserts
+every grid cell has exactly one owner.
+
+The six tiles mosaic onto one grid — **817 × 586 at 60 m, coverage 1.00**, of which **950 km² is
+land** and 336 km² built — and a storm runs on the whole city in **under 3 seconds** on a T4, with
+water crossing the former seams instead of hitting six closed boundaries.
+
+Seam audit (100 mm storm, city domain vs each individual tile, land cells only):
+
+| tile | mean Δh in the 600 m edge band | mean Δh interior | ratio | p99 Δh |
+|---|---|---|---|---|
+| mumbai_south | 4.67 cm | 3.23 cm | 1.4× | 35 cm |
+| mumbai_west | 5.55 cm | 4.00 cm | 1.4× | 48 cm |
+| mumbai_east | 5.73 cm | 3.66 cm | 1.6× | 59 cm |
+| mumbai_north | 7.51 cm | 4.05 cm | 1.9× | 69 cm |
+| mumbai_northeast | 10.85 cm | 4.56 cm | **2.4×** | 106 cm |
+| mumbai_harbour | 7.15 cm | 2.91 cm | 2.5× | 54 cm |
+
+Depths near former boundaries disagree with the tiled model **40–150% more than in the interior** —
+the measured cost of closed tile boundaries. The two new creek tiles are the worst affected, which
+is what you would expect: they are where the water was trying to leave.
+
+Honest caveat: the interior disagreement is not zero either (2.9–4.6 cm), because mosaicking
+re-samples the DEM at a slightly different sub-pixel phase (mean |Δz| 0.44–2.34 m between the two
+croppings, worst on northeast). The seam signal is the *difference* between edge and interior, not
+the absolute number.
 
 ## What this changes
 
@@ -178,8 +196,11 @@ signal is the *difference* between edge and interior, not the absolute number.
   and infiltration the twin underestimates.
 - **Radar sees extent, not depth**, so nothing here constrains the depth ranking (Result 3 is the
   direct evidence).
-- Two tiles hit non-finite gradients on some iterations (`n_skipped` in `sinkfield_fit.json`:
-  west 17, north 25 of 40) — those steps are skipped, not silently applied, but the effective
-  training length varies by tile and north's field is the weakest as a result.
+- **The creek tiles are undertrained, for a numerical reason.** An explicit Bates step of 10 s
+  violates CFL where a tidal creek makes the water deep, the storm returns NaN, and that iteration
+  is thrown away: west lost 17 of 40, north and northeast 25 of 40. Their fields are correspondingly
+  weak (northeast mean 0.33 mm/h against east's 2.98). `fit` now re-runs an unstable storm at a
+  halved timestep before giving up, so a re-fit of those tiles should recover the lost training —
+  the fields reported here predate that fix.
 - SAR wet masks over a monsoon megacity include wet roofs, mudflats and creek margins the JRC mask
   does not remove.

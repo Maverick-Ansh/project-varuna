@@ -427,6 +427,40 @@ def learning_log(area: str | None = None):
     return {"area": area or default_area_id(), "entries": js or []}
 
 
+@app.get("/api/city_domain")
+def city_domain(city: str = "mumbai", rain_mm: float = 100.0):
+    """The JOINED city: one domain where water crosses the former tile seams.
+
+    Served from a precomputed storm ladder (varuna.build.city.build_city_bundle) and
+    interpolated — a city-scale simulation is minutes on this CPU, and rainfall is one scalar,
+    so the ladder reproduces the slider without pretending to re-simulate. /api/city is the
+    different, older answer: a SUM over independent closed-boundary tiles.
+    """
+    grp = CITIES.get(city)
+    if not grp:
+        raise HTTPException(404, f"unknown city '{city}'; known: {sorted(CITIES)}")
+    from varuna.areas import artifacts_root
+    rain_mm = round(min(max(float(rain_mm), 0.0), 500.0))
+    work = os.path.join(artifacts_root(), city)
+
+    def build():
+        try:
+            from varuna.serve.city_view import city_flood
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(503, f"city view unavailable: {e}")
+        try:
+            out = city_flood(rain_mm, work)
+        except FileNotFoundError as e:
+            raise HTTPException(404, str(e))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(500, f"city view failed: {e}")
+        out["city"] = city
+        out["tiles"] = grp["tiles"]
+        return out
+
+    return _cached(("city_domain", city, rain_mm), 600, build)
+
+
 @app.get("/api/city")
 def city(city: str = "mumbai", rain_mm: float | None = None):
     """City-wide aggregate over a tile group. Tiles tessellate exactly, so sums don't double-count."""
@@ -571,6 +605,52 @@ def flowfield(req: FlowReq):
 
     return _cached(("flow", work, round(float(req.rain_mm), 1), int(req.step),
                     int(req.max_arrows), bool(req.roads), bool(req.particles)), 300, build)
+
+
+class StreetReq(BaseModel):
+    rain_mm: float = 100.0
+    area: str | None = None
+    bbox: list[list[float]] | None = None    # [[south, west], [north, east]] — the viewport
+    max_segments: int = 1500
+    min_depth_mm: float = 20.0
+
+
+@app.post("/api/streets")
+def streets(req: StreetReq):
+    """How deep is the water on each street in view, and which way is it running.
+
+    Unlike /api/flowfield this keeps PONDED streets (no flow, still flooded — usually the ones
+    that matter) and returns one row per street segment inside the viewport instead of one arrow
+    per 60 m cell. Every row carries both the twin's cell mean and a street-depth estimate; see
+    varuna/serve/streets.py for what that correction is and is not.
+    """
+    work = _work(req.area)
+    try:
+        from varuna.serve.streets import streets_for_area
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(503, f"street layer unavailable (need torch+rasterio+bundle): {e}")
+
+    bbox = req.bbox
+    if bbox is not None:
+        try:
+            (s, w), (n, e) = bbox
+            if not (s < n and w < e):
+                raise ValueError("expected [[south, west], [north, east]]")
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(400, f"bad bbox: {exc}")
+
+    def build():
+        try:
+            return streets_for_area(req.rain_mm, work=work, bbox=bbox,
+                                    max_segments=max(1, int(req.max_segments)),
+                                    min_depth=max(0.0, float(req.min_depth_mm) / 1000.0))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(500, f"street layer failed: {e}")
+
+    key = ("streets", work, round(float(req.rain_mm), 1), int(req.max_segments),
+           round(float(req.min_depth_mm), 1),
+           None if bbox is None else tuple(round(float(x), 4) for p in bbox for x in p))
+    return _cached(key, 300, build)
 
 
 class CanalReq(BaseModel):

@@ -96,6 +96,31 @@ def test_save_and_load_roundtrip(tmp_path):
     assert torch.allclose(dom.drain, sf.drain_ms().detach(), atol=1e-7)
 
 
+def test_fit_retries_an_unstable_storm_at_a_smaller_step(monkeypatch):
+    """A storm that returns NaN at the default step must be re-run at a smaller one, not
+    silently skipped — skipping cost the creek tiles 25 of 40 training iterations."""
+    base = _synth_domain()
+    calls = []
+    real = S.DrainDomain.simulate
+
+    def flaky(self, z, rain_mm, **kw):
+        dt = kw.get("dt", 10.0)
+        calls.append(dt)
+        out = real(self, z, rain_mm, **kw)
+        if dt >= 10.0:                       # unstable at the default step only
+            return out * float("nan")
+        return out
+
+    monkeypatch.setattr(S.DrainDomain, "simulate", flaky)
+    rains = {"a": 30.0}
+    sar = {"a": torch.zeros(base.N, base.N)}
+    hp = dict(S.DEFAULT_HP, iters=1, batch=1, lvol=0.0,
+              storm_hr=SIM["storm_hr"], total_hr=SIM["total_hr"])
+    _dom, _sf, hist = S.fit(base, sar, None, rains, ["a"], hp=hp)
+    assert 10.0 in calls and 5.0 in calls          # retried at half the step
+    assert not hist[0].get("skipped")              # and the iteration actually trained
+
+
 def test_wet_duration_and_drained_volume_helpers():
     base = _synth_domain()
     dur = S.wet_duration_s(base, 30.0, storm_hr=SIM["storm_hr"], total_hr=SIM["total_hr"])

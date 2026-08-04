@@ -66,11 +66,15 @@ _AREAS = [
          note="sub-crop of the Patna DEM (no new download)"),
     Area("bengaluru", "Bengaluru", (77.50, 12.87, 77.78, 13.01), (12.940, 77.640),
          note="urban stormwater flooding; requires an Earth Engine build"),
-    # --- Mumbai (BMC) as four 256^2 @ 60 m tiles (15.36 km squares) tessellating edge-to-edge:
-    # row lat edges 18.8963/19.0348/19.1733/19.3118, col lon edges 72.7570/72.9030/73.0490.
-    # Exact tessellation (zero overlap) so city-wide sums are correct by construction. Tiles are
-    # independent closed-boundary models — flow across tile seams is not simulated; tidal /
-    # storm-surge effects are not modeled. AOIs pad the crop window for the EE download.
+    # --- Mumbai (BMC) as a COMPLETE 2 x 3 grid of 256^2 @ 60 m tiles (15.36 km squares)
+    # tessellating edge-to-edge: row lat edges 18.8963/19.0348/19.1733/19.3118, col lon edges
+    # 72.7570/72.9030/73.0490. The edges are a fixed 0.1460 deg apart, which equals 256 x 60 m
+    # only near 19.10 N — so the northern row overlaps its neighbour by ~17 m (a quarter cell,
+    # test-bounded to half a cell), and city-wide sums over tiles carry that much double-count.
+    # No gaps, so varuna.build.city can mosaic the whole grid. Tiles are
+    # independent closed-boundary models — cross-seam flow needs the joined city domain
+    # (varuna/build/city.py); tidal / storm-surge effects are not modeled anywhere yet.
+    # AOIs pad the crop window for the EE download and are derived from the edges, never typed.
     Area("mumbai_south", "Mumbai — Island City", (72.745, 18.884, 72.915, 19.047),
          (18.9655, 72.8300), n_grid=256, city="mumbai",
          note="Colaba-Mahim: Hindmata/Parel, Kings Circle, Dadar TT, Byculla, Worli"),
@@ -83,6 +87,16 @@ _AREAS = [
     Area("mumbai_north", "Mumbai — North (Malad-Dahisar)", (72.745, 19.161, 72.915, 19.324),
          (19.2425, 72.8300), n_grid=256, city="mumbai",
          note="Malad subway, Kandivali, Borivali, Dahisar; Poisar & Dahisar rivers"),
+    # The two cells that completed the grid (added V4): the eastern column's north and south
+    # rows. Both are creek-dominated — a large share of each tile is tidal water, which is
+    # exactly why they matter (the outfalls are here) and why their emulators are the most
+    # likely to need train_emulator's collapse retry.
+    Area("mumbai_northeast", "Mumbai — North-east (Mulund-Thane creek)",
+         (72.891, 19.161, 73.061, 19.324), (19.2425, 72.9760), n_grid=256, city="mumbai",
+         note="Mulund, Nahur, Bhandup pumping station, Thane creek flank, Airoli approach"),
+    Area("mumbai_harbour", "Mumbai — Harbour (Trombay-Vashi)",
+         (72.891, 18.884, 73.061, 19.047), (18.9655, 72.9760), n_grid=256, city="mumbai",
+         note="Trombay, Mahul, Mankhurd, Sewri mudflats, Vashi creek; harbour outfalls"),
 ]
 
 
@@ -114,9 +128,14 @@ _REGISTRY = {a.id: a for a in _AREAS}
 # City groups for the aggregate dashboard view. Tiles tessellate exactly, so summing per-tile
 # volumes/areas never double-counts.
 CITIES = {"mumbai": dict(name="Mumbai (BMC)",
-                         tiles=["mumbai_south", "mumbai_west", "mumbai_east", "mumbai_north"],
-                         note=("Four independent 15.4 km tiles; cross-seam flow and tides are "
-                               "not simulated."))}
+                         tiles=["mumbai_south", "mumbai_west", "mumbai_east", "mumbai_north",
+                                "mumbai_northeast", "mumbai_harbour"],
+                         grid=dict(lat_edges=[18.8963, 19.0348, 19.1733, 19.3118],
+                                   lon_edges=[72.7570, 72.9030, 73.0490]),
+                         note=("A complete 2 x 3 grid of 15.4 km tiles. Per-tile views are "
+                               "independent closed-boundary models; the joined city domain "
+                               "(varuna.build.city) simulates flow across the seams. Tides are "
+                               "not simulated anywhere yet."))}
 
 
 def list_areas() -> list[Area]:

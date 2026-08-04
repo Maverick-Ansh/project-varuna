@@ -28,6 +28,8 @@ export const api = {
   canalPlan: (area) => get(`/api/canal_plan${q(area)}`),
   whatif: (rain_mm, dig_sites, area) => post("/api/whatif", { rain_mm, dig_sites, area }),
   flowfield: (rain_mm, area, opts = {}) => post("/api/flowfield", { rain_mm, area, ...opts }),
+  // street-level water inside a viewport: [[south, west], [north, east]]
+  streets: (rain_mm, area, bbox, opts = {}) => post("/api/streets", { rain_mm, area, bbox, ...opts }),
   canals: (rain_mm, n_canals, area) => post("/api/canals", { rain_mm, n_canals, area }),
   storage: (rain_mm, area) => post("/api/storage", { rain_mm, area }),
   optimize: (design_rain, budget_m3, area) => post("/api/optimize", { design_rain, budget_m3, area }),
@@ -51,6 +53,9 @@ export const api = {
   depthValidation: (area) => get(`/api/depth_validation${q(area)}`),
   city: (cityId, rain_mm) =>
     get(`/api/city?city=${encodeURIComponent(cityId)}${rain_mm != null ? `&rain_mm=${rain_mm}` : ""}`),
+  // the JOINED city domain (water crosses the tile seams) — different answer from city()
+  cityDomain: (cityId, rain_mm) =>
+    get(`/api/city_domain?city=${encodeURIComponent(cityId)}&rain_mm=${rain_mm}`),
   imageUrl: (name, area) => `${BASE}/api/image/${name}${q(area)}`,
 
   // v3 "Bhujal": metered recharge plan, state screen, quarantined news

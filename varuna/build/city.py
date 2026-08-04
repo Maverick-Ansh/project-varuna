@@ -179,6 +179,102 @@ def city_drain_field(sink_paths, info, tile_offsets=None):
     return drain
 
 
+RAIN_LADDER = (25.0, 50.0, 75.0, 100.0, 150.0, 200.0)
+
+
+def build_city_bundle(tile_works, out_dir, rains=RAIN_LADDER, sink_paths=None,
+                      tile_offsets=None, device=None, storm_hr=2.0, total_hr=4.0):
+    """Precompute the joined city's storms once, so serving needs no physics.
+
+    A city storm is ~3 s on a T4 and minutes on the CPU the public Space runs on, so the live
+    rainfall slider cannot drive the simulator at city scale. It does not need to: rainfall is
+    one scalar, so a ladder of storms plus interpolation reproduces the slider exactly the way
+    `serve/waterbalance.py` already does for the water budget.
+
+    Writes `city_hmax.npz` (depth grids, float16 — a 60 m depth carries nowhere near 4 decimal
+    digits of meaning) and `city_meta.json`. With `sink_paths`, the ladder is simulated WITH the
+    inferred drainage and the drained volume per rung is recorded.
+    """
+    import json
+    import os
+
+    os.makedirs(out_dir, exist_ok=True)
+    dom, info = build_city_domain(tile_works, device=device)
+    drain = None
+    if sink_paths:
+        from .sinkfield import DrainDomain
+        drain = city_drain_field(sink_paths, info, tile_offsets)
+        sim = DrainDomain(dom)
+        sim.drain = torch.as_tensor(drain, device=sim.device)
+    else:
+        sim = dom
+
+    grids, outflow, dt_used = {}, {}, {}
+    for r in rains:
+        # The Bates scheme is explicit: on tiles full of tidal creek the 10 s step can violate
+        # CFL at high rainfall and the whole grid goes non-finite. A NaN ladder rung would be
+        # served as a flood map, so halve the step and re-run rather than storing it.
+        dt = 10.0
+        for _attempt in range(4):
+            if drain is not None:
+                hmax, vol = sim.drained_volume_m3(float(r), storm_hr=storm_hr,
+                                                  total_hr=total_hr, dt=dt)
+            else:
+                with torch.no_grad():
+                    hmax = sim.simulate(sim.z0, rain_mm=float(r), storm_hr=storm_hr,
+                                        total_hr=total_hr, dt=dt)
+                vol = None
+            if bool(torch.isfinite(hmax).all()):
+                break
+            dt /= 2.0
+            log.warning("city ladder %.0f mm went non-finite — retrying at dt=%.2f s", r, dt)
+        else:
+            raise RuntimeError(
+                f"city storm at {r} mm is non-finite even at dt={dt} s — the domain is "
+                f"numerically unstable, do not serve this ladder")
+        if vol is not None:
+            outflow[str(r)] = round(vol)
+        dt_used[str(r)] = dt
+        grids[str(r)] = hmax.cpu().numpy().astype("float16")
+        log.info("city ladder %.0f mm (dt %.1f s): wet@0.15 %.3f", r, dt,
+                 float((hmax > 0.15).float().mean()))
+
+    # `covered` means "some tile supplies data here" — with a complete grid that is everything,
+    # INCLUDING the Arabian Sea and Thane creek. Reporting totals over it would count the sea as
+    # flooded land (908 km^2 of a 1,723 km^2 grid at 200 mm, against ~600 km^2 of real Mumbai).
+    # `land` is the mask every headline number must use.
+    from .landcover import NO_RECHARGE
+    land = info["covered"] & ~np.isin(np.asarray(dom.wc), list(NO_RECHARGE))
+    log.info("city: %.0f km2 of grid, %.0f km2 land, %.0f km2 built",
+             info["covered"].sum() * dom.dx ** 2 / 1e6, land.sum() * dom.dx ** 2 / 1e6,
+             float(dom.built.sum()) * dom.dx ** 2 / 1e6)
+    np.savez_compressed(os.path.join(out_dir, "city_hmax.npz"),
+                        covered=info["covered"], land=land,
+                        built=dom.built.cpu().numpy().astype(bool),
+                        wc=np.asarray(dom.wc).astype("int16"), **grids)
+    meta = {
+        "grid": list(info["grid"]),
+        "pix_deg": info["pix_deg"],
+        "origin": list(info["origin"]),
+        "dx": dom.dx,
+        "coverage": round(info["coverage"], 4),
+        "built_frac": round(info["built_frac"], 4),
+        "rains": list(rains),
+        "tiles": list(tile_works),
+        "offsets60": {k: list(v) for k, v in info["offsets60"].items()},
+        "with_sink_field": drain is not None,
+        "outflow_m3": outflow,
+        "dt_s": dt_used,
+        "note": ("Depths are a ladder of design storms on the JOINED city domain (water crosses "
+                 "the former tile seams). Between rungs the server interpolates; it does not "
+                 "re-simulate. Outflow, when present, is a lower bound - see SINKFIELD_RESULTS.md."),
+    }
+    with open(os.path.join(out_dir, "city_meta.json"), "w") as f:
+        json.dump(meta, f, indent=1)
+    log.info("city bundle -> %s (%d rungs)", out_dir, len(grids))
+    return meta
+
+
 def city_outflow(city_dom, sink_paths, info, tile_offsets=None, rains=(50.0, 100.0, 200.0),
                  storm_hr=2.0, total_hr=4.0):
     """Drained volume per design storm on the city domain, using the tiles' fitted sink fields.
