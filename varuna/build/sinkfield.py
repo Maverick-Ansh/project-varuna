@@ -60,10 +60,13 @@ class DrainDomain(Domain):
     """
 
     def __init__(self, base: Domain):
-        super().__init__(base.z0.cpu().numpy(), base.mann.cpu().numpy(),
-                         base.infil.cpu().numpy(), base.built.cpu().numpy(),
+        # detach: the base may arrive mid-calibration with graph-attached physics tensors
+        # (LearnablePhysics.apply leaves mann/infil requiring grad until reset)
+        super().__init__(base.z0.detach().cpu().numpy(), base.mann.detach().cpu().numpy(),
+                         base.infil.detach().cpu().numpy(), base.built.detach().cpu().numpy(),
                          dx=base.dx, device=base.device,
-                         capacity=None if base.capacity is None else base.capacity.cpu().numpy())
+                         capacity=(None if base.capacity is None
+                                   else base.capacity.detach().cpu().numpy()))
         self.row0, self.col0 = base.row0, base.col0
         self.wc = getattr(base, "wc", None)
         self.drain = torch.zeros_like(self.z0)
