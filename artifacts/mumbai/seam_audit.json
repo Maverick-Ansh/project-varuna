@@ -1,0 +1,38 @@
+{
+ "artifacts/mumbai_south": {
+  "mean_abs_dz_m": 0.441,
+  "edge_band_mean_dh_cm": 4.67,
+  "interior_mean_dh_cm": 3.23,
+  "p99_dh_cm": 35.0
+ },
+ "artifacts/mumbai_west": {
+  "mean_abs_dz_m": 0.597,
+  "edge_band_mean_dh_cm": 5.55,
+  "interior_mean_dh_cm": 4.0,
+  "p99_dh_cm": 48.0
+ },
+ "artifacts/mumbai_east": {
+  "mean_abs_dz_m": 1.395,
+  "edge_band_mean_dh_cm": 5.73,
+  "interior_mean_dh_cm": 3.66,
+  "p99_dh_cm": 58.6
+ },
+ "artifacts/mumbai_north": {
+  "mean_abs_dz_m": 0.98,
+  "edge_band_mean_dh_cm": 7.51,
+  "interior_mean_dh_cm": 4.05,
+  "p99_dh_cm": 69.2
+ },
+ "artifacts/mumbai_northeast": {
+  "mean_abs_dz_m": 2.338,
+  "edge_band_mean_dh_cm": 10.85,
+  "interior_mean_dh_cm": 4.56,
+  "p99_dh_cm": 106.0
+ },
+ "artifacts/mumbai_harbour": {
+  "mean_abs_dz_m": 1.206,
+  "edge_band_mean_dh_cm": 7.15,
+  "interior_mean_dh_cm": 2.91,
+  "p99_dh_cm": 53.7
+ }
+}

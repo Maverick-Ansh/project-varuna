@@ -1,0 +1,74 @@
+{
+ "grid": [
+  817,
+  586
+ ],
+ "pix_deg": 0.00026949458523585647,
+ "origin": [
+  19.324109234337087,
+  72.74494288729997
+ ],
+ "dx": 60.0,
+ "coverage": 1.0,
+ "built_frac": 0.1949,
+ "rains": [
+  25.0,
+  50.0,
+  75.0,
+  100.0,
+  150.0,
+  200.0
+ ],
+ "tiles": [
+  "artifacts/mumbai_south",
+  "artifacts/mumbai_west",
+  "artifacts/mumbai_east",
+  "artifacts/mumbai_north",
+  "artifacts/mumbai_northeast",
+  "artifacts/mumbai_harbour"
+ ],
+ "offsets60": {
+  "artifacts/mumbai_south": [
+   514,
+   0
+  ],
+  "artifacts/mumbai_west": [
+   258,
+   0
+  ],
+  "artifacts/mumbai_east": [
+   258,
+   270
+  ],
+  "artifacts/mumbai_north": [
+   0,
+   0
+  ],
+  "artifacts/mumbai_northeast": [
+   0,
+   270
+  ],
+  "artifacts/mumbai_harbour": [
+   514,
+   270
+  ]
+ },
+ "with_sink_field": true,
+ "outflow_m3": {
+  "25.0": 3476056,
+  "50.0": 4632810,
+  "75.0": 5032906,
+  "100.0": 5207150,
+  "150.0": 5339340,
+  "200.0": 5414236
+ },
+ "dt_s": {
+  "25.0": 10.0,
+  "50.0": 10.0,
+  "75.0": 10.0,
+  "100.0": 10.0,
+  "150.0": 10.0,
+  "200.0": 10.0
+ },
+ "note": "Depths are a ladder of design storms on the JOINED city domain (water crosses the former tile seams). Between rungs the server interpolates; it does not re-simulate. Outflow, when present, is a lower bound - see SINKFIELD_RESULTS.md."
+}

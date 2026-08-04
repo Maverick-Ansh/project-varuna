@@ -21,7 +21,10 @@ def city_bundle(tmp_path):
         g[covered] = depth
         g[0, 0] = depth * 2                     # a deepest cell to check max
         grids[str(r)] = g
-    np.savez_compressed(tmp_path / "city_hmax.npz", covered=covered, built=built, **grids)
+    land = covered.copy()
+    land[:, 3] = False                          # one land column is actually creek
+    np.savez_compressed(tmp_path / "city_hmax.npz", covered=covered, land=land, built=built,
+                        **grids)
     meta = {"grid": [h, w], "pix_deg": 0.00027, "origin": [19.3, 72.75], "dx": 60.0,
             "coverage": 0.5, "built_frac": 0.125, "rains": [50.0, 100.0, 200.0],
             "tiles": ["a", "b"], "offsets60": {}, "with_sink_field": True,
@@ -60,13 +63,32 @@ def test_outside_the_ladder_clamps_and_warns(city_bundle):
     assert out_hi["max_depth_m"] == pytest.approx(CV.city_flood(200.0, city_bundle)["max_depth_m"])
 
 
-def test_sea_is_excluded_from_every_total(city_bundle):
+def test_sea_and_creek_are_excluded_from_every_total(city_bundle):
     out = CV.city_flood(100.0, city_bundle)
-    # 10 x 8 grid, left 4 columns are land = 40 cells of 3600 m^2 (reported to 1 dp)
-    assert out["land_km2"] == pytest.approx(round(40 * 0.0036, 1))
+    # 10 x 8 grid: 4 covered columns, but one of them is creek -> 30 land cells of 3600 m^2
+    assert out["land_km2"] == pytest.approx(round(30 * 0.0036, 1))
+    assert out["grid_km2"] == pytest.approx(round(40 * 0.0036, 1))   # covered, incl. the creek
     assert out["built_km2"] == pytest.approx(round(10 * 0.0036, 1))
-    assert out["flood_km2"] <= 40 * 0.0036 + 1e-9        # never counts the sea half
+    assert out["flood_km2"] <= 30 * 0.0036 + 1e-9        # never counts sea or creek
     assert out["flood_built_km2"] <= out["flood_km2"]
+    assert "land_is_approximate" not in out
+
+
+def test_a_bundle_without_a_land_mask_says_its_totals_are_approximate(tmp_path):
+    """Old bundles only have `covered`; they must flag that, not silently overstate."""
+    h, w = 6, 6
+    covered = np.ones((h, w), dtype=bool)
+    np.savez_compressed(tmp_path / "city_hmax.npz", covered=covered,
+                        built=np.zeros((h, w), dtype=bool),
+                        **{"100.0": np.full((h, w), 0.3, dtype="float16")})
+    (tmp_path / "city_meta.json").write_text(json.dumps(
+        {"grid": [h, w], "pix_deg": 0.00027, "origin": [19.3, 72.75], "dx": 60.0,
+         "rains": [100.0], "tiles": []}))
+    CV._CACHE.clear()
+    out = CV.city_flood(100.0, str(tmp_path))
+    assert out["land_is_approximate"] is True
+    assert "sea" in out["land_note"]
+    CV._CACHE.clear()
 
 
 def test_volume_and_area_rise_with_rain(city_bundle):

@@ -78,11 +78,24 @@ def depth_grid(rain_mm, work):
                   "clamped": clamped, "ladder": rungs}
 
 
+def land_mask(npz):
+    """Cells that are dry land. NOT `covered`.
+
+    `covered` only says a tile supplied data. Once the tile grid is complete that is the whole
+    bounding box — sea, creek and all — so totals taken over it count the Arabian Sea as flooded
+    ground. Bundles built before this distinction existed only have `covered`; they fall back to
+    it, and `land_is_approximate` in the payload says so rather than quietly overstating.
+    """
+    if "land" in npz.files:
+        return npz["land"], False
+    return npz["covered"], True
+
+
 def city_flood(rain_mm, work, min_depth=0.15):
     """Headline city-wide numbers at a rainfall total — the joined-domain answer."""
     meta, npz = load_city(work)
     grid, prov = depth_grid(rain_mm, work)
-    covered = npz["covered"]
+    covered, approx = land_mask(npz)
     built = npz["built"]
     dx = float(meta.get("dx", 60.0))
     cell_km2 = dx * dx / 1e6
@@ -103,9 +116,14 @@ def city_flood(rain_mm, work, min_depth=0.15):
         "grid": meta["grid"],
         "bounds": bounds(meta),
         "with_sink_field": meta.get("with_sink_field", False),
+        "grid_km2": round(float(npz["covered"].sum()) * cell_km2, 1),
         "provenance": prov,
         "note": meta.get("note"),
     }
+    if approx:
+        out["land_is_approximate"] = True
+        out["land_note"] = ("this bundle predates the land mask, so 'land' here is the whole "
+                            "covered grid and includes sea/creek — rebuild it for real totals")
     if meta.get("outflow_m3"):
         lo, hi = prov["rungs_used"]
         o = meta["outflow_m3"]

@@ -239,9 +239,19 @@ def build_city_bundle(tile_works, out_dir, rains=RAIN_LADDER, sink_paths=None,
         log.info("city ladder %.0f mm (dt %.1f s): wet@0.15 %.3f", r, dt,
                  float((hmax > 0.15).float().mean()))
 
+    # `covered` means "some tile supplies data here" — with a complete grid that is everything,
+    # INCLUDING the Arabian Sea and Thane creek. Reporting totals over it would count the sea as
+    # flooded land (908 km^2 of a 1,723 km^2 grid at 200 mm, against ~600 km^2 of real Mumbai).
+    # `land` is the mask every headline number must use.
+    from .landcover import NO_RECHARGE
+    land = info["covered"] & ~np.isin(np.asarray(dom.wc), list(NO_RECHARGE))
+    log.info("city: %.0f km2 of grid, %.0f km2 land, %.0f km2 built",
+             info["covered"].sum() * dom.dx ** 2 / 1e6, land.sum() * dom.dx ** 2 / 1e6,
+             float(dom.built.sum()) * dom.dx ** 2 / 1e6)
     np.savez_compressed(os.path.join(out_dir, "city_hmax.npz"),
-                        covered=info["covered"], built=dom.built.cpu().numpy().astype(bool),
-                        **grids)
+                        covered=info["covered"], land=land,
+                        built=dom.built.cpu().numpy().astype(bool),
+                        wc=np.asarray(dom.wc).astype("int16"), **grids)
     meta = {
         "grid": list(info["grid"]),
         "pix_deg": info["pix_deg"],
