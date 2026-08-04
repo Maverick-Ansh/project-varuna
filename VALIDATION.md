@@ -46,3 +46,28 @@ drainage-aware modeling as future work).
 
 Artifacts: `observed_water_<date>.tif` (8 storms), `calibration_report.json`, `calibrated_params.json`,
 `twin_scores_2025-08-02.json`.
+
+---
+
+# Mumbai SAR validation (2026-08-04) — the run G6 said we never did
+
+Same protocol as Patna (dynamic twin, real 2-day antecedent rain per TILE centre — not Patna's,
+`calibrate._rain_for_date` had priced Patna rain into every city until this branch; jrc<50 mask on
+both sides), on all 4 Mumbai tiles x 11 monsoon storm dates (2025 + 2026, Sentinel-1 passes with
+>=25 mm antecedent rain, incl. 213 mm before 2026-07-08). tau = 0.15 m.
+
+| tile | mean CSI | typical FAR | POD at >=90 mm |
+|---|---|---|---|
+| mumbai_south | 0.039 | 0.93–0.98 | 0.53–0.71 |
+| mumbai_west  | 0.047 | 0.92–0.96 | 0.41–0.70 |
+| mumbai_east  | 0.043 | 0.93–0.97 | 0.59–0.71 |
+| mumbai_north | 0.041 | 0.93–0.96 | 0.46–0.74 |
+
+**Mumbai lands exactly in Patna's regime** (0.033–0.041): at high rain the twin finds most of the
+SAR water (POD up to 0.74) while predicting 10–15x too many wet cells. Read with the CSI caution
+from `DEPTH_VALIDATION.md`: these CSIs are bought with massive over-wetness (pred_wet vs sar_wet
+is in `artifacts/mumbai_sar_baseline.json` per date). Over-flooding where working drainage exists
+is precisely gap G2 — which the sink-field inversion on this branch attacks; its results live in
+`artifacts/sinkfield_report.json` and the summary below.
+
+*(sink-field results section pending the v2 fits on this branch)*

@@ -1,0 +1,105 @@
+# V4 plan — one city, seen street by street, kept by an agent
+
+V3 shipped metered recharge. V4's depth validation then proved the twin's core failure with two
+independent instruments (SAR extent; crowdsourced depths): it knows *how much* water but not
+*where*. Everything below is organised around fixing "where" — and around the vision: **join the
+tiles into a city, see the water at street level, know what the city pours out, and put a
+caretaker agent on duty.**
+
+## Where this stands (V4 so far)
+
+- **Sprint 1 (shipped)**: living map — flow arrows, named danger zones, satellite basemap.
+- **Depth validation (shipped)**: the twin fails point depths (skill −0.46, wet-site corr −0.23);
+  magnitude half is a 60 m resolution artifact (4.45× ⇒ ~810 m² ponds), ranking half is real.
+- **Sprint 2 (this branch)**: Mumbai SAR validation finally run (baseline mean CSI 0.039–0.047,
+  FAR ≈ 0.95 — same regime as Patna, over-flooding near working drains); **inferred drainage-sink
+  field** — per-cell drain capacity fitted by gradient descent through the differentiable twin
+  against Sentinel-1 wet masks, with a minimum-outflow prior so the fitted outflow volume is a
+  defensible lower bound on what the city actually pours out per storm; judged on the quarantined
+  depth reports. Plus a stitched-city prototype (below).
+
+## A. One Mumbai — the tile join
+
+Tiles were built with overlapping AOIs, so their 30 m rasters mosaic cleanly onto the union
+bounding box (72.745–73.061 E, 18.884–19.324 N ≈ 555×810 cells at 60 m — ~7× one tile's sim
+cost, seconds on a T4). Cross-seam flow then happens *inside one Domain* instead of being
+truncated by four closed boundaries (gap G6).
+
+1. `build_city_domain(tile_ids)` — mosaic dem/worldcover/sand/clay, union grid, one Domain;
+   prototype in Sprint 2.
+2. Seam audit: storm on the city domain vs per-tile domains; map where water crosses former
+   boundaries — the honest measure of what tiling was costing us.
+3. City-wide flow field + danger zones for the map (Sprint 1 layers recomputed at city scale).
+4. Tidal/storm-surge boundary at the western outfalls — for Mumbai the binding constraint
+   (backlog #8); without it the city domain still closes at the sea.
+5. Later: multi-resolution nesting — city at 60 m, hotspots at 5–10 m (workstream B).
+
+## B. Street level — where the 4.45× goes to die
+
+The depth validation left a number to beat: remove the 4.45× dilution ⇒ resolve ~28 m ponds.
+
+1. Sub-grid street conveyance (backlog #4): streets as 1D channels inside 60 m cells using the
+   existing `road_graph.json.gz`; carved drains stop being full-cell artifacts (G3).
+2. CartoDEM 10 m rebuild of one ward (backlog #5): the clean test of whether finer relief alone
+   fixes co-location — our own thesis, falsifiable.
+3. Map: zoom ≥ 16 switches to satellite + street-projected flow arrows (extend
+   `flowlayers.jsx`), per-street depth in mm at the toggled rain — depths sampled from the
+   sink-field twin onto road segments, arrows from the flow field projected on street bearings.
+
+## C. Reverse-engineering the city — outflow and assimilation
+
+The sink field *is* the reverse engineering: given observed extent (SAR) and depths (reports),
+infer the drainage the city must have, and integrate `drained_volume_m3` per storm — "the city
+poured out ≥ X m³ during this storm", per tile and city-wide, on the dashboard next to the
+rain total. Next:
+
+1. Surface outflow + per-tile drain maps on the map UI (a "what the city removes" layer).
+2. Rolling assimilation: refit the field each monsoon month as new S1 passes + reports arrive;
+   the field's *change* is drainage degradation/clogging seen from space (feeds backlog #23,
+   the maintenance prioritiser).
+3. Cross-check against BMC/BRIMSTOWAD pumping-station capacities where published — turns a
+   lower bound into a calibration.
+
+## D. The city caretaker — an agent on duty
+
+All the pieces exist separately (chat agent + tools, nightly loop, alerts, news stage 2.5,
+reward gate). The caretaker is their orchestration into one daemon with a memory:
+
+1. **Watch**: Open-Meteo nowcast + IMD bulletins every few hours (backlog #19 lite).
+2. **Simulate**: on rain signal, run the city domain for the nowcast total; refresh danger
+   zones, flow arrows, ward alerts.
+3. **Learn**: run the nightly citizen-report loop for real (backlog #20 — deployed, never
+   exercised; the reward gate finally fires on live data), and the monthly sink-field refit (C2).
+4. **Report**: a daily caretaker note — what it watched, simulated, changed, refused to change
+   (the reward gate's refusals are the trust signal) — via the existing agent/chat surface.
+5. Implementation: a single `varuna caretaker` loop (cron/HF Space scheduled job) + a state
+   file; the LLM agent narrates and answers, the loop does the work.
+
+## E. Learning systems — what "reinforcement" concretely means here
+
+1. **Reward-gated nightly fine-tune** (exists): citizen reports nudge the emulator only if the
+   replay-buffer anchor says the grid didn't degrade. Run it nightly for a month; report
+   accepted/refused updates.
+2. **SAR-supervised FloodGNN** (backlog #6): train the GNN on observed S1 water directly, not
+   on the twin's own output — removes the "distills the twin" caveat; the biggest single
+   scientific upgrade available.
+3. **RL on interventions**: the differentiable optimiser already does portfolio design by
+   gradient; the honest RL experiment is a policy (PPO) proposing drain/storage portfolios on
+   the city domain with flood-cut-per-rupee as reward, compared against the gradient optimiser
+   on identical budgets. GPU budget is available; free-tier T4 is no longer the constraint.
+4. **Nowcast emulator**: train the U-Net on real hyetographs (hourly Open-Meteo shapes, not the
+   1.5 h design storm) so "next 3 hours" is an emulator call (backlog #19) — removes the
+   storm-shape excuse the depth validation had to grant the model.
+
+## Sequencing
+
+Sprint 2 (this branch) → **S3**: city join hardened + seam audit + tidal boundary + city map
+layers → **S4**: street-level view + sub-grid conveyance + CartoDEM ward → **S5**: caretaker
+daemon + nightly loop actually running → **S6**: GNN-on-SAR + RL-vs-gradient study + nowcast
+emulator. The paper gains a V4 section after S3 (city + sink field are publishable together:
+"satellite-inferred effective drainage of an Indian megacity").
+
+## Validation discipline (unchanged, non-negotiable)
+
+CSI is never quoted without a wetness figure. Depth reports and news labels never train
+anything. Every learned field ships with its held-out numbers, including the ones that lose.

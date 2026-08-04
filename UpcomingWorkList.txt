@@ -206,4 +206,15 @@ IF I HAD TO PICK 5 (best impact-to-effort on the current setup)
 
 Together these move Varuna from "honest research demo" to "operational,
 decision-grade, and scientifically upgraded."
+
+------------------------------------------------------------------------------
+PROGRESS LOG
+------------------------------------------------------------------------------
+2026-08-04 (branch v4/sink-field): #9 DONE (Mumbai SAR validation run: 4 tiles
+x 11 storms 2025-26, mean CSI 0.039-0.047 = Patna's regime, FAR~0.95; DEM
+ensemble variant still open). G2 attacked by a NEW idea not on this list:
+per-cell drainage-sink field inverted from SAR through the differentiable twin
+(varuna/build/sinkfield.py) with a minimum-outflow prior -> also yields
+"m3 the city pours out per storm" (lower bound). G6 partially: tile-join
+city-domain prototype (817x586 @ 60 m, seam audit) - see V4_PLAN.md.
 ==============================================================================

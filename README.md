@@ -35,6 +35,13 @@ Measured on the differentiable twin (128×128 @ 60 m) against free public data �
   (0.866→0.906 layers 0→4); 4 ms/query vs 260 ms for the raster pipeline. Reproduce in one Colab
   session: [`RUNBOOK_GNN.md`](RUNBOOK_GNN.md), `varuna/gnn/`, `notebooks/06_gnn_path_planning.ipynb`.
 
+**V4 (in progress):** the depth validation ([`DEPTH_VALIDATION.md`](DEPTH_VALIDATION.md)) proved
+co-location is the core failure by a second independent method; this branch answers with a
+**satellite-inferred per-cell drainage-sink field** fitted through the differentiable twin
+([`varuna/build/sinkfield.py`](varuna/build/sinkfield.py)), the first Mumbai SAR validation, a
+stitched one-Mumbai city domain, and per-storm city outflow accounting. Roadmap:
+[`V4_PLAN.md`](V4_PLAN.md).
+
 ## Notebooks (run in this order)
 
 | Notebook | Idea | What it produces |
