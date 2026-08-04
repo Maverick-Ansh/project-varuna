@@ -10,7 +10,7 @@ import {
   RechargePlanPanel, StateScreenPanel, NewsPanel, RECHARGE,
 } from "./components/panels.jsx";
 import {
-  Basemap, BASEMAPS, DangerPanel, DangerPins, DepthValidationPanel, FlowArrows,
+  Basemap, BASEMAPS, CityDomainPanel, DangerPanel, DangerPins, DepthValidationPanel, FlowArrows,
   SATELLITE_ZOOM, SEVERITY, StreetPanel, StreetWater, useMapZoom,
 } from "./components/flowlayers.jsx";
 
@@ -207,6 +207,7 @@ export default function App() {
   const [eff, setEff] = useState(0.8);
   const [nl, setNl] = useState(null);
   const [citySummary, setCitySummary] = useState(null);
+  const [cityDomain, setCityDomain] = useState(null);   // the JOINED domain, not a tile sum
   const [learn, setLearn] = useState(null);
 
   // v3 "Bhujal": metered recharge plan / state screen / quarantined news
@@ -328,6 +329,12 @@ export default function App() {
     return () => clearTimeout(streetDebounce.current);
   }, [rain, area, wantStreets, viewBox && viewBox.join(",")]);
 
+  // the joined-city numbers follow the same slider; 404 just means it hasn't been built yet
+  useEffect(() => {
+    if (!isCity || !cityId) { setCityDomain(null); return; }
+    api.cityDomain(cityId, rain).then(setCityDomain).catch(() => setCityDomain(null));
+  }, [isCity, cityId, rain]);
+
   function flyToZone(z) {
     if (mapRef.current && z && z.latlon) mapRef.current.flyTo(z.latlon, Math.max(zoom, 15));
   }
@@ -443,6 +450,11 @@ export default function App() {
         </Panel>
 
         {isCity && <CityPanel city={citySummary} onSelectTile={(tid) => setView(tid)} />}
+        {isCity && (
+          <Panel title="One city (joined domain)">
+            <CityDomainPanel data={cityDomain} rain={rain} />
+          </Panel>
+        )}
 
         {!isCity && (
           <>

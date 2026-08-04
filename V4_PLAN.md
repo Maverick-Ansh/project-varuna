@@ -22,10 +22,17 @@ caretaker agent on duty.**
 
 ## A. One Mumbai — the tile join
 
-Tiles were built with overlapping AOIs, so their 30 m rasters mosaic cleanly onto the union
-bounding box (72.745–73.061 E, 18.884–19.324 N ≈ 555×810 cells at 60 m — ~7× one tile's sim
-cost, seconds on a T4). Cross-seam flow then happens *inside one Domain* instead of being
-truncated by four closed boundaries (gap G6).
+**Status: the city is complete and serving.** The four original tiles turned out to be a 2×3
+grid with two cells empty — the eastern column's north row (Mulund, Nahur, Bhandup pumping
+station, Thane creek) and south row (Trombay, Mahul, Mankhurd, Sewri, Vashi creek) — which the
+mosaic had been silently filling with sea. Both are now built (`mumbai_northeast`,
+`mumbai_harbour`), a test asserts every grid cell has exactly one owner, and
+`varuna/build/city.py` mosaics all six into one 60 m domain that `varuna/serve/city_view.py`
+serves from a precomputed storm ladder (`GET /api/city_domain`).
+
+Tiles mosaic cleanly onto the union bounding box (72.745–73.061 E, 18.884–19.324 N) because they
+share the DEM's 30 m pixel grid at integer offsets. Cross-seam flow then happens *inside one
+Domain* instead of being truncated by six closed boundaries (gap G6).
 
 1. ~~`build_city_domain(tile_works)` — mosaic dem/worldcover/sand/clay, union grid, one Domain~~
    **done** (`varuna/build/city.py`); next: wire it into `areas.py` as a first-class area so the
@@ -46,9 +53,13 @@ The depth validation left a number to beat: remove the 4.45× dilution ⇒ resol
    existing `road_graph.json.gz`; carved drains stop being full-cell artifacts (G3).
 2. CartoDEM 10 m rebuild of one ward (backlog #5): the clean test of whether finer relief alone
    fixes co-location — our own thesis, falsifiable.
-3. Map: zoom ≥ 16 switches to satellite + street-projected flow arrows (extend
-   `flowlayers.jsx`), per-street depth in mm at the toggled rain — depths sampled from the
-   sink-field twin onto road segments, arrows from the flow field projected on street bearings.
+3. ~~Map: zoom switches to satellite + street-projected flow arrows, per-street depth in mm~~
+   **done** — `varuna/serve/streets.py` + `POST /api/streets` + the `StreetWater` layer. It
+   keeps ponded streets (the flow layer drops them, and they are usually the worst place to be)
+   and reports both the cell mean and a street-depth estimate using the measured 4.45×
+   concentration. Next: the estimate is a single median ratio for the whole city — it should
+   vary with how much of the cell is street rather than being constant, which needs the sub-grid
+   conveyance work in item 1.
 
 ## C. Reverse-engineering the city — outflow and assimilation
 

@@ -242,6 +242,56 @@ export function StreetPanel({ data, zoom, rain, minZoom = SATELLITE_ZOOM }) {
   );
 }
 
+// --- the joined city --------------------------------------------------------------------------
+
+/**
+ * One Mumbai: the six tiles simulated as a single domain, so water crosses the former seams.
+ *
+ * This is a genuinely different number from the tile view's sum, and the panel says which one
+ * you are reading — the gap between them IS the seam cost the project measured, so quietly
+ * showing one in place of the other would erase a result.
+ */
+export function CityDomainPanel({ data, rain }) {
+  if (!data) {
+    return (
+      <p className="muted">
+        the joined-city bundle has not been built for this city yet — until then the city view
+        sums independent tiles.
+      </p>
+    );
+  }
+  const p = data.provenance || {};
+  const exact = p.blend === 0;
+  return (
+    <>
+      <div className="kv">
+        <div>Flooded</div>
+        <div><b>{data.flood_km2} km²</b>
+          <span className="muted"> of {data.land_km2} km² land</span></div>
+        <div>On built land</div><div>{data.flood_built_km2} km²</div>
+        <div>Standing water</div>
+        <div>{(data.volume_m3 / 1e6).toFixed(1)}M m³
+          <span className="muted"> · deepest {data.max_depth_m} m</span></div>
+        {data.outflow_m3_lower_bound != null && (
+          <>
+            <div>Drained away</div>
+            <div>≥ {(data.outflow_m3_lower_bound / 1e6).toFixed(2)}M m³
+              <span className="muted"> (lower bound)</span></div>
+          </>
+        )}
+      </div>
+      {data.warning && <p className="warn-tip">{data.warning}</p>}
+      <p className="muted" style={{ marginBottom: 0 }}>
+        One joined domain of {data.tiles?.length || 6} tiles — water flows across the former tile
+        boundaries. {exact
+          ? `Simulated directly at ${p.rungs_used?.[0]} mm.`
+          : `Interpolated between simulated storms at ${p.rungs_used?.[0]} and ${p.rungs_used?.[1]} mm.`}
+        {data.with_sink_field && " Includes the satellite-inferred drainage."}
+      </p>
+    </>
+  );
+}
+
 // --- danger zones ---------------------------------------------------------------------------
 
 export const SEVERITY = {
