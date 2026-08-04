@@ -157,7 +157,7 @@ def wet_duration_s(dom: Domain, rain_mm, storm_hr=2.0, total_hr=4.0, dt=10.0, hm
 
 
 def fit(base: Domain, sar_by_date: dict, valid, rain_by_date: dict, train_dates,
-        hp: dict | None = None, progress=None):
+        hp: dict | None = None, progress=None, wetdur: dict | None = None):
     """Fit a sink field by gradient descent through the simulator against SAR wet masks.
 
     Stochastic over storms: each iteration draws `batch` train dates (seeded — reruns are
@@ -177,9 +177,11 @@ def fit(base: Domain, sar_by_date: dict, valid, rain_by_date: dict, train_dates,
     opt = torch.optim.Adam([sf.theta], lr=hp["lr"])
     rng = np.random.default_rng(hp["seed"])
     train_dates = list(train_dates)
-    # minimum-outflow prior: drained-volume proxy per date = <drain_rate, wet_duration> / rain
-    wetdur = {d: wet_duration_s(base, rain_by_date[d], hp["storm_hr"], hp["total_hr"])
-              for d in train_dates} if hp.get("lvol") else {}
+    # minimum-outflow prior: drained-volume proxy per date = <drain_rate, wet_duration> / rain.
+    # The rollout costs ~a forward sim per date — pass `wetdur` to reuse across fits on one tile.
+    if wetdur is None:
+        wetdur = {d: wet_duration_s(base, rain_by_date[d], hp["storm_hr"], hp["total_hr"])
+                  for d in train_dates} if hp.get("lvol") else {}
     rain_m = {d: rain_by_date[d] / 1000.0 * base.N * base.N for d in train_dates}
     hist = []
     t0 = time.time()
@@ -207,18 +209,26 @@ def fit(base: Domain, sar_by_date: dict, valid, rain_by_date: dict, train_dates,
                 l = l + hp["lvol"] * (dom.drain * wetdur[d]).sum() / rain_m[d]
             loss = loss + l
         loss = loss / len(batch) + sf.penalty(hp["l1"], hp["tv"])
+        skipped = None
         if not torch.isfinite(loss):
-            log.warning("iter %d: non-finite loss — step skipped", it)
+            skipped = "loss"                      # a NaN sim state; do not backprop it
+        else:
+            loss.backward()
+            # a finite loss can still yield a non-finite adjoint through 1440 near-CFL steps;
+            # clip_grad_norm_ would silently write NaN into theta and kill the fit for good
+            if not torch.isfinite(sf.theta.grad).all():
+                skipped = "grad"
+        if skipped:
+            log.warning("iter %d: non-finite %s — step skipped", it, skipped)
             opt.zero_grad()
-            hist.append(dict(it=it, loss=float("nan"), skipped=True))
-            continue
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_([sf.theta], 10.0)
-        opt.step()
-        dmm = sf.drain_mm_h()
-        hist.append(dict(it=it, loss=float(loss), mean_mm_h=float(dmm.mean()),
-                         max_mm_h=float(dmm.max()),
-                         frac_gt1=float((dmm > 1.0).float().mean())))
+            hist.append(dict(it=it, loss=float("nan"), skipped=skipped))
+        else:
+            torch.nn.utils.clip_grad_norm_([sf.theta], 5.0)
+            opt.step()
+            dmm = sf.drain_mm_h()
+            hist.append(dict(it=it, loss=float(loss), mean_mm_h=float(dmm.mean()),
+                             max_mm_h=float(dmm.max()),
+                             frac_gt1=float((dmm > 1.0).float().mean())))
         if progress and (it % 5 == 0 or it == hp["iters"] - 1):
             progress(it, hp["iters"], hist[-1], (time.time() - t0) / 60.0)
     dom.drain = sf.drain_ms().detach()
