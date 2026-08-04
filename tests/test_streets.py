@@ -23,19 +23,37 @@ def _grid(R=20, C=20, val=0.0):
     return np.full((R, C), val)
 
 
-def test_concentration_factor_ramps_then_holds():
+def test_concentration_factor_rises_over_the_measured_range():
     assert S.concentration_factor(0.0) == pytest.approx(1.0)
     assert S.concentration_factor(S.WET_THRESHOLD_M) == pytest.approx(S.DILUTION_FACTOR)
-    assert S.concentration_factor(1.0) == pytest.approx(S.DILUTION_FACTOR)   # clipped, not extrapolated
+    assert S.concentration_factor(S.MEASURED_MAX_M) == pytest.approx(S.DILUTION_FACTOR)
     mid = S.concentration_factor(S.WET_THRESHOLD_M / 2)
     assert 1.0 < mid < S.DILUTION_FACTOR
 
 
+def test_concentration_decays_to_one_when_the_cell_is_uniformly_deep():
+    """Regression: without this a 4.45 m creekside cell mean became 19.8 m 'on the street'."""
+    assert S.concentration_factor(S.UNIFORM_DEPTH_M) == pytest.approx(1.0)
+    assert S.concentration_factor(4.45) == pytest.approx(1.0)
+    between = S.concentration_factor((S.MEASURED_MAX_M + S.UNIFORM_DEPTH_M) / 2)
+    assert 1.0 < between < S.DILUTION_FACTOR
+    assert S.street_depth_mm(4.45) == pytest.approx(4450, abs=1)      # reports the cell mean
+
+
 def test_street_depth_exceeds_cell_mean_but_never_below_it():
-    d = np.array([0.0, 0.05, 0.15, 0.5, 2.0])
+    d = np.array([0.0, 0.05, 0.15, 0.5, 2.0, 5.0])
     mm = S.street_depth_mm(d)
     assert np.all(mm >= d * 1000 - 1e-9)
     assert mm[2] == pytest.approx(0.15 * S.DILUTION_FACTOR * 1000)
+
+
+def test_street_depth_peaks_in_the_measured_band():
+    """The correction must not make deep water deeper than the deepest corrected puddle."""
+    d = np.linspace(0.0, 6.0, 200)
+    mm = S.street_depth_mm(d)
+    boost = mm / 1000.0 - d
+    assert boost.argmax() < len(d) // 2                  # the lift lives at shallow depths
+    assert boost[-1] == pytest.approx(0.0, abs=1e-6)     # none left in deep water
 
 
 def test_ponded_streets_are_kept_and_marked():

@@ -40,21 +40,37 @@ log = logging.getLogger("varuna.serve.streets")
 # the 0.15 m and 0.30 m thresholds. NOT a tuned parameter — changing it invalidates that doc.
 DILUTION_FACTOR = 4.45
 WET_THRESHOLD_M = 0.15          # CFG.min_depth_m — where the ratio was measured
+MEASURED_MAX_M = 0.50           # deepest cell mean in the study the ratio comes from
+UNIFORM_DEPTH_M = 2.0           # by here a 60 m cell is flooded wall to wall, not ponded
 MIN_DEPTH_M = 0.02              # below this a street is "damp", not worth a row
 MAX_SEGMENTS = 1500
 
 
-def concentration_factor(depth_m, factor=DILUTION_FACTOR, wet=WET_THRESHOLD_M):
-    """Cell-mean -> street multiplier: 1x when dry, ramping to `factor` at the wet threshold.
+def concentration_factor(depth_m, factor=DILUTION_FACTOR, wet=WET_THRESHOLD_M,
+                         measured_max=MEASURED_MAX_M, uniform=UNIFORM_DEPTH_M):
+    """Cell-mean depth -> street multiplier. Rises to `factor`, then falls back to 1x.
 
-    The ratio was only ever measured AT wet sites, so above the threshold it is applied as
-    measured and below it is interpolated from 1x. The ramp is an interpolation choice made to
-    avoid a discontinuity at 0.15 m (a 15 cm cell mean would otherwise jump to 67 cm); it is not
-    a measurement, and it is deliberately the conservative direction.
+    The ratio means `cell_area / pond_area`: the water occupies part of the cell, so a person
+    standing in the pond is deeper than the cell average. That only holds while the water IS a
+    pond. Three regimes, and only the middle one is measured:
+
+      * below the wet threshold  — ramped up from 1x. Never measured; the ramp exists so a 15 cm
+        cell mean does not jump discontinuously to 67 cm, and it errs shallow.
+      * 0.15 - 0.50 m            — the range the 83 observations actually covered; the measured
+        4.45x applies as measured.
+      * above 0.50 m             — decays back to 1x by `uniform`. A cell averaging metres is not
+        a puddle in a dry street, it is uniformly deep water, and there is no concentration left
+        to apply. WITHOUT this the correction multiplies a 4.45 m creekside cell mean into 19.8 m
+        of water "on the street", which is how this was caught.
+
+    The decay is a modelling choice, like the ramp, and errs toward the cell mean rather than
+    away from it. Nothing here changes the measured middle.
     """
     d = np.asarray(depth_m, dtype="float64")
-    ramp = np.clip(d / max(wet, 1e-9), 0.0, 1.0)
-    return 1.0 + (factor - 1.0) * ramp
+    up = np.clip(d / max(wet, 1e-9), 0.0, 1.0)
+    span = max(uniform - measured_max, 1e-9)
+    down = 1.0 - np.clip((d - measured_max) / span, 0.0, 1.0)
+    return 1.0 + (factor - 1.0) * np.minimum(up, down)
 
 
 def street_depth_mm(cell_depth_m, factor=DILUTION_FACTOR, wet=WET_THRESHOLD_M):
