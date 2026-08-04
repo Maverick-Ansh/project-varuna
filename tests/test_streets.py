@@ -1,4 +1,4 @@
-"""Offline tests for the street-level water layer (no bundle / rasterio needed)."""
+﻿"""Offline tests for the street-level water layer (no bundle / rasterio needed)."""
 import numpy as np
 import pytest
 
@@ -61,7 +61,7 @@ def test_ponded_streets_are_kept_and_marked():
     seg = _segments()
     h = _grid()
     h[5, 2:8] = 0.3
-    rows, meta = S.streets_in_view(seg, h, u=_grid(), v=_grid())     # zero velocity everywhere
+    rows, meta, _st = S.streets_in_view(seg, h, u=_grid(), v=_grid())     # zero velocity everywhere
     assert len(rows) == 6
     assert all(r.get("ponded") for r in rows)
     assert all("bearing" not in r for r in rows)
@@ -73,7 +73,7 @@ def test_flowing_streets_get_a_bearing_and_no_ponded_flag():
     h = _grid()
     h[5, 2:8] = 0.3
     u = _grid(val=1.0)
-    rows, _ = S.streets_in_view(seg, h, u=u, v=_grid())
+    rows, _m, _st = S.streets_in_view(seg, h, u=u, v=_grid())
     east_rows = [r for r in rows if r["cell"][1] % 2 == 0]           # east-aligned segments
     assert east_rows and all("bearing" in r for r in east_rows)
     assert all(not r.get("ponded") for r in east_rows)
@@ -84,7 +84,7 @@ def test_bbox_filters_and_reports_what_was_in_view():
     h = _grid()
     h[5, 2:8] = 0.3
     bbox = [[18.999, 72.799], [19.0015, 72.8015]]                    # first ~2 midpoints
-    rows, meta = S.streets_in_view(seg, h, bbox=bbox)
+    rows, meta, _st = S.streets_in_view(seg, h, bbox=bbox)
     assert 0 < len(rows) < 6
     assert meta["n_in_view"] == len(rows)
     assert meta["n_segments"] == 6
@@ -93,7 +93,7 @@ def test_bbox_filters_and_reports_what_was_in_view():
 def test_dry_streets_are_dropped():
     seg = _segments()
     h = _grid(val=0.001)
-    rows, meta = S.streets_in_view(seg, h)
+    rows, meta, _st = S.streets_in_view(seg, h)
     assert rows == [] and meta["n_returned"] == 0
 
 
@@ -101,9 +101,23 @@ def test_truncation_keeps_the_deepest_and_says_so():
     seg = _segments(n=6)
     h = _grid()
     h[5, 2:8] = [0.1, 0.9, 0.2, 0.8, 0.3, 0.7]
-    rows, meta = S.streets_in_view(seg, h, max_segments=2)
+    rows, meta, _st = S.streets_in_view(seg, h, max_segments=2)
     assert meta["truncated"] is True and meta["dropped"] == 4
     assert [r["depth_cell_mm"] for r in rows] == [900, 800]          # deepest first
+
+
+def test_summary_describes_the_viewport_not_the_truncated_draw_list():
+    """Regression: stats over the returned subset reported 100% of streets impassable in a
+    viewport where only the deepest 1,500 of 6,982 were being drawn."""
+    seg = _segments(n=6)
+    h = _grid()
+    h[5, 2:8] = [0.03, 0.9, 0.03, 0.8, 0.03, 0.7]                   # 3 deep, 3 barely wet
+    rows, meta, stats = S.streets_in_view(seg, h, max_segments=2)
+    assert len(rows) == 2 and meta["truncated"] is True
+    assert stats["n"] == 6                                          # all six flooded, not two
+    assert stats["flooded_length_m"] == 300                         # 6 x 50 m
+    # the shallow half must dilute the bands — not every metre is impassable
+    assert stats["length_over_impassable_600mm"] < stats["flooded_length_m"]
 
 
 def test_excluded_and_flagged_cells():
@@ -114,7 +128,7 @@ def test_excluded_and_flagged_cells():
     excl[5, 2] = True                                               # permanent water
     flag = np.zeros((20, 20), dtype=bool)
     flag[5, 3] = True                                               # neighbour of water
-    rows, _ = S.streets_in_view(seg, h, exclude=excl, flag=flag)
+    rows, _m, _st = S.streets_in_view(seg, h, exclude=excl, flag=flag)
     assert len(rows) == 5                                           # the water cell is gone
     assert sum(1 for r in rows if r.get("near_water")) == 1
 
@@ -138,5 +152,6 @@ def test_empty_segments_is_not_a_crash():
              ("row", "col", "east", "north", "length_m", "lat", "lon")}
     empty["row"] = empty["row"].astype("int64")
     empty["col"] = empty["col"].astype("int64")
-    rows, meta = S.streets_in_view(empty, _grid())
+    rows, meta, _st = S.streets_in_view(empty, _grid())
     assert rows == [] and meta["n_segments"] == 0
+

@@ -97,7 +97,7 @@ def streets_in_view(segments, h, u=None, v=None, bbox=None, min_depth=MIN_DEPTH_
     """
     n_total = len(segments["row"])
     if n_total == 0:
-        return [], {"n_segments": 0, "n_returned": 0, "truncated": False}
+        return [], {"n_segments": 0, "n_returned": 0, "truncated": False}, {"n": 0}
 
     r, c = segments["row"], segments["col"]
     lat, lon = segments["lat"], segments["lon"]
@@ -110,12 +110,16 @@ def streets_in_view(segments, h, u=None, v=None, bbox=None, min_depth=MIN_DEPTH_
     idx = np.flatnonzero(keep)
     if len(idx) == 0:
         return [], {"n_segments": n_total, "n_in_view": n_in_view, "n_returned": 0,
-                    "truncated": False}
+                    "truncated": False}, {"n": 0}
 
     # deepest first, so a truncated list keeps the streets that matter
     idx = idx[np.argsort(-depth[idx], kind="stable")]
     truncated = len(idx) > max_segments
     shown = idx[:max_segments]
+    # Statistics describe EVERY flooded street in view, not the subset we happen to draw.
+    # Computing them on `shown` instead reported "100% of streets impassable" for a viewport
+    # where 1,500 of 6,982 were returned — true of the drawn subset, wildly false of the place.
+    stats = _stats(depth[idx], segments["length_m"][idx], factor)
 
     if u is not None and v is not None:
         along = (np.asarray(u)[r, c] * segments["east"]
@@ -165,19 +169,40 @@ def streets_in_view(segments, h, u=None, v=None, bbox=None, min_depth=MIN_DEPTH_
     }
     if truncated:
         meta["dropped"] = int(len(idx) - len(rows))
-        log.info("streets_in_view: showing %d of %d in view (deepest first)",
-                 len(rows), len(idx))
-    return rows, meta
+        meta["summary_scope"] = "all flooded streets in view, not just the ones returned"
+        log.info("streets_in_view: drawing %d of %d flooded in view (deepest first); "
+                 "summary covers all %d", len(rows), len(idx), len(idx))
+    return rows, meta, stats
+
+
+BANDS = {"ankle_100mm": 100, "knee_400mm": 400, "impassable_600mm": 600}
+
+
+def _stats(depth_m, length_m, factor=DILUTION_FACTOR, ponded=None):
+    """Headline numbers over an array of flooded segments — the viewport, not the draw list."""
+    if len(depth_m) == 0:
+        return {"n": 0}
+    st = street_depth_mm(depth_m, factor)
+    length = np.asarray(length_m, dtype="float64")
+    out = {
+        "n": int(len(st)),
+        "max_street_mm": int(st.max()),
+        "median_street_mm": int(np.median(st)),
+        "flooded_length_m": int(length.sum()),
+    }
+    if ponded is not None and len(ponded):
+        out["ponded_share"] = round(float(np.mean(ponded)), 3)
+    for name, mm in BANDS.items():                 # thresholds people can act on
+        out[f"length_over_{name}"] = int(length[st >= mm].sum())
+    return out
 
 
 def summarise(rows):
-    """Headline numbers for a viewport: worst street, how much is impassable."""
+    """Same headline numbers from already-built rows (used by tests and callers with a list)."""
     if not rows:
         return {"n": 0}
     st = np.array([r["depth_street_mm"] for r in rows], dtype="float64")
     length = np.array([r["length_m"] for r in rows], dtype="float64")
-    # thresholds people can act on, not model units
-    bands = {"ankle_100mm": 100, "knee_400mm": 400, "impassable_600mm": 600}
     out = {
         "n": len(rows),
         "max_street_mm": int(st.max()),
@@ -185,7 +210,7 @@ def summarise(rows):
         "flooded_length_m": int(length.sum()),
         "ponded_share": round(float(sum(1 for r in rows if r.get("ponded")) / len(rows)), 3),
     }
-    for name, mm in bands.items():
+    for name, mm in BANDS.items():
         out[f"length_over_{name}"] = int(length[st >= mm].sum())
     return out
 
@@ -218,9 +243,11 @@ def streets_for_area(rain_mm, work=None, bbox=None, max_segments=MAX_SEGMENTS,
                          "reason": "this bundle has no cached road graph"}}
 
     water = flowfield._permanent_water(dom)
-    rows, meta = streets_in_view(segments, hmax, u, v, bbox=bbox, min_depth=min_depth,
-                                 max_segments=max_segments, exclude=water,
-                                 flag=flowfield._dilate(water, 1))
+    rows, meta, stats = streets_in_view(segments, hmax, u, v, bbox=bbox, min_depth=min_depth,
+                                        max_segments=max_segments, exclude=water,
+                                        flag=flowfield._dilate(water, 1))
     rows = flowfield._name_streets(rows, work)
+    if rows:
+        stats["ponded_share"] = round(sum(1 for r in rows if r.get("ponded")) / len(rows), 3)
     return {"rain_mm": rain_mm, "streets": rows, "meta": meta,
-            "summary": summarise(rows), "flood_km2": summary.get("flood_km2")}
+            "summary": stats, "flood_km2": summary.get("flood_km2")}
