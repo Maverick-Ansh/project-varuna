@@ -209,17 +209,34 @@ def build_city_bundle(tile_works, out_dir, rains=RAIN_LADDER, sink_paths=None,
     else:
         sim = dom
 
-    grids, outflow = {}, {}
+    grids, outflow, dt_used = {}, {}, {}
     for r in rains:
-        if drain is not None:
-            hmax, vol = sim.drained_volume_m3(float(r), storm_hr=storm_hr, total_hr=total_hr)
-            outflow[str(r)] = round(vol)
+        # The Bates scheme is explicit: on tiles full of tidal creek the 10 s step can violate
+        # CFL at high rainfall and the whole grid goes non-finite. A NaN ladder rung would be
+        # served as a flood map, so halve the step and re-run rather than storing it.
+        dt = 10.0
+        for _attempt in range(4):
+            if drain is not None:
+                hmax, vol = sim.drained_volume_m3(float(r), storm_hr=storm_hr,
+                                                  total_hr=total_hr, dt=dt)
+            else:
+                with torch.no_grad():
+                    hmax = sim.simulate(sim.z0, rain_mm=float(r), storm_hr=storm_hr,
+                                        total_hr=total_hr, dt=dt)
+                vol = None
+            if bool(torch.isfinite(hmax).all()):
+                break
+            dt /= 2.0
+            log.warning("city ladder %.0f mm went non-finite — retrying at dt=%.2f s", r, dt)
         else:
-            with torch.no_grad():
-                hmax = sim.simulate(sim.z0, rain_mm=float(r), storm_hr=storm_hr,
-                                    total_hr=total_hr)
+            raise RuntimeError(
+                f"city storm at {r} mm is non-finite even at dt={dt} s — the domain is "
+                f"numerically unstable, do not serve this ladder")
+        if vol is not None:
+            outflow[str(r)] = round(vol)
+        dt_used[str(r)] = dt
         grids[str(r)] = hmax.cpu().numpy().astype("float16")
-        log.info("city ladder %.0f mm: wet@0.15 %.3f", r,
+        log.info("city ladder %.0f mm (dt %.1f s): wet@0.15 %.3f", r, dt,
                  float((hmax > 0.15).float().mean()))
 
     np.savez_compressed(os.path.join(out_dir, "city_hmax.npz"),
@@ -237,6 +254,7 @@ def build_city_bundle(tile_works, out_dir, rains=RAIN_LADDER, sink_paths=None,
         "offsets60": {k: list(v) for k, v in info["offsets60"].items()},
         "with_sink_field": drain is not None,
         "outflow_m3": outflow,
+        "dt_s": dt_used,
         "note": ("Depths are a ladder of design storms on the JOINED city domain (water crosses "
                  "the former tile seams). Between rungs the server interpolates; it does not "
                  "re-simulate. Outflow, when present, is a lower bound - see SINKFIELD_RESULTS.md."),

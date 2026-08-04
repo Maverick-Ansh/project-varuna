@@ -82,7 +82,7 @@ class DrainDomain(Domain):
             self._drained = self._drained + d.sum()
         return (h, *out[1:])
 
-    def drained_volume_m3(self, rain_mm, storm_hr=2.0, total_hr=4.0, dt=10.0):
+    def drained_volume_m3(self, rain_mm, storm_hr=2.0, total_hr=4.0, dt=10.0):  # noqa: D401
         """Run a storm and return (hmax, m^3 the drain field removed) — the city's outflow:
         the volume the drainage system actually poured out of the surface during this storm,
         as inferred from the fitted field."""
