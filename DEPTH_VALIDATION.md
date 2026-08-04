@@ -149,3 +149,29 @@ path with its own reward gate (`learn/reward.py`).
 3. **Co-location is confirmed as the core problem** by a second, independent method — which
    strengthens the case for the things that change *where* water goes (spatially varying rainfall,
    an inferred drainage-sink field) over the things that change how deep it gets.
+
+---
+
+## Addendum (2026-08-04): the inferred drainage-sink field was tried here, and it does not help
+
+Point 3 above nominated an inferred drainage-sink field as a promising direction. It was built
+(`varuna/build/sinkfield.py`) and fitted on Sentinel-1 wet masks over Mumbai. On radar extent it
+works — held-out CSI improves on all four tiles while predicting *less* water, and it beats both a
+one-parameter and the 16-parameter control ([`SINKFIELD_RESULTS.md`](SINKFIELD_RESULTS.md)).
+
+Replayed against these 83 observations, with identical machinery on both arms:
+
+| | skill | correlation | correlation (wet sites) | RMSE |
+|---|---|---|---|---|
+| textbook twin | −0.918 | +0.037 | −0.065 | 0.356 m |
+| with sink field | −0.921 | +0.032 | −0.063 | 0.356 m |
+
+**Nothing moves.** Note these absolute values differ from the table above because the replay drives
+the raw **simulator** on both arms while the original run used the **emulator**; the A/B is
+therefore internally valid but not comparable to the headline numbers. (Curiously the emulator
+scores better than the simulator it distils — smoothing seems to help point comparisons.)
+
+The lesson is worth keeping: a field fitted on *extent* learns where water leaves the surface, not
+which of two wet streets is deeper. This document's other conclusion — that the magnitude half is a
+**resolution** artifact with a ~28 m target — is now the better-supported path forward, because
+adding 65,536 parameters at 60 m did not buy any ranking skill.
