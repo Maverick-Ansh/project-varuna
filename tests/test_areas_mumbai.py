@@ -7,7 +7,8 @@ from varuna.areas import list_areas, CITIES
 
 TILES = [a for a in list_areas() if a.city == "mumbai"]
 HOTSPOTS = {"hindmata": (19.008, 72.844), "milan_subway": (19.078, 72.836),
-            "kurla": (19.070, 72.880), "powai": (19.120, 72.905), "malad": (19.190, 72.840)}
+            "kurla": (19.070, 72.880), "powai": (19.120, 72.905), "malad": (19.190, 72.840),
+            "mulund": (19.172, 72.956), "chembur_trombay": (19.010, 72.970)}
 
 
 def _crop_box(a):
@@ -18,9 +19,26 @@ def _crop_box(a):
 
 
 def test_registry_shape():
-    assert len(TILES) == 4
+    assert len(TILES) == 6
     assert all(a.n_grid == 256 and a.dx in (None, 60.0) for a in TILES)
     assert set(CITIES["mumbai"]["tiles"]) == {a.id for a in TILES}
+
+
+def test_grid_is_complete_with_no_gaps():
+    """Every cell of the declared 2 x 3 grid holds exactly one tile.
+
+    A gap here is invisible until the city mosaic quietly fills it with sea (which is what the
+    first four tiles did to Mulund and the harbour), so the registry has to prove completeness.
+    """
+    grid = CITIES["mumbai"]["grid"]
+    lat_e, lon_e = grid["lat_edges"], grid["lon_edges"]
+    cells = [(0.5 * (lat_e[r] + lat_e[r + 1]), 0.5 * (lon_e[c] + lon_e[c + 1]))
+             for r in range(len(lat_e) - 1) for c in range(len(lon_e) - 1)]
+    assert len(cells) == len(TILES)
+    for la, lo in cells:
+        owners = [a.id for a in TILES if abs(a.center[0] - la) < 1e-3
+                  and abs(a.center[1] - lo) < 1e-3]
+        assert len(owners) == 1, f"grid cell ({la:.4f}, {lo:.4f}) has owners {owners}"
 
 
 def test_centers_inside_aoi_and_crop_inside_aoi():
@@ -42,13 +60,25 @@ def test_hotspots_covered_exactly_once():
 
 
 def test_tiles_do_not_overlap():
+    """Overlap must stay below half a cell, measured in METRES.
+
+    A degree tolerance is latitude-dependent and lies: the grid's longitude edges are spaced at
+    a fixed 0.1460 deg while a 256 x 60 m tile spans 0.1460 deg only at ~19.10 N, so the northern
+    row overlaps its neighbour by ~17 m. That is a quarter of a 60 m cell — below the resolution
+    at which "which tile owns this ground" is even defined — but it is not zero, so city-wide
+    sums over tiles carry that much double-count.
+    """
     boxes = [_crop_box(a) for a in TILES]
     for i in range(len(boxes)):
         for j in range(i + 1, len(boxes)):
             a, b = boxes[i], boxes[j]
-            lat_olap = min(a[2], b[2]) - max(a[0], b[0])
-            lon_olap = min(a[3], b[3]) - max(a[1], b[1])
-            assert lat_olap <= 1e-4 or lon_olap <= 1e-4, (TILES[i].id, TILES[j].id)
+            lat_m = (min(a[2], b[2]) - max(a[0], b[0])) * 111320.0
+            lat_mid = 0.5 * (TILES[i].center[0] + TILES[j].center[0])
+            lon_m = ((min(a[3], b[3]) - max(a[1], b[1]))
+                     * 111320.0 * math.cos(math.radians(lat_mid)))
+            half_cell = 0.5 * 60.0
+            assert lat_m <= half_cell or lon_m <= half_cell, (
+                TILES[i].id, TILES[j].id, round(lat_m, 1), round(lon_m, 1))
 
 
 def test_build_domain_explicit_n_grid(synth_bundle):

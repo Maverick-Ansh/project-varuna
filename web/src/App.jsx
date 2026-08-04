@@ -11,7 +11,7 @@ import {
 } from "./components/panels.jsx";
 import {
   Basemap, BASEMAPS, DangerPanel, DangerPins, DepthValidationPanel, FlowArrows,
-  SATELLITE_ZOOM, SEVERITY, useMapZoom,
+  SATELLITE_ZOOM, SEVERITY, StreetPanel, StreetWater, useMapZoom,
 } from "./components/flowlayers.jsx";
 
 const LEVEL_COLOR = { RED: "#e23", AMBER: "#f90", GREEN: "#2a4" };
@@ -112,6 +112,21 @@ function ZoomWatch({ onZoom }) {
   return null;
 }
 
+// The street layer is viewport-scoped — it asks the backend only about the roads you can
+// actually see — so the map has to report where it is looking.
+function ViewportWatch({ onView }) {
+  const map = useMapEvents({
+    moveend: () => report(),
+    zoomend: () => report(),
+  });
+  function report() {
+    const b = map.getBounds();
+    onView([[b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]]);
+  }
+  useEffect(() => { report(); }, []);
+  return null;
+}
+
 function ValidationPanel({ v, learn }) {
   if (!v) return <Panel title="Validation"><p className="muted">loading…</p></Panel>;
   const stat = v.static_depth_vs_sar;
@@ -171,8 +186,11 @@ export default function App() {
   const [depthVal, setDepthVal] = useState(null);
   const [basemap, setBasemap] = useState("auto");
   const [zoom, setZoom] = useState(12);
+  const [streets, setStreets] = useState(null);   // {streets, summary, meta} for the viewport
+  const [viewBox, setViewBox] = useState(null);   // [[s, w], [n, e]]
   const mapRef = useRef(null);
   const flowDebounce = useRef(null);
+  const streetDebounce = useRef(null);
 
   // v2: live weather / citizen reports / water budget / advisory / night lights / city
   const [live, setLive] = useState(false);
@@ -197,7 +215,7 @@ export default function App() {
   const [news, setNews] = useState(null);
 
   const [show, setShow] = useState({
-    flood: true, zones: true, street_flow: true, flow: false,
+    flood: true, zones: true, street_flow: true, flow: false, streets: true,
     alerts: true, sinks: false, recharge: false, canal: true, dig: true,
     buildings: true, roads: true, route: true, reports: true, nightlights: true,
     containers: false, recharge_plan: false,
@@ -296,6 +314,19 @@ export default function App() {
     }, 600);
     return () => clearTimeout(flowDebounce.current);
   }, [rain, area, wantFlow, show.street_flow]);
+
+  // Street-level water: only fetched once you are zoomed in far enough for one road to be a
+  // meaningful unit, and only for the viewport — at city zoom it would be both unreadable and a
+  // multi-megabyte answer to a question nobody asked.
+  const wantStreets = show.streets && !isCity && zoom >= SATELLITE_ZOOM;
+  useEffect(() => {
+    if (!area || !wantStreets || !viewBox) { setStreets(null); return undefined; }
+    if (streetDebounce.current) clearTimeout(streetDebounce.current);
+    streetDebounce.current = setTimeout(() => {
+      api.streets(rain, area, viewBox).then(setStreets).catch(() => setStreets(null));
+    }, 500);
+    return () => clearTimeout(streetDebounce.current);
+  }, [rain, area, wantStreets, viewBox && viewBox.join(",")]);
 
   function flyToZone(z) {
     if (mapRef.current && z && z.latlon) mapRef.current.flyTo(z.latlon, Math.max(zoom, 15));
@@ -444,6 +475,15 @@ export default function App() {
                   {flood.zones.some((z) => !z.named) && " “?” = nearest place name is over 1.2 km away."}
                 </p>
               )}
+            </Panel>
+
+            <Panel title="Water on your street">
+              <label className="chk">
+                <input type="checkbox" checked={show.streets}
+                       onChange={() => toggle("streets")} /> street-level depth
+                <span className="muted"> (zoom {SATELLITE_ZOOM}+)</span>
+              </label>
+              <StreetPanel data={streets} zoom={zoom} rain={rain} />
             </Panel>
 
             <Panel title="Water movement">
@@ -646,6 +686,10 @@ export default function App() {
           {!isCity && show.street_flow && flow && (
             <FlowArrows arrows={flow.road_flow} zoom={zoom} rain={rain} street
                         rmse={flow.depth_rmse_m} />
+          )}
+          <ViewportWatch onView={setViewBox} />
+          {wantStreets && streets && (
+            <StreetWater streets={streets.streets} zoom={zoom} rain={rain} meta={streets.meta} />
           )}
 
           {/* named danger zones — the worst few keep a permanent label */}

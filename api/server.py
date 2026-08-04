@@ -573,6 +573,52 @@ def flowfield(req: FlowReq):
                     int(req.max_arrows), bool(req.roads), bool(req.particles)), 300, build)
 
 
+class StreetReq(BaseModel):
+    rain_mm: float = 100.0
+    area: str | None = None
+    bbox: list[list[float]] | None = None    # [[south, west], [north, east]] — the viewport
+    max_segments: int = 1500
+    min_depth_mm: float = 20.0
+
+
+@app.post("/api/streets")
+def streets(req: StreetReq):
+    """How deep is the water on each street in view, and which way is it running.
+
+    Unlike /api/flowfield this keeps PONDED streets (no flow, still flooded — usually the ones
+    that matter) and returns one row per street segment inside the viewport instead of one arrow
+    per 60 m cell. Every row carries both the twin's cell mean and a street-depth estimate; see
+    varuna/serve/streets.py for what that correction is and is not.
+    """
+    work = _work(req.area)
+    try:
+        from varuna.serve.streets import streets_for_area
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(503, f"street layer unavailable (need torch+rasterio+bundle): {e}")
+
+    bbox = req.bbox
+    if bbox is not None:
+        try:
+            (s, w), (n, e) = bbox
+            if not (s < n and w < e):
+                raise ValueError("expected [[south, west], [north, east]]")
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(400, f"bad bbox: {exc}")
+
+    def build():
+        try:
+            return streets_for_area(req.rain_mm, work=work, bbox=bbox,
+                                    max_segments=max(1, int(req.max_segments)),
+                                    min_depth=max(0.0, float(req.min_depth_mm) / 1000.0))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(500, f"street layer failed: {e}")
+
+    key = ("streets", work, round(float(req.rain_mm), 1), int(req.max_segments),
+           round(float(req.min_depth_mm), 1),
+           None if bbox is None else tuple(round(float(x), 4) for p in bbox for x in p))
+    return _cached(key, 300, build)
+
+
 class CanalReq(BaseModel):
     rain_mm: float = 100.0
     n_canals: int = 3

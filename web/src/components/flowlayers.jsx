@@ -108,6 +108,140 @@ const POINTS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
                 "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
 export const compass = (deg) => POINTS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
 
+// --- street-level water -----------------------------------------------------------------------
+
+// Bands people can act on, not model units. One hue, light to dark, so depth reads as depth.
+export const STREET_BANDS = [
+  { max: 100, color: "#bfdbfe", label: "shallow" },
+  { max: 400, color: "#60a5fa", label: "ankle–knee" },
+  { max: 600, color: "#2563eb", label: "knee-deep" },
+  { max: Infinity, color: "#1e3a8a", label: "impassable" },
+];
+export const streetBand = (mm) => STREET_BANDS.find((b) => mm < b.max);
+
+// The viewport can hold thousands of segments; draw the deepest ones the zoom can carry.
+const streetBudget = (zoom) => (zoom >= 17 ? 900 : zoom >= 16 ? 600 : zoom >= 15 ? 350 : 180);
+
+const dotCache = new Map();
+function pondIcon(color, size) {
+  const key = `${color}|${size}`;
+  let icon = dotCache.get(key);
+  if (!icon) {
+    icon = L.divIcon({
+      className: "street-pond",
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+      html:
+        `<svg width="${size}" height="${size}" viewBox="0 0 24 24">` +
+        `<circle cx="12" cy="12" r="7" fill="${color}" stroke="#fff" stroke-width="2.5" ` +
+        `fill-opacity="0.95"/></svg>`,
+    });
+    dotCache.set(key, icon);
+  }
+  return icon;
+}
+
+/**
+ * Water on individual streets, for when you have zoomed in far enough to ask about one road.
+ *
+ * Two marks, because there are two situations and conflating them misleads: an ARROW where the
+ * water is running (it will drain, and the direction says where it goes), a DOT where it is
+ * merely sitting (nowhere to go — usually the worse place to be, and the case the city-scale
+ * arrow layer drops entirely).
+ *
+ * Both depth numbers are always shown. `depth_street_mm` is the honest headline for a person
+ * standing there, but it is a measured correction applied to a cell mean, so the cell mean it
+ * came from stays visible right next to it.
+ */
+export function StreetWater({ streets, zoom, rain, meta }) {
+  const shown = useMemo(
+    () => [...(streets || [])].slice(0, streetBudget(zoom)),
+    [streets, zoom]);
+  if (!shown.length) return null;
+  const size = zoom >= 16 ? 24 : 18;
+  return (
+    <>
+      {shown.map((s, i) => {
+        const band = streetBand(s.depth_street_mm);
+        const flowing = s.bearing != null;
+        return (
+          <Marker key={`sw${i}`} position={s.latlon} interactive
+                  icon={flowing ? arrowIcon(s.bearing, band.color, size)
+                                : pondIcon(band.color, size)}
+                  zIndexOffset={600}>
+            <Tooltip direction="top" offset={[0, -6]}>
+              <b>{s.street || "unnamed street"}</b><br />
+              <b>{s.depth_street_mm.toLocaleString()} mm</b> on the street
+              <span className="muted"> ({band.label})</span><br />
+              <span className="muted">
+                60 m cell mean {s.depth_cell_mm.toLocaleString()} mm
+                {meta?.dilution_factor ? ` × ${meta.dilution_factor} measured concentration` : ""}
+              </span><br />
+              {flowing
+                ? <>flowing {compass(s.bearing)} at {s.speed_ms.toFixed(2)} m/s</>
+                : <span className="warn-tip">ponded — no outflow here</span>}
+              {rain != null && <><br /><span className="muted">at {rain} mm rain</span></>}
+              {s.near_water && (
+                <><br /><span className="warn-tip">next to permanent water — depth may be the
+                  waterbody's, not the street's</span></>
+              )}
+            </Tooltip>
+          </Marker>
+        );
+      })}
+    </>
+  );
+}
+
+/** Worst streets in view, readable without hovering the map. */
+export function StreetPanel({ data, zoom, rain, minZoom = SATELLITE_ZOOM }) {
+  if (zoom < minZoom) {
+    return <p className="muted">zoom in to zoom {minZoom}+ to read individual streets.</p>;
+  }
+  if (!data) return <p className="muted">move the map or the rainfall slider…</p>;
+  const { streets = [], summary = {}, meta = {} } = data;
+  if (!streets.length) {
+    return <p className="muted">no flooded streets in view at {rain} mm.</p>;
+  }
+  const worst = streets.slice(0, 12);
+  return (
+    <>
+      <div className="kv">
+        <div>Flooded streets</div><div>{summary.n} in view</div>
+        <div>Deepest</div><div><b>{summary.max_street_mm?.toLocaleString()} mm</b></div>
+        <div>Impassable</div>
+        <div>{(summary.length_over_impassable_600mm || 0).toLocaleString()} m
+          <span className="muted"> of {summary.flooded_length_m?.toLocaleString()} m</span></div>
+        <div>Standing water</div>
+        <div>{Math.round((summary.ponded_share || 0) * 100)}%<span className="muted"> not draining</span></div>
+      </div>
+      <table className="cb zones">
+        <thead><tr><th>Street</th><th>Depth</th><th></th></tr></thead>
+        <tbody>
+          {worst.map((s, i) => (
+            <tr key={i}>
+              <td>
+                <i className="sw" style={{ background: streetBand(s.depth_street_mm).color }} />
+                {s.street || <span className="muted">unnamed</span>}
+              </td>
+              <td>{s.depth_street_mm.toLocaleString()} mm</td>
+              <td className="muted">{s.bearing != null ? compass(s.bearing) : "ponded"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {meta.truncated && (
+        <p className="muted">showing the {meta.n_returned} deepest of {meta.n_returned + meta.dropped} in view.</p>
+      )}
+      <p className="muted" style={{ marginBottom: 0 }}>
+        Street depth = the twin's 60 m cell mean × {meta.dilution_factor || 4.45}, the
+        concentration measured against real reports (DEPTH_VALIDATION.md). It corrects a known
+        under-reading; it does not fix which street the model thinks is worst.
+      </p>
+    </>
+  );
+}
+
 // --- danger zones ---------------------------------------------------------------------------
 
 export const SEVERITY = {
