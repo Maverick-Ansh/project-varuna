@@ -184,6 +184,7 @@ def fit(base: Domain, sar_by_date: dict, valid, rain_by_date: dict, train_dates,
                   for d in train_dates} if hp.get("lvol") else {}
     rain_m = {d: rain_by_date[d] / 1000.0 * base.N * base.N for d in train_dates}
     hist = []
+    n_halved = 0
     t0 = time.time()
     for it in range(hp["iters"]):
         batch = rng.choice(train_dates, size=min(hp["batch"], len(train_dates)), replace=False)
@@ -191,8 +192,19 @@ def fit(base: Domain, sar_by_date: dict, valid, rain_by_date: dict, train_dates,
         dom.drain = sf.drain_ms()
         loss = torch.zeros((), device=dom.device)
         for d in batch:
-            hmax = dom.simulate(dom.z0, rain_mm=rain_by_date[d], storm_hr=hp["storm_hr"],
-                                total_hr=hp["total_hr"], grad=True)
+            # Explicit Bates + a fixed 10 s step violates CFL on tiles full of tidal creek at
+            # high rainfall, and the storm returns NaN. Skipping those iterations (the guard
+            # below) costs real training: the creek tiles lost 25 of 40 steps that way. So the
+            # storm itself is retried at a smaller step first, and only a storm that stays
+            # non-finite falls through to the skip.
+            dt = hp.get("dt", 10.0)
+            for _attempt in range(3):
+                hmax = dom.simulate(dom.z0, rain_mm=rain_by_date[d], storm_hr=hp["storm_hr"],
+                                    total_hr=hp["total_hr"], dt=dt, grad=True)
+                if bool(torch.isfinite(hmax).all()):
+                    break
+                dt /= 2.0
+                n_halved += 1
             sar = sar_by_date[d]
             l = soft_dice_loss(soft_wet(hmax, hp["tau"], hp["beta"]), sar, valid)
             # every term below is a VOLUME FRACTION of the storm's rain, so the weights are
@@ -232,6 +244,12 @@ def fit(base: Domain, sar_by_date: dict, valid, rain_by_date: dict, train_dates,
         if progress and (it % 5 == 0 or it == hp["iters"] - 1):
             progress(it, hp["iters"], hist[-1], (time.time() - t0) / 60.0)
     dom.drain = sf.drain_ms().detach()
+    n_skipped = sum(1 for h in hist if h.get("skipped"))
+    if n_skipped:
+        log.warning("%d of %d iterations skipped (non-finite) — this field is undertrained",
+                    n_skipped, len(hist))
+    if n_halved:
+        log.info("%d storms needed a reduced timestep to stay finite", n_halved)
     return dom, sf, hist
 
 
