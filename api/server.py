@@ -427,6 +427,40 @@ def learning_log(area: str | None = None):
     return {"area": area or default_area_id(), "entries": js or []}
 
 
+@app.get("/api/city_domain")
+def city_domain(city: str = "mumbai", rain_mm: float = 100.0):
+    """The JOINED city: one domain where water crosses the former tile seams.
+
+    Served from a precomputed storm ladder (varuna.build.city.build_city_bundle) and
+    interpolated — a city-scale simulation is minutes on this CPU, and rainfall is one scalar,
+    so the ladder reproduces the slider without pretending to re-simulate. /api/city is the
+    different, older answer: a SUM over independent closed-boundary tiles.
+    """
+    grp = CITIES.get(city)
+    if not grp:
+        raise HTTPException(404, f"unknown city '{city}'; known: {sorted(CITIES)}")
+    from varuna.areas import artifacts_root
+    rain_mm = round(min(max(float(rain_mm), 0.0), 500.0))
+    work = os.path.join(artifacts_root(), city)
+
+    def build():
+        try:
+            from varuna.serve.city_view import city_flood
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(503, f"city view unavailable: {e}")
+        try:
+            out = city_flood(rain_mm, work)
+        except FileNotFoundError as e:
+            raise HTTPException(404, str(e))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(500, f"city view failed: {e}")
+        out["city"] = city
+        out["tiles"] = grp["tiles"]
+        return out
+
+    return _cached(("city_domain", city, rain_mm), 600, build)
+
+
 @app.get("/api/city")
 def city(city: str = "mumbai", rain_mm: float | None = None):
     """City-wide aggregate over a tile group. Tiles tessellate exactly, so sums don't double-count."""
