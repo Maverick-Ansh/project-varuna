@@ -70,4 +70,15 @@ is in `artifacts/mumbai_sar_baseline.json` per date). Over-flooding where workin
 is precisely gap G2 — which the sink-field inversion on this branch attacks; its results live in
 `artifacts/sinkfield_report.json` and the summary below.
 
-*(sink-field results section pending the v2 fits on this branch)*
+## Sink-field inversion (same branch) — the first thing that improves held-out extent
+
+Fitting a **per-cell drainage capacity** through the differentiable twin against these same SAR
+masks (8 train storms, 3 held out) improves held-out CSI on **all four tiles while predicting
+fewer wet cells** — mean 0.0435 → 0.0479 (+10%) at −10% wetness. The controls ladder on
+`mumbai_east` shows the gain is spatial, not extra freedom: one uniform drain rate does nothing
+(0.0442 → 0.0439) and the 16-parameter per-class physics calibration makes held-out extent *worse*
+(0.0402), reproducing this document's §2 near-null under a stronger loss.
+
+It does **not** transfer to point depths — replaying the 83 held-out depth reports with and without
+the field moves nothing past the fourth decimal. Full numbers, method, and limits:
+[`SINKFIELD_RESULTS.md`](SINKFIELD_RESULTS.md).

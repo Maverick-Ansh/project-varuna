@@ -215,6 +215,21 @@ x 11 storms 2025-26, mean CSI 0.039-0.047 = Patna's regime, FAR~0.95; DEM
 ensemble variant still open). G2 attacked by a NEW idea not on this list:
 per-cell drainage-sink field inverted from SAR through the differentiable twin
 (varuna/build/sinkfield.py) with a minimum-outflow prior -> also yields
-"m3 the city pours out per storm" (lower bound). G6 partially: tile-join
-city-domain prototype (817x586 @ 60 m, seam audit) - see V4_PLAN.md.
+"m3 the city pours out per storm" (lower bound: >=5.3M m3 @100mm, SATURATING
+by 200mm). G6 partially: tile-join city domain shipped (varuna/build/city.py,
+817x586 @ 60 m; seam cost measured at 40-85% extra disagreement in the edge
+band). RESULT: held-out SAR extent improves on all 4 tiles while getting
+DRIER (0.0435 -> 0.0479 CSI at -10% wetness), beating 1-param and 16-param
+controls -- but NO transfer to point depths (SINKFIELD_RESULTS.md).
+
+  => G1 (co-location) has now survived THREE attacks: physics calibration,
+     resolution analysis, drainage inversion. Idea #5 (CartoDEM 10 m
+     co-location experiment) is now the highest-value open item on this list,
+     because the depth validation gives it a number to beat (~28 m) and the
+     sink field just showed that MORE PARAMETERS AT 60 M IS NOT THE ANSWER.
+  => New items worth adding: (a) validate the inferred drainage against
+     published BMC/BRIMSTOWAD pumping capacity; (b) refit the field each
+     monsoon month -- its CHANGE is drainage clogging seen from space, which
+     feeds #23; (c) promote the city domain to a first-class area in
+     areas.py so the dashboard serves "Mumbai (one city)".
 ==============================================================================

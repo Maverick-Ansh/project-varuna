@@ -11,12 +11,14 @@ caretaker agent on duty.**
 - **Sprint 1 (shipped)**: living map — flow arrows, named danger zones, satellite basemap.
 - **Depth validation (shipped)**: the twin fails point depths (skill −0.46, wet-site corr −0.23);
   magnitude half is a 60 m resolution artifact (4.45× ⇒ ~810 m² ponds), ranking half is real.
-- **Sprint 2 (this branch)**: Mumbai SAR validation finally run (baseline mean CSI 0.039–0.047,
-  FAR ≈ 0.95 — same regime as Patna, over-flooding near working drains); **inferred drainage-sink
-  field** — per-cell drain capacity fitted by gradient descent through the differentiable twin
-  against Sentinel-1 wet masks, with a minimum-outflow prior so the fitted outflow volume is a
-  defensible lower bound on what the city actually pours out per storm; judged on the quarantined
-  depth reports. Plus a stitched-city prototype (below).
+- **Sprint 2 (shipped, this branch)**: Mumbai SAR validation finally run (baseline mean CSI
+  0.039–0.047, FAR ≈ 0.95 — same regime as Patna). **Inferred drainage-sink field** fitted through
+  the twin against Sentinel-1: held-out extent improves on all four tiles *while predicting less
+  water* (mean CSI 0.0435 → 0.0479 at −10% wetness), beating a 1-parameter and the 16-parameter
+  control; it does **not** move point-depth ranking at all. City outflow ≥ 5.3 Mm³ per 100 mm
+  storm, saturating by 200 mm. Stitched one-Mumbai domain (817 × 586 @ 60 m) with a measured seam
+  cost. Full results: [`SINKFIELD_RESULTS.md`](SINKFIELD_RESULTS.md); code in
+  `varuna/build/sinkfield.py` + `varuna/build/city.py`.
 
 ## A. One Mumbai — the tile join
 
@@ -25,10 +27,12 @@ bounding box (72.745–73.061 E, 18.884–19.324 N ≈ 555×810 cells at 60 m �
 cost, seconds on a T4). Cross-seam flow then happens *inside one Domain* instead of being
 truncated by four closed boundaries (gap G6).
 
-1. `build_city_domain(tile_ids)` — mosaic dem/worldcover/sand/clay, union grid, one Domain;
-   prototype in Sprint 2.
-2. Seam audit: storm on the city domain vs per-tile domains; map where water crosses former
-   boundaries — the honest measure of what tiling was costing us.
+1. ~~`build_city_domain(tile_works)` — mosaic dem/worldcover/sand/clay, union grid, one Domain~~
+   **done** (`varuna/build/city.py`); next: wire it into `areas.py` as a first-class area so the
+   API and dashboard can serve "Mumbai (one city)" instead of four tiles.
+2. ~~Seam audit~~ **done**: depths near former boundaries disagree 40–85% more than in the
+   interior. Next: kill the residual sub-pixel regrid phase difference (mean |Δz| 0.4–1.4 m)
+   by cropping tiles from the city mosaic rather than re-deriving each tile's own crop.
 3. City-wide flow field + danger zones for the map (Sprint 1 layers recomputed at city scale).
 4. Tidal/storm-surge boundary at the western outfalls — for Mumbai the binding constraint
    (backlog #8); without it the city domain still closes at the sea.
