@@ -21,8 +21,11 @@ DEFAULT_SPACE = "Maverick-Ansh/varuna-floodtwin"
 ALLOW = ["Dockerfile", "requirements-deploy.txt", "varuna/**", "api/**", "artifacts/**"]
 IGNORE = [
     "**/__pycache__/**", "*.pyc",
-    "artifacts/patna/observed_water_*.tif",   # masks not needed at serve time
-    "artifacts/patna/twin_dataset.pt",        # big, training-only
+    # training-only inputs — every area, not just Patna (the Mumbai tiles each carry 11 SAR masks)
+    "artifacts/*/observed_water_*.tif",
+    "artifacts/*/sar_masks_domaingrid.npz",
+    "artifacts/*/twin_dataset.pt",
+    "artifacts/*/sinkfield_fit.json",         # loss history; the fitted field itself does ship
     "web/**", "tests/**", "notebooks/**", ".git/**",
 ]
 
