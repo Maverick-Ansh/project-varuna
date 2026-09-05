@@ -43,7 +43,48 @@ def ablation_mask(names, kind, n_static):
     return m
 
 
-def train_fold(D, train, stats, args, dev, chan_mask):
+def fold_targets(D, train, target):
+    """Per-scene (truth, valid) under the requested target.
+
+    mask       - the full Sentinel-1 water mask. Dominated by storm-independent water:
+                 tidal flat, mangrove, seasonal pond, paddy. What the net was trained on so far.
+    increment  - wet today AND not persistently wet. This is the quantity the physics twin
+                 actually predicts, so training on it is the fairest possible head-to-head,
+                 and it is the only target for which "did the storm do this" is the question.
+
+    The persistent field for a scene is built from the OTHER TRAINING scenes of its domain, never
+    from the held-out scene, so switching target cannot leak the test label into training.
+    """
+    if target == "mask":
+        return None
+    by_area = {}
+    for s in train:
+        by_area.setdefault(s["area"], []).append(s["idx"])
+    out = {}
+    for s in train:
+        others = [D.Y[s["area"]][i] for i in by_area[s["area"]] if i != s["idx"]]
+        pers = (np.mean(others, 0) >= 0.5 if others
+                else np.zeros_like(D.Y[s["area"]][s["idx"]], bool))
+        out[(s["area"], s["idx"])] = (D.Y[s["area"]][s["idx"]] & ~pers,
+                                      D.valid[s["area"]] & ~pers)
+    return out
+
+
+def calibrated_threshold(prob, valid, wet_frac):
+    """Per-scene threshold that makes the predicted wet fraction match a prior wet fraction.
+
+    Ranking quality has run consistently above achieved CSI in every experiment here, which is
+    calibration loss: the model orders cells better than one global threshold can exploit.
+    `wet_frac` is the mean observed wet fraction of the TRAINING scenes - a number available
+    without ever looking at the test label - so this is a free correction, not a peek.
+    """
+    v = prob[valid]
+    if v.size == 0:
+        return 0.5
+    return float(np.quantile(v, 1.0 - min(max(wet_frac, 1e-6), 1.0)))
+
+
+def train_fold(D, train, stats, args, dev, chan_mask, targets=None):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     net = UNet(D.n_in, args.width, args.depth, args.dropout).to(dev)
@@ -53,7 +94,12 @@ def train_fold(D, train, stats, args, dev, chan_mask):
     scaler = torch.amp.GradScaler("cuda", enabled=(dev.type == "cuda"))
     cm = torch.as_tensor(chan_mask, device=dev)[None, :, None, None]
 
-    cache = [D.tensor(s, stats) for s in train]
+    cache = []
+    for s in train:
+        x, y, v = D.tensor(s, stats)
+        if targets is not None:
+            y, v = targets[(s["area"], s["idx"])]
+        cache.append((x, y, v))
     rng = np.random.default_rng(args.seed)
     net.train()
     for step in range(args.steps):
@@ -115,6 +161,9 @@ def main(argv=None):
     ap.add_argument("--bce_w", type=float, default=0.5)
     ap.add_argument("--pos_weight", type=float, default=None)
     ap.add_argument("--ablate", default="none", choices=["none", "rain", "persist", "terrain"])
+    ap.add_argument("--target", default="mask", choices=["mask", "increment"],
+                    help="mask: full SAR water. increment: wet today and not persistently wet "
+                         "- the quantity the physics twin predicts.")
     ap.add_argument("--norm", default="per_domain", choices=["per_domain", "global"])
     ap.add_argument("--areas", default="", help="comma-separated areas to KEEP")
     ap.add_argument("--shuffle_rain", type=int, default=0,
@@ -138,15 +187,30 @@ def main(argv=None):
     for fold in range(D.n_folds(args.split)):
         train, test = D.split(args.split, fold)
         stats = D.stats(train, per_domain=(args.norm == "per_domain"))
-        net = train_fold(D, train, stats, args, dev, cmask)
+        targets = fold_targets(D, train, args.target)
+        net = train_fold(D, train, stats, args, dev, cmask, targets)
         if fold == 0:
-            print(f"  net: {count_params(net) / 1e6:.2f}M params")
+            print(f"  net: {count_params(net) / 1e6:.2f}M params  target={args.target}")
 
         # threshold picked on TRAIN scenes only - never on the scenes we then report
-        tp = [predict(net, D, s, stats, dev, cmask) for s in train[:min(len(train), 12)]]
+        tp = []
+        for s in train[:min(len(train), 12)]:
+            p, y, v = predict(net, D, s, stats, dev, cmask)
+            if targets is not None:
+                y, v = targets[(s["area"], s["idx"])]
+            tp.append((p, y, v))
         thr, _ = sweep_threshold(np.concatenate([p.ravel() for p, _, _ in tp]),
                                  np.concatenate([y.ravel() for _, y, _ in tp]),
                                  np.concatenate([v.ravel() for _, _, v in tp]))
+
+        # Prior wet fraction from the TRAINING scenes, per domain where the domain was seen
+        # (loso/flood) and pooled when it was not (lodo). Feeds the calibrated threshold.
+        wf = {}
+        for s in train:
+            y, v = (targets[(s["area"], s["idx"])] if targets is not None
+                    else (D.Y[s["area"]][s["idx"]], D.valid[s["area"]]))
+            wf.setdefault(s["area"], []).append(float((y & v).sum()) / max(int(v.sum()), 1))
+        wf_pooled = float(np.mean([x for xs in wf.values() for x in xs]))
 
         for s in test:
             p, y, v = predict(net, D, s, stats, dev, cmask)
@@ -155,24 +219,31 @@ def main(argv=None):
             masks = [D.Y[s["area"]][i] for i in range(len(D.dates[s["area"]]))]
             pers = persistent_field(masks, s["idx"])
             inc = storm_increment(y, pers)
+            vi = v & ~pers
+            frac = float(np.mean(wf[s["area"]])) if s["area"] in wf else wf_pooled
+            thr_c = calibrated_threshold(p, v, frac)
+            thr_ci = calibrated_threshold(p, vi, frac)
             rows.append(dict(
                 fold=fold, area=s["area"], date=s["date"], flood=s["flood"], thr=round(thr, 3),
                 csi=r["csi"], csi_opt=csi_opt, pod=r["pod"], far=r["far"], bias=r["bias"],
                 pred_wet=r["pred_wet"], obs_wet=r["obs_wet"],
                 csi_allwet=csi_allwet(y, v), csi_random=csi_random(y, v),
                 csi_clim=csi_report(pers, y, v)["csi"],
-                csi_increment=csi_report(p >= thr, inc, v & ~pers)["csi"],
+                csi_increment=csi_report(p >= thr, inc, vi)["csi"],
+                csi_cal=csi_report(p >= thr_c, y, v)["csi"],
+                csi_inc_cal=csi_report(p >= thr_ci, inc, vi)["csi"],
+                thr_cal=round(float(thr_c), 4),
                 inc_wet=int((inc & v).sum())))
 
     hdr = (f"{'area':<17}{'date':<12}{'CSI':>7}{'opt':>7}{'bias':>7}{'POD':>6}"
-           f"{'allwet':>8}{'rand':>7}{'clim':>7}{'incr':>7}")
+           f"{'allwet':>8}{'rand':>7}{'clim':>7}{'incr':>7}{'cal':>7}")
     print("\n" + hdr)
     print("-" * len(hdr))
     for r in rows:
         star = "*" if r["flood"] else " "
         print(f"{r['area']:<17}{r['date'] + star:<12}{r['csi']:>7.4f}{r['csi_opt']:>7.4f}"
               f"{r['bias']:>7.2f}{r['pod']:>6.3f}{r['csi_allwet']:>8.4f}{r['csi_random']:>7.4f}"
-              f"{r['csi_clim']:>7.4f}{r['csi_increment']:>7.4f}")
+              f"{r['csi_clim']:>7.4f}{r['csi_increment']:>7.4f}{r['csi_cal']:>7.4f}")
 
     def mean(k):
         return float(np.mean([r[k] for r in rows]))
@@ -180,7 +251,7 @@ def main(argv=None):
     print("-" * len(hdr))
     print(f"{'MEAN':<29}{mean('csi'):>7.4f}{mean('csi_opt'):>7.4f}{mean('bias'):>7.2f}"
           f"{mean('pod'):>6.3f}{mean('csi_allwet'):>8.4f}{mean('csi_random'):>7.4f}"
-          f"{mean('csi_clim'):>7.4f}{mean('csi_increment'):>7.4f}")
+          f"{mean('csi_clim'):>7.4f}{mean('csi_increment'):>7.4f}{mean('csi_cal'):>7.4f}")
     print("\n(* = real flood event.  'opt' = threshold swept on the test scene itself: "
           "optimistic, shown only for comparability with the existing baseline table.)")
     print("reference: dynamic twin 0.0410 | TWI 0.0422 | HAND-lite 0.0505  (Patna, 8 dates)")
@@ -188,11 +259,13 @@ def main(argv=None):
 
     os.makedirs(args.out, exist_ok=True)
     name = (f"{args.split}_{args.ablate}_w{args.width}_g{args.grid}_s{args.seed}"
+        f"{'_inc' if args.target == 'increment' else ''}"
         f"{'_shuf' + str(args.shuffle_rain) if args.shuffle_rain else ''}"
         f"{'_' + args.areas.replace(',', '+') if args.areas else ''}{args.tag}.json")
     json.dump(dict(args=vars(args), rows=rows,
                    mean={k: mean(k) for k in ("csi", "csi_opt", "bias", "pod", "csi_allwet",
-                                              "csi_random", "csi_clim", "csi_increment")}),
+                                              "csi_random", "csi_clim", "csi_increment", "csi_cal",
+                                              "csi_inc_cal")}),
               open(os.path.join(args.out, name), "w"), indent=2)
     print("wrote", os.path.join(args.out, name))
     return rows
