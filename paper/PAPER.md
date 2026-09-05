@@ -129,7 +129,7 @@ Hydraulics run at 60 m, coarser than the drawn street network; carved "drains" a
 
 ## Reproducibility
 
-Code, all nine per-area artifact bundles (including SAR masks, road graphs, replay buffers, and the ranked storage-site lists), 90 offline tests, and step-by-step runbooks: https://github.com/Maverick-Ansh/project-varuna. Live dashboard: https://project-varuna-iota.vercel.app (API: `anshvivek-varuna-floodtwin.hf.space`); citizen-report dataset: `AnshVivek/varuna-reports` on Hugging Face. A new city builds with one script on a free Colab/Kaggle T4 and serves from the committed bundle; every headline number in this paper is regenerable from a committed artifact (see the provenance table in `paper/README.md`).
+Code, all 16 per-area artifact bundles (including SAR masks, road graphs, replay buffers, and the ranked storage-site lists), 239 offline tests, and step-by-step runbooks: https://github.com/Maverick-Ansh/project-varuna. Live dashboard: https://project-varuna-iota.vercel.app (API: `anshvivek-varuna-floodtwin.hf.space`); citizen-report dataset: `AnshVivek/varuna-reports` on Hugging Face. A new city builds with one script on a free Colab/Kaggle T4 and serves from the committed bundle; every headline number in this paper is regenerable from a committed artifact (see the provenance table in `paper/README.md`).
 
 ## References
 
