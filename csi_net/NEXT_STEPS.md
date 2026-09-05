@@ -19,6 +19,7 @@ Kept, briefly, because what a test *ruled out* is as much a result as what it fo
 | §6 train on the storm increment | **Done. Null.** 0.1757 ± 0.0038 vs 0.1711 ± 0.0059 trained on the full mask. Training on the target you are graded on does not make the increment predictable. |
 | §8 threshold calibration | **Done, and it is not a win.** +0.0154 on LODO (unseen city) but −0.0268 on the LOSO headline and −0.0801 on the flood split. It only helps where the domain is unseen, and the gain is one seed-sd. Kept as a reported column, not a claim. |
 | audit `gw_levels.csv` reach | **Done, clean.** The V3 recharge *volumes* come from WorldCover perviousness × Cosby Ksat and the twin's metered infiltration; `gw_levels.csv` reaches only the site *ordering*, which already carries a gate. |
+| the dataset had no builder | **Fixed.** `build_stack.py` + `build_rain.py` regenerate both halves from the bundles. SAR truth identical, 21/23 channels exact, 357/360 rain values exact, and the headline re-run on a fully rebuilt stack lands at 0.2885 ± 0.0082 against 0.2884 ± 0.0066 — 0.02 seed-sd. See RESULTS §8. |
 
 The one result none of this was looking for: **the net ties the climatology baseline** (0.2884 vs
 0.2881) on the split where the city is known. The headline is now transfer, not accuracy.
@@ -48,12 +49,26 @@ public before submission, or drop the claim. This is the user's call, not a code
 
 ## Tier 2 — strengthens the claim
 
-### 4. More domains
-**GEE job on the existing pipeline.** Three domains is a thin basis for a cross-city claim, and
-the deployable claim now rests entirely on LODO (0.0936 ± 0.0205, n=3 cities). The V3 build
-serves 14 areas; SAR masks exist for 3. Fetching `observed_water_*.tif` for even three more
-would roughly double the evidence behind the only number that matters for deployment. **This is
-the highest-value experiment left in the project.**
+### 4. More domains — tooling is ready, blocked on one interactive login
+**This is the highest-value experiment left in the project**, and everything except the login is
+now built. The deployable claim rests entirely on LODO (0.0936 ± 0.0205, n=3 cities); 16 bundles
+are built and only 3 have SAR masks.
+
+```bash
+earthengine authenticate                 # one-time, interactive, needs a browser
+export VARUNA_PROJECT_ID=<gcp-project>
+python scripts/fetch_sar_masks.py --areas bengaluru,mumbai_south,mumbai_west --n 10 --dry-run
+python scripts/fetch_sar_masks.py --areas bengaluru,mumbai_south,mumbai_west --n 10
+python -m csi_net.build_stack --areas patna,mumbai_harbour,mumbai_northeast,bengaluru,mumbai_south,mumbai_west
+python -m csi_net.build_rain  --areas patna,mumbai_harbour,mumbai_northeast,bengaluru,mumbai_south,mumbai_west
+python -m csi_net.run --split lodo --ablate rain --width 32 --steps 1500 --seed 0
+```
+
+`--dry-run` needs no Earth Engine and prints the ranked candidate dates, so the selection is
+reviewable first. Rebuild **every** area in one `build_stack` call — see its docstring.
+
+Bengaluru is the most valuable single addition: it is the one domain with 10x the relief of the
+others, and the DEM-ensemble section of the paper already contrasts it with Patna.
 
 ### 5. A real tide gauge for Harbour
 **~2 h.** Only the calendar proxy has been ruled out. FES2014, or a tide table sampled at the
@@ -79,6 +94,12 @@ and either promote it to a claim or drop it.
 - **BMC / BRIMSTOWAD capacity lookup.** A literature lookup, not a compute job, and still the
   best value-per-hour item available: it could externally validate the 5.3 Mm³ drainage
   saturation ceiling, which would be the only externally-validated number in the project.
+- **The twin and csi_net have never used the same rainfall window, and now that is written
+  down.** `calibrate._rain_for_date` uses IST and Open-Meteo's inclusive range, so the twin's
+  "2-day antecedent rain" is three IST days; csi_net's `rain_2d` is two UTC days. The gap is
+  measurably small for the twin (re-deriving the committed table on UTC rain moves it 0.0412 →
+  0.0409), so this is a decision about which convention to standardise on, not a fire. Changing
+  it moves the twin's calibration.
 - **ERA5 vs IFS is a decision, not a bug, and it can be flipped in one line.**
   `varuna/serve/weather.py:ARCHIVE_MODEL`. Pinning IFS preserved every existing number; switching
   to ERA5 costs a full recalibration and moves rainfall by 2.19×. Stated either way, as required.

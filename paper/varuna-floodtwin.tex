@@ -629,7 +629,12 @@ the ranked storage-site lists), 253 offline tests, and step-by-step runbooks:
 citizen-report dataset: \texttt{AnshVivek/varuna-reports} on Hugging Face. A new city builds with
 one script on a free Colab/Kaggle T4 and serves from the committed bundle; every headline number
 in this paper is regenerable from a committed artifact (the provenance table in
-\texttt{paper/README.md} maps each one to its file).
+\texttt{paper/README.md} maps each one to its file). The learned-baseline dataset of
+\S\ref{sec:validation} is rebuilt from those bundles by \texttt{csi\_net/build\_stack.py} and
+\texttt{csi\_net/build\_rain.py}, each with a \texttt{--verify} mode that reports
+channel-by-channel agreement with the committed copy rather than asserting it; the headline
+is unchanged on a fully rebuilt dataset ($0.288\pm0.008$ against $0.288\pm0.007$, $0.02$ seed
+standard deviations apart).
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}

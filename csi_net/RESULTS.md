@@ -416,7 +416,84 @@ wet fraction is nothing like the training prior.
 
 ---
 
-## 8. Data integrity: what was excluded and why
+## 8. The dataset had no builder, and now it does
+
+Everything above was computed from an 8 MB `varuna_stack.npz` and a `rain_features.json` that
+were produced in a scratch notebook cell and committed as binaries with no code behind them.
+That made two things impossible: adding a domain — the highest-value experiment left — and
+honouring the paper's claim that every headline number is regenerable from a committed artifact.
+
+`build_stack.py` and `build_rain.py` close it. Both have a `--verify` mode that compares against
+the committed files rather than asserting equality, because parts of the originals could not be
+reproduced and pretending otherwise would be the wrong kind of tidy.
+
+### 8.1 What reproduces, and what does not
+
+| | result |
+|---|---|
+| SAR truth (the labels) | **identical**, all three areas |
+| feature channels | **21 of 23** reproduce to float16 precision |
+| `hand` | differs on mumbai_harbour only: 27 cells of 262 144, a percentile tie-break |
+| `twi` | **differs everywhere** — see below |
+| `rain_Nd` totals | **identical**, once the conventions were recovered |
+| `peak_*h` | 117 of 120; the 3 misses are all mumbai_northeast 2026-08-01 |
+
+`twi`'s committed values are not reproduced by `varuna/build/baselines.py`'s own formula, nor by
+that formula on a filled DEM, a Horn/Sobel slope, a 60 m slope, or the full-AOI raster. Inverting
+it gives a flow-accumulation multiplier of ~950 with scatter rather than a clean 900. The cell
+that wrote it is gone, so the builder uses the project's own documented definition and says so.
+
+Two conventions in the rain file had to be recovered by search, and both are the kind of thing
+that silently poisons a comparison:
+
+- **UTC, not IST.** The same date at the same point totals 30.0 mm in UTC and 48.5 mm in
+  Asia/Kolkata (Patna, 2023-08-09) — 5.5 hours of a different day swap in.
+- **`rain_Nd` is N calendar days *ending on* the overpass.** Open-Meteo's archive range is
+  inclusive at both ends, so the natural `d - N` fetches N+1 days.
+- `peak_*h` is the heaviest burst in the **7 days** ending on the overpass, not within the day.
+  3-day and 5-day windows fit some dates; only 7 fits 117 of 120.
+
+**A live inconsistency this surfaced:** `varuna/build/calibrate.py:_rain_for_date` uses IST *and*
+the off-by-one, so the twin's "2-day antecedent rain" is three IST days, while csi_net's
+`rain_2d` is two UTC days. Neither is wrong; they have never been the same number. It is left as
+a stated decision rather than a silent fix, because changing it moves the twin's calibration —
+and §2's regression check shows the gap is small for the twin anyway: re-deriving the committed
+8-date table with the *cached UTC* rain lands at 0.0409 against the recorded 0.0412.
+
+### 8.2 The difference does not move any result
+
+One channel of 23, standardised before the net sees it, should not matter. Should-not is not a
+measurement. The headline was re-run on a fully rebuilt stack, 3 seeds:
+
+| stack | CSI | per-seed |
+|---|---|---|
+| committed | 0.2884 ± 0.0066 | 0.2795 / 0.2954 / 0.2903 |
+| **rebuilt** | **0.2885 ± 0.0082** | 0.2772 / 0.2961 / 0.2923 |
+
+**+0.0001, or 0.02 seed-sd.** Leave-one-domain-out agrees too (0.1223 → 0.1214, seed 0). The
+builder is validated for adding new domains.
+
+One rule comes with it: **rebuild every area or none.** A stack with old `twi` in two cities and
+new `twi` in a third would have leave-one-domain-out comparing domains built two different ways,
+which is exactly the failure mode this whole document exists to avoid.
+
+### 8.3 Getting more cities
+
+`scripts/fetch_sar_masks.py` is the remaining piece: Sentinel-1 monsoon passes over an area's
+AOI, deduplicated to one per 10 days, ranked by 3-day antecedent rainfall, top N downloaded.
+`--dry-run` imports no Earth Engine at all and ranks candidates from the rainfall archive, so the
+selection is reviewable before any quota is spent. `--min-wet` deletes any mask whose wet
+fraction is below a floor — `patna/2024-07-07` has zero observed wet cells, which is not ground
+truth but a forced 0.0 in every method's mean, and it sat in the published twin baseline for
+months.
+
+It needs `earthengine authenticate` and `VARUNA_PROJECT_ID`, which is an interactive login. That
+is the only thing standing between this project and a fourth, fifth and sixth domain — and the
+transfer claim, which is the model's whole case, currently rests on three.
+
+---
+
+## 9. Data integrity: what was excluded and why
 
 - **`waterlogging_frequency.tif` — excluded, label leakage.** `varuna/build/validate.py:83`
   builds it by counting wet pixels across the same Sentinel-1 passes that produce our labels.
@@ -443,7 +520,7 @@ problem, attacked at the feature level.
 
 ---
 
-## 9. What this means for the paper
+## 10. What this means for the paper
 
 The paper's §4 currently claims *topographic routing does not co-locate flat-city flooding*,
 supported by four methods sitting in a 0.032–0.051 band. Both halves need to change.
@@ -465,9 +542,11 @@ supported by four methods sitting in a 0.032–0.051 band. Both halves need to c
 6. **Neither scale nor resolution is the lever.** Flat from 2.0 M to 70.6 M parameters, and flat
    from 60 m to 30 m on the skill multiple.
 
-## 10. Reproducing
+## 11. Reproducing
 
 ```bash
+python -m csi_net.build_stack --verify        # rebuild the rasters, compare to the committed npz
+python -m csi_net.build_rain  --verify        # same for the rainfall vectors
 python -m csi_net.run --split loso  --ablate rain --areas patna,mumbai_northeast --width 32
 python -m csi_net.run --split lodo  --ablate rain --width 32 --steps 1500
 python -m csi_net.run --split loso  --ablate rain --target increment --areas patna,mumbai_northeast
@@ -478,7 +557,7 @@ python -m csi_net.tide_probe                                      # CPU, seconds
 Runs on one T4 in minutes. `--ablate {none,rain,persist,terrain,tide}`, `--target {mask,increment}`,
 `--shuffle_rain N`, `--areas a,b`, `--grid {30,60,120}`, `--tide 1`, `--width/--depth`.
 
-## 11. Open
+## 12. Open
 
 - Three domains is a thin basis for a cross-city claim. The LODO number is a floor, not an
   estimate, and it is the number the deployable claim rests on.
