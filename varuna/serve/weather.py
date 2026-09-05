@@ -26,7 +26,7 @@ def forecast_rain_mm(lat, lon, hours=24):
 ARCHIVE_MODEL = "ecmwf_ifs"      # 9 km. See the note below before changing this.
 
 
-def historical_rain_mm(lat, lon, start_date, end_date):
+def historical_rain_mm(lat, lon, start_date, end_date, timezone="Asia/Kolkata"):
     """Total observed precipitation (mm) over [start_date, end_date] inclusive, from Open-Meteo's
     archive. Dates are ISO 'YYYY-MM-DD'.
 
@@ -43,6 +43,13 @@ def historical_rain_mm(lat, lon, start_date, end_date):
         models=era5              1213.4 mm     <- 2.19x higher; 2.56x over a 6-day window
         models=era5_land            0.0 mm     <- no data at this coastal cell
 
+    `timezone` sets where the day boundary falls, and it is not cosmetic: the same date at the
+    same point totals 30.0 mm in UTC and 48.5 mm in Asia/Kolkata (Patna, 2023-08-09), because
+    5.5 hours of a different day are swapped in. The twin's calibration calls this with the
+    default IST; csi_net's rain features were built in UTC (see csi_net/build_rain.py). Those
+    two conventions have never agreed, and this parameter is what makes the disagreement
+    visible instead of buried.
+
     Pinning ecmwf_ifs reproduces every existing calibration and every csi_net number exactly,
     and stops `best_match` silently changing model under the project later. Switching to ERA5 is
     a defensible alternative but is not free: the twin's calibration would have to be re-run,
@@ -50,7 +57,7 @@ def historical_rain_mm(lat, lon, start_date, end_date):
     """
     url = ("https://archive-api.open-meteo.com/v1/archive"
            f"?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}"
-           f"&hourly=precipitation&timezone=Asia/Kolkata&models={ARCHIVE_MODEL}")
+           f"&hourly=precipitation&timezone={timezone}&models={ARCHIVE_MODEL}")
     js = http_get_json(url, timeout=60)
     p = js.get("hourly", {}).get("precipitation") or []
     total = float(sum(v or 0 for v in p))
@@ -58,7 +65,7 @@ def historical_rain_mm(lat, lon, start_date, end_date):
     return total
 
 
-def hourly_rain_series(lat, lon, start_date, end_date):
+def hourly_rain_series(lat, lon, start_date, end_date, timezone="Asia/Kolkata"):
     """Hourly precipitation (mm) over [start_date, end_date] inclusive -> (times, precip).
 
     `historical_rain_mm` sums the whole range, which is all the SAR calibration needs. Scoring a
@@ -75,12 +82,12 @@ def hourly_rain_series(lat, lon, start_date, end_date):
     if lag_days >= 6:
         url = ("https://archive-api.open-meteo.com/v1/archive"
                f"?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}"
-               f"&hourly=precipitation&timezone=Asia/Kolkata&models={ARCHIVE_MODEL}")
+               f"&hourly=precipitation&timezone={timezone}&models={ARCHIVE_MODEL}")
     else:
         past = min(92, max(1, (_dt.date.today() - _dt.date.fromisoformat(str(start_date))).days + 1))
         url = ("https://api.open-meteo.com/v1/forecast"
                f"?latitude={lat}&longitude={lon}&hourly=precipitation"
-               f"&past_days={past}&forecast_days=1&timezone=Asia/Kolkata")
+               f"&past_days={past}&forecast_days=1&timezone={timezone}")
     js = http_get_json(url, timeout=60)
     h = js.get("hourly") or {}
     times = h.get("time") or []
