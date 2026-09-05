@@ -43,23 +43,25 @@ and loses the flood.
 
 ## 2. Headline result
 
-Leave-one-storm-out, tidal tile excluded, terrain-only, 18 storms, width 32, single seed:
+Leave-one-storm-out, tidal tile excluded, terrain-only, 18 storms, width 32, **3 seeds**:
 
-| method | CSI | bias | note |
-|---|---|---|---|
-| random | 0.013 | 1.00 | |
-| all-wet | 0.026 | — | |
-| dynamic twin | 0.041 | 1.12 | |
-| TWI | 0.042 | | one-line formula |
-| HAND-lite | 0.051 | | one-line formula |
-| **net (terrain-only)** | **0.281** | **1.35** | **6.9× the twin** |
+| method | CSI | bias | POD | precision | note |
+|---|---|---|---|---|---|
+| random | 0.013 | 1.00 | | | |
+| all-wet | 0.026 | — | 1.00 | 0.03 | |
+| dynamic twin | 0.041 | 1.12 | 0.08 | 0.05 | |
+| TWI | 0.042 | | | | one-line formula |
+| HAND-lite | 0.051 | | | | one-line formula |
+| **net (terrain-only)** | **0.2895 ± 0.0064** | **1.39 ± 0.05** | **0.514** | **0.37** | **7.1× the twin** |
 
-Bias 1.35 matters as much as the CSI: the gain is not bought by predicting more water. On the
-flood-holdout split the net runs at bias 0.22 — a *quarter* of the observed wet area — at 68 %
-precision, against the twin's FAR of 0.95.
+Per-seed: 0.2806 / 0.2955 / 0.2924. Ranking 0.3219 ± 0.0059.
+
+Bias matters as much as the CSI: the gain is not bought by predicting more water. The twin
+catches 8 % of wet cells at 5 % precision; this catches 51 % at 37 %. On the flood-holdout split
+the net runs at bias 0.22 — a *quarter* of the observed wet area — at 68 % precision.
 
 Storm-increment score (wet today and not persistently wet — the honest target a rainfall model
-should be graded on) is **0.166** for the same run.
+should be graded on) is **0.1723 ± 0.0054**.
 
 ### 2.1 Capacity is not the bottleneck
 
@@ -86,7 +88,7 @@ in 35 seconds reaches the same place as a 70 M one.
 
 | protocol | what is held out | CSI | ranking | bias | increment |
 |---|---|---|---|---|---|
-| leave-one-storm-out | an ordinary storm, terrain seen | **0.281** | 0.315 | 1.35 | 0.166 |
+| leave-one-storm-out | an ordinary storm, terrain seen | **0.290 ± 0.006** | 0.322 | 1.39 | 0.172 |
 | flood holdout | the two largest storms | 0.206 ± 0.002 | 0.278 | 0.22 | — |
 | leave-one-**domain**-out | an entire unseen city | 0.099 | 0.127 | 0.57 | 0.037 |
 
@@ -233,7 +235,9 @@ Runs on one T4 in minutes. `--ablate {none,rain,persist,terrain}`, `--shuffle_ra
 
 ## 8. Open
 
-- LOSO 0.281 is single-seed; needs 3 seeds before it goes in a paper.
 - The 30 m run (`--grid 30`) is built but not yet executed — it tests the project's own
   28.5 m pond measurement directly.
 - Whether a tide-corrected Harbour becomes usable is untested.
+- Leave-one-domain-out is single-seed and was run with rainfall included; it should be rerun
+  terrain-only, where §4 predicts it improves.
+- Three domains is a thin basis for a cross-city claim. The LODO number is a floor, not an estimate.
