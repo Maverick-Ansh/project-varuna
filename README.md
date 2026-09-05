@@ -9,12 +9,27 @@ notebook 05) using free public data.
 
 Measured on the differentiable twin (128×128 @ 60 m) against free public data — reported as-is, including a negative result.
 
-- **SAR validation (the honest core):** scoring the *dynamic* twin against Sentinel-1 water masks
-  (consistent `jrc<50` permanent-water mask on both sides) gives **mean CSI ≈ 0.033** across 8 storms
-  (best 2025-08-02 = 0.112). Per-WorldCover-class Manning/infiltration calibration is a **near-null**
-  (held-out 0.048→0.049): at 60 m, topographic-sink routing has limited co-location skill, and physics
-  constants move water *level*, not *location*. See [`VALIDATION.md`](VALIDATION.md). The committed
-  `validation_scores.json` 0.045 scored the *static* `depth.tif`, not the twin — superseded.
+- **SAR validation (the honest core):** a CSI on this task means nothing without the trivial
+  baselines beside it, so here they are first. On 18 Sentinel-1 storms across Patna and
+  Mumbai-NE, with the `jrc<50` permanent-water mask on both sides and every threshold chosen off
+  the scene being reported: **random 0.014, all-wet 0.029, TWI 0.039, HAND-lite 0.039, dynamic
+  twin 0.054** — and a parameter-free **climatology 0.288** ("the cells wet in most *other*
+  storms": no rainfall, no physics, no parameters). Per-WorldCover-class Manning/infiltration
+  calibration is a **near-null** (held-out 0.048→0.049): physics constants move water *level*, not
+  *location*.
+- **What that does and does not prove.** It is *not* evidence that terrain lacks the signal. A
+  U-Net over the same DEM/land-cover/soil rasters reaches **CSI 0.290 ± 0.006** on those same
+  storms — 5.4× the twin, 9.9× all-wet. What fails at 60 m is *routing* water over a ±1 m DEM, not
+  *predicting* where it goes; relative micro-relief survives the error that destroys absolute
+  elevation. But the learned model only **ties the climatology** (0.290 vs 0.288), so on a city
+  with a radar archive it buys nothing. Its real value is transfer: **0.094 ± 0.021 on a city
+  never seen in training**, where a climatology cannot be computed at all. Full numbers,
+  protocols and the runs that produced them: [`csi_net/RESULTS.md`](csi_net/RESULTS.md).
+- **Two corrections to this project's own record.** The twin's previously published 0.041
+  *understated* it — 0.054 once a scene with zero observed wet cells is dropped and a second city
+  added. And the rainfall source is **ECMWF IFS 9 km, never ERA5** (2.19× apart on the same
+  window); the model is now pinned explicitly. The committed `validation_scores.json` 0.045 scored
+  the *static* `depth.tif`, not the twin — superseded. See [`VALIDATION.md`](VALIDATION.md).
 - **Canal / drainage optimizer:** the v2 router (basin sources, downhill-guaranteed Dijkstra,
   descending carved bed, river outfalls) cuts **20.2%** of built-land flood volume on a 100 mm storm
   (vs the v1 least-cost router's 16.1%). Strategy ladder: pits-only 7.8% → canals+pits 20.2%. See

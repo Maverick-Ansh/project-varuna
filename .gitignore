@@ -38,3 +38,12 @@ csi_net/results/*.log
 
 # twin simulation cache: recomputable in ~28 CPU-minutes, 14 MB, not evidence
 csi_net/results/twin_grids.npz
+
+# LaTeX build artifacts (the .tex and .pdf are tracked, the scaffolding is not)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
