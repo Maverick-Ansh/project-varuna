@@ -178,10 +178,13 @@ def main(argv=None):
     ap.add_argument("--tag", default="")
     ap.add_argument("--verbose", type=int, default=1)
     ap.add_argument("--out", default=os.path.join(HERE, "results"))
+    ap.add_argument("--stack", default="",
+                    help="alternative feature stack .npz (default: data/varuna_stack.npz). "
+                         "Used to check that a rebuilt stack reproduces the headline.")
     args = ap.parse_args(argv)
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    D = VarunaData(os.path.join(HERE, "data", "varuna_stack.npz"),
+    D = VarunaData(args.stack or os.path.join(HERE, "data", "varuna_stack.npz"),
                    os.path.join(HERE, "data", "rain_features.json"), grid_m=args.grid,
                    shuffle_rain=args.shuffle_rain, tide=bool(args.tide),
                    keep_areas=[a for a in args.areas.split(',') if a] or None)
@@ -265,10 +268,11 @@ def main(argv=None):
     print(f"elapsed {time.time() - t0:.0f}s")
 
     os.makedirs(args.out, exist_ok=True)
+    tag = args.tag + ("_" + os.path.basename(args.stack).replace(".npz", "") if args.stack else "")
     name = (f"{args.split}_{args.ablate}_w{args.width}_g{args.grid}_s{args.seed}"
         f"{'_inc' if args.target == 'increment' else ''}{'_tide' if args.tide else ''}"
         f"{'_shuf' + str(args.shuffle_rain) if args.shuffle_rain else ''}"
-        f"{'_' + args.areas.replace(',', '+') if args.areas else ''}{args.tag}.json")
+        f"{'_' + args.areas.replace(',', '+') if args.areas else ''}{tag}.json")
     json.dump(dict(args=vars(args), rows=rows,
                    mean={k: mean(k) for k in ("csi", "csi_opt", "bias", "pod", "csi_allwet",
                                               "csi_random", "csi_clim", "csi_increment", "csi_cal",
