@@ -35,3 +35,6 @@ Thumbs.db
 # csi_net run outputs: the JSON is the evidence and is COMMITTED - a Kaggle kernel is
 # ephemeral and results that live only there are results that get lost. Logs are not.
 csi_net/results/*.log
+
+# twin simulation cache: recomputable in ~28 CPU-minutes, 14 MB, not evidence
+csi_net/results/twin_grids.npz
