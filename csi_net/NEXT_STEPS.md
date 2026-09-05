@@ -16,32 +16,23 @@ Kept, briefly, because what a test *ruled out* is as much a result as what it fo
 | §3 finish the 30 m test | **Done.** 30 m 10.4× all-wet vs 60 m 9.7×. Resolution is not the lever. |
 | §4 decide what Harbour is for | **Done, and the tidal reading was tested rather than asserted.** Calendar tide phase explains nothing in Harbour (R² 0.405, permutation p = 0.47) while landlocked Patna "fits" at 0.985. Excluded, with a measured reason: 0.0000 storm increment on 8 of 11 dates. |
 | §5 fix the rainfall source | **Done.** `best_match` = `ecmwf_ifs` to the 0.1 mm (554.2 = 554.2); ERA5 would be 2.19× higher. Pinned `models=ecmwf_ifs`, which changes no existing number, and corrected the prose in 6 files. |
-| §6 train on the storm increment | **Done. Null.** 0.1757 ± 0.0038 vs 0.1723 ± 0.0054 trained on the full mask. Training on the target you are graded on does not make the increment predictable. |
-| §8 threshold calibration | **Partly.** Implemented and reported on every run. +0.0154 on LODO, −0.0106 on LOSO — one seed-sd, so kept as a suggestion, not a claim. |
+| §6 train on the storm increment | **Done. Null.** 0.1757 ± 0.0038 vs 0.1711 ± 0.0059 trained on the full mask. Training on the target you are graded on does not make the increment predictable. |
+| §8 threshold calibration | **Done, and it is not a win.** +0.0154 on LODO (unseen city) but −0.0268 on the LOSO headline and −0.0801 on the flood split. It only helps where the domain is unseen, and the gain is one seed-sd. Kept as a reported column, not a claim. |
 | audit `gw_levels.csv` reach | **Done, clean.** The V3 recharge *volumes* come from WorldCover perviousness × Cosby Ksat and the twin's metered infiltration; `gw_levels.csv` reaches only the site *ordering*, which already carries a gate. |
 
-The one result none of this was looking for: **the net ties the climatology baseline** (0.2895 vs
+The one result none of this was looking for: **the net ties the climatology baseline** (0.2884 vs
 0.2881) on the split where the city is known. The headline is now transfer, not accuracy.
 
 ---
 
 ## Tier 1 — the paper cannot be submitted without these
 
-### 1. Rewrite the paper's §4
-**~3 h, no compute.** `paper/varuna-floodtwin.tex:174-215` claims *topographic routing does not
-co-locate flat-city flooding*, evidenced by four methods in a 0.032–0.051 band. That claim is now
-refuted by our own data: the same rasters, learned, reach 0.2895. The section needs:
-
-- Table 3 replaced by the like-for-like table (`RESULTS.md` §2.1), which also *raises* the twin
-  from 0.0410 to 0.0536 — a correction against our own headline, and it should be said as such.
-- The trivial baselines added beside every CSI in the paper. All-wet 0.013–0.047 and climatology
-  0.30–0.58 are the floor and the ceiling, and no CSI in this literature is interpretable
-  without them. This is the part that generalises past this paper.
-- The claim restated: co-location *is* learnable from terrain; this physics model was not
-  extracting it; and the learned model's contribution is transfer to cities with no SAR archive,
-  not accuracy on cities with one.
-- §4's "why" (DEM uncertainty) survives as an explanation of why *the twin* fails, not of why the
-  task is impossible.
+### 1. Read §4 of the paper end to end before submitting
+**~30 min.** It was rewritten on 2026-09-05 and has not been read by a human since. It now
+retracts the "no topographic router can co-locate" claim, adds the trivial-baselines table,
+re-measures Table 3 (raising the twin from 0.0410 to 0.0536), and leads with transfer rather than
+with a multiple. It compiles clean at 12 pp with no undefined references, but a section that
+argues against the project's own earlier position is exactly the one to re-read cold.
 
 ### 2. Pick a venue
 **~1 h.** The paper has been "done, not submitted" since 2026-07-12. Nothing below improves it
@@ -78,10 +69,13 @@ and either promote it to a claim or drop it.
 
 ## Tier 3 — carried over, unchanged by this work
 
-- **The nightly loop has still never run.** Either run it for 3–5 nights and get a real log, or
-  cut §6 of the paper and keep it as one line of future work. `scripts/nightly_update.py
-  --dry-run` on Kaggle (where `HF_TOKEN` is a secret) is the zero-risk first step — it snapshots
-  the Space and pushes nothing.
+- **The nightly loop has still never run, and the blocker is now named.** `HF_TOKEN` is *not* a
+  secret on the colab-proxy Kaggle notebook — only `GITHUB_TOKEN` is — so
+  `scripts/nightly_update.py` cannot fetch the Space snapshot it works from. All three push paths
+  (`push_space`, `push_lineage`, the news upload) were read and confirmed to return early under
+  `--dry-run`, so the moment the token is attached, `--areas patna --dry-run --skip-ee` is a
+  zero-risk end-to-end exercise. Until then: run it for 3–5 nights and get a real log, or cut
+  §6 of the paper and keep it as one line of future work.
 - **BMC / BRIMSTOWAD capacity lookup.** A literature lookup, not a compute job, and still the
   best value-per-hour item available: it could externally validate the 5.3 Mm³ drainage
   saturation ceiling, which would be the only externally-validated number in the project.

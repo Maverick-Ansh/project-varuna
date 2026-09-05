@@ -18,10 +18,10 @@ Measured on the differentiable twin (128×128 @ 60 m) against free public data �
   calibration is a **near-null** (held-out 0.048→0.049): physics constants move water *level*, not
   *location*.
 - **What that does and does not prove.** It is *not* evidence that terrain lacks the signal. A
-  U-Net over the same DEM/land-cover/soil rasters reaches **CSI 0.290 ± 0.006** on those same
+  U-Net over the same DEM/land-cover/soil rasters reaches **CSI 0.288 ± 0.007** on those same
   storms — 5.4× the twin, 9.9× all-wet. What fails at 60 m is *routing* water over a ±1 m DEM, not
   *predicting* where it goes; relative micro-relief survives the error that destroys absolute
-  elevation. But the learned model only **ties the climatology** (0.290 vs 0.288), so on a city
+  elevation. But the learned model only **ties the climatology** (0.2884 vs 0.2881), so on a city
   with a radar archive it buys nothing. Its real value is transfer: **0.094 ± 0.021 on a city
   never seen in training**, where a climatology cannot be computed at all. Full numbers,
   protocols and the runs that produced them: [`csi_net/RESULTS.md`](csi_net/RESULTS.md).

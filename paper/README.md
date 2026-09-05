@@ -37,7 +37,7 @@ replace with the template's rupee glyph if available.
 |---|---|
 | trivial baselines (all-wet 0.013–0.047, climatology 0.30–0.58, SAR-vs-SAR ceiling) | `artifacts/trivial_baselines.json` |
 | like-for-like table on 18 storms (twin 0.054 / TWI 0.039 / HAND 0.039 / depth 0.032 / all-wet 0.029 / random 0.014 / climatology 0.288) | `csi_net/results/twin_protocol.json` |
-| learned net 0.290 ± 0.006 (LOSO), 0.094 ± 0.021 (unseen city) | `csi_net/results/loso_rain_w32_g60_s*_patna+mumbai_northeast.json`, `lodo_rain_w32_g60_s*.json` |
+| learned net 0.288 ± 0.007 (LOSO), 0.094 ± 0.021 (unseen city) | `csi_net/results/loso_rain_w32_g60_s*_patna+mumbai_northeast.json`, `lodo_rain_w32_g60_s*.json` |
 | rainfall ablation, permutation control, tide arms, 30 m vs 60 m, increment target | `csi_net/results/*.json`, tabulated in `csi_net/RESULTS.md` |
 | rain source is ECMWF IFS 9 km, not ERA5 (554.2 vs 1213.4 mm) | `varuna/serve/weather.py:ARCHIVE_MODEL` docstring (measurement inline) |
 | *superseded:* baseline CSI table (0.032 / 0.042 / 0.051 / 0.041), twin 0.033 | `artifacts/patna/BASELINES.md`, `baseline_comparison.json`, `VALIDATION.md` — kept as the record the new table reproduces to ±0.0007 |

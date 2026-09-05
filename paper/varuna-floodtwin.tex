@@ -48,12 +48,13 @@ signal, and gradient calibration of per-land-class roughness/infiltration remain
 (held-out CSI $0.048\!\to\!0.049$): the model predicts a comparable flooded \emph{area} but not
 its \emph{location}. \textbf{(2) That failure is specific to routing, not to the terrain data ---
 correcting our own earlier claim:} a U-Net reading the same DEM, land cover and soil rasters
-reaches CSI $0.290\pm0.006$, $5.4\times$ the twin on identical scenes, because relative
+reaches CSI $0.288\pm0.007$, $5.4\times$ the twin on identical scenes, because relative
 micro-relief survives the spatially-correlated DEM error that destroys absolute elevation. Under a
 $\pm1$\,m DEM ensemble total flooded area is stable (Patna $10.79\pm0.35$\,km$^2$) but only 5\% of
 it is co-located across members on deltaic flats (52\% in hillier Bengaluru), which is why a
 downhill solver cannot place water --- yet the learned model still ties the parameter-free
-climatology ($0.288$), so what terrain buys on a \emph{known} city is nothing, and its real value
+climatology ($0.2881$ against $0.2884$), so what terrain buys on a \emph{known} city is
+nothing, and its real value
 is transfer: $0.094\pm0.021$ on a city never seen in training, where a climatology cannot be
 computed at all. \textbf{(3) Planning can survive location
 uncertainty:} intervention value is \emph{measured by re-simulation} rather than assumed. A dense
@@ -252,7 +253,7 @@ TWI (topographic wetness)         & 0.039 & --- & 0.26 \\
 HAND-lite (height above drainage) & 0.039 & --- & 0.90 \\
 dynamic twin (antecedent rain)    & 0.054 & --- & 0.29 \\
 \midrule
-\textbf{learned (terrain only)}   & \textbf{0.290 $\pm$ 0.006} & 1.39 & 0.51 \\
+\textbf{learned (terrain only)}   & \textbf{0.288 $\pm$ 0.007} & 1.41 & 0.52 \\
 climatology (no model, no rain)   & 0.288 & 1.29 & --- \\
 \bottomrule
 \end{tabular}
@@ -267,15 +268,16 @@ state this because the correction runs against our own headline.
 
 \textbf{Co-location \emph{is} learnable from terrain, so our ``terrain-fundamental'' claim was
 wrong.} The same DEM, the same land cover, the same soil rasters, read by a U-Net instead of
-routed by a solver, reach $0.290\pm0.006$ --- $5.4\times$ the twin and $9.9\times$ all-wet, on
+routed by a solver, reach $0.288\pm0.007$ --- $5.4\times$ the twin and $9.9\times$ all-wet, on
 identical scenes. What fails in this regime is \emph{routing} water over a noisy DEM, not
 \emph{predicting} where water goes. The feature that makes the difference is available to both:
 elevation minus its own Gaussian blur at 2/8/32 cells. DEM error is spatially correlated, so
 relative micro-relief survives a bias that destroys absolute elevation --- the same $\pm1$\,m
 error the ensemble below injects.
 
-\textbf{But the learned model ties the climatology it was meant to beat.} $0.290$ against
-$0.288$, a gap of $0.0014$ against a seed standard deviation of $0.0064$. On a city with a
+\textbf{But the learned model ties the climatology it was meant to beat.} $0.2884$ against
+$0.2881$: the same number to three decimal places, a gap of $0.0003$ against a seed
+standard deviation of $0.0066$. On a city with a
 Sentinel-1 archive, a neural network over 23 terrain channels is worth nothing over ``these cells
 are usually wet''. The learned model's contribution is therefore \emph{not} accuracy; it is
 transfer, which we isolate next.
@@ -338,7 +340,7 @@ metre-scale DEM noise exceeds the relief that decides which street ponds, a solv
 \emph{routes} water downhill cannot place it reliably, and its calibration gradient with respect
 to co-location is $\approx0$. That is why the twin sits at $0.054$. It is \emph{not} a proof that
 the terrain data lacks the information: a model reading relative micro-relief from the same
-rasters reaches $0.290$. The correct statement is that absolute elevation is too noisy to route
+rasters reaches $0.288$. The correct statement is that absolute elevation is too noisy to route
 over, while relative elevation is not too noisy to learn from. It follows that (a) reported skill
 in this regime should always be accompanied both by such an ensemble and by the trivial baselines
 of Table~\ref{tab:trivial}, and (b) planning tools should be judged on decisions that are robust

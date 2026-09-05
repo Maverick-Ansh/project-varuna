@@ -117,15 +117,17 @@ Leave-one-storm-out, tidal tile excluded, terrain-only, 18 storms, width 32, **3
 | TWI | 0.0394 | | 0.26 | |
 | HAND-lite | 0.0394 | | 0.90 | |
 | dynamic twin | 0.0536 | | 0.29 | |
-| **net (terrain-only)** | **0.2895 ± 0.0064** | **1.39 ± 0.05** | **0.514** | **0.37** |
+| **net (terrain-only)** | **0.2884 ± 0.0066** | **1.41 ± 0.05** | **0.517** | **0.37** |
 | **climatology (no model, no rain)** | **0.2881** | 1.29 | | |
 
-Per-seed: 0.2806 / 0.2955 / 0.2924. Ranking 0.3219 ± 0.0059.
+Per-seed: 0.2795 / 0.2954 / 0.2903. Ranking 0.3217 ± 0.0062.
+`csi_net/results/loso_rain_w32_g60_s{0,1,2}_patna+mumbai_northeast.json`.
 
 - **5.4× the physics twin**, on identical scenes, with both thresholds chosen off the test scene.
 - **9.9× all-wet**, **21× random**.
-- **1.005× climatology.** The net and "these cells are usually wet" are the same number: the gap
-  is 0.0014 against a seed standard deviation of 0.0064.
+- **1.001× climatology.** The net and "these cells are usually wet" are the same number to three
+  decimal places: 0.2884 against 0.2881, a gap of **0.0003** against a seed standard deviation of
+  0.0066.
 
 That last line is the honest headline and it is not the one this document previously carried.
 Where the city has been seen in training, a 7.9 M-parameter U-Net over 23 terrain channels does
@@ -135,9 +137,10 @@ the net can.
 
 Bias matters as much as the CSI: the gain over the twin is not bought by predicting more water.
 The twin catches 29 % of wet cells; this catches 51 % at 37 % precision. On the flood-holdout
-split the net runs at bias 0.22 — a *quarter* of the observed wet area — at 68 % precision.
+split the net runs at bias 0.26 — a *quarter* of the observed wet area — catching 22 % of wet
+cells, so what it does predict there it predicts precisely.
 
-Storm-increment score (wet today and not persistently wet) is **0.1723 ± 0.0054**.
+Storm-increment score (wet today and not persistently wet) is **0.1711 ± 0.0059**.
 
 ### 3.1 Capacity is not the bottleneck
 
@@ -175,8 +178,8 @@ the 60 m cell size was not what was standing in the way.
 
 | protocol | what is held out | CSI | ranking | bias | increment |
 |---|---|---|---|---|---|
-| leave-one-storm-out | an ordinary storm, terrain seen | **0.2895 ± 0.0064** | 0.322 | 1.39 | 0.172 |
-| flood holdout | the two largest storms | 0.206 ± 0.002 | 0.278 | 0.22 | — |
+| leave-one-storm-out | an ordinary storm, terrain seen | **0.2884 ± 0.0066** | 0.322 | 1.41 | 0.171 |
+| flood holdout | the two largest storms | 0.2211 ± 0.0064 | 0.273 | 0.26 | 0.177 |
 | leave-one-**domain**-out | an entire unseen city | **0.0936 ± 0.0205** | 0.129 | 1.07 | 0.039 |
 
 Leave-one-domain-out is now 3 seeds (it was a single seed). Per held-out city: mumbai_northeast
@@ -359,7 +362,7 @@ than quoting the convenient one:
 | split | with Harbour | without | effect of pooling |
 |---|---|---|---|
 | flood holdout (train quiet → test the 2 big floods) | 0.170 | 0.2059 ± 0.0018 | **−0.036** |
-| leave-one-storm-out | 0.3391 ± 0.0062 | 0.2814 | **+0.058** |
+| leave-one-storm-out | 0.3391 ± 0.0062 | 0.2884 ± 0.0066 | **+0.051** |
 
 On the flood split Harbour degrades the model, which is the number this document previously
 quoted. On leave-one-storm-out it *inflates* the pooled mean by more than it degraded the other,
@@ -381,10 +384,10 @@ terrain-only, patna + mumbai_northeast, 3 seeds:
 
 | training target | increment CSI | full-mask CSI |
 |---|---|---|
-| full SAR mask | 0.1723 ± 0.0054 | **0.2814** |
+| full SAR mask | 0.1711 ± 0.0059 | **0.2884 ± 0.0066** |
 | storm increment | **0.1757 ± 0.0038** | 0.2444 ± 0.0064 |
 
-+0.0034 on the increment, against seed sds of 0.004–0.005. A null. Training directly on the
++0.0046 on the increment, against seed sds of 0.004–0.006. A null. Training directly on the
 quantity that matters does not make the storm increment more predictable, which is the strongest
 evidence yet that the increment is close to unlearnable from these inputs rather than merely
 mis-targeted. Full-mask CSI drops as expected once the model stops being asked to find
@@ -400,11 +403,16 @@ the test label.
 | split | global threshold | calibrated | delta |
 |---|---|---|---|
 | LODO, with rain (3 seeds) | 0.0939 ± 0.0161 | 0.1093 ± 0.0111 | **+0.0154** |
+| LOSO headline (3 seeds) | 0.2884 ± 0.0066 | 0.2616 ± 0.0019 | −0.0268 |
 | LOSO, increment-trained (3 seeds) | 0.2444 ± 0.0064 | 0.2338 ± 0.0062 | −0.0106 |
+| flood holdout (3 seeds) | 0.2211 ± 0.0064 | 0.1410 ± 0.0013 | −0.0801 |
 
-Suggestive, not established: +0.0154 is about one seed sd. The direction is coherent — a
-threshold fitted on other cities is miscalibrated for an unseen one, and matching the wet
-fraction repairs part of that — but it needs more splits before it is a claim.
+The gain is real only where the domain is unseen, and the losses elsewhere are much larger than
+it. That is coherent — a threshold fitted on *other cities* is miscalibrated for an unseen one,
+while on a seen city the swept threshold is already right and forcing the wet fraction to a prior
+can only move it away — but +0.0154 is about one seed sd, so it stays a suggestion. On the flood
+split it is actively harmful (−0.0801), because the held-out storms are the two largest and their
+wet fraction is nothing like the training prior.
 
 ---
 
@@ -442,11 +450,11 @@ supported by four methods sitting in a 0.032–0.051 band. Both halves need to c
 
 1. **CSI on this task has a floor and a ceiling that were never measured.** All-wet is
    0.013–0.047 and a rainfall-free climatology is 0.30–0.58. Any CSI reported without those
-   beside it is uninterpretable — including the 0.041, and including our own 0.2895.
+   beside it is uninterpretable — including the 0.041, and including our own 0.2884.
 2. **Terrain does carry the co-location signal; the twin was not extracting it.** A learned model
    on the same rasters reaches 5.4× the twin on identical scenes. "No topographic method can
    co-locate" is refuted; "this physics model does not" is what the evidence supports.
-3. **But the learned model ties a model-free climatology** (0.2895 vs 0.2881) where the city is
+3. **But the learned model ties a model-free climatology** (0.2884 vs 0.2881) where the city is
    known. Its real contribution is transfer: on an unseen city it scores 0.094 where climatology
    cannot be computed at all. The paper should lead with transfer, not with the multiple.
 4. **The twin's published 0.0410 understated it.** It is 0.0536 on a fair protocol. Correcting a

@@ -310,12 +310,12 @@ def main(argv=None):
 
     print("\nLOSO/dom lets each domain keep its own threshold - more generous to the terrain\n"
           "indices than the pooled rule, and the number quoted for them below.")
-    print(f"\nnet (terrain-only, this protocol, 3 seeds): 0.2895 +/- 0.0064")
+    print(f"\nnet (terrain-only, this protocol, 3 seeds): 0.2884 +/- 0.0066")
     for name, m in report["methods"].items():
-        print(f"  net / {name:<14} {0.2895 / max(m['best_csi'], 1e-9):>5.1f}x   "
+        print(f"  net / {name:<14} {0.2884 / max(m['best_csi'], 1e-9):>5.1f}x   "
               f"(best of its protocols: {m['best_csi']:.4f})")
-    print(f"  net / all-wet        {0.2895 / max(report['reference']['all_wet'], 1e-9):>5.1f}x")
-    print(f"  net / climatology    {0.2895 / max(report['reference']['climatology'], 1e-9):>5.1f}x")
+    print(f"  net / all-wet        {0.2884 / max(report['reference']['all_wet'], 1e-9):>5.1f}x")
+    print(f"  net / climatology    {0.2884 / max(report['reference']['climatology'], 1e-9):>5.1f}x")
 
     if args.reproduce:
         report["reproduction"] = reproduce_old_table(args, doms)
