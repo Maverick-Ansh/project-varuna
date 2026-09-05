@@ -30,10 +30,16 @@ def pool(a, k, agg):
 
 
 class VarunaData:
-    def __init__(self, npz_path, rain_json, grid_m=60, drop_dead=True, shuffle_rain=0):
+    def __init__(self, npz_path, rain_json, grid_m=60, drop_dead=True, shuffle_rain=0,
+                 keep_areas=None):
         z = np.load(npz_path, allow_pickle=True)
         self.feature_names = [str(s) for s in z["feature_names"]]
         self.areas = [str(s) for s in z["areas"]]
+        if keep_areas:
+            # Mumbai-Harbour's rain<->extent correlation is significantly NEGATIVE
+            # (r=-0.70, p=0.017 at 14 d): tidal, not pluvial. Training across it and
+            # Mumbai-NE (r=+0.79) asks the net to fit two opposite stories at once.
+            self.areas = [a for a in self.areas if a in keep_areas]
         self.grid_m = grid_m
         k = {30: 1, 60: 2, 120: 4}[grid_m]
         rain = json.load(open(rain_json))
