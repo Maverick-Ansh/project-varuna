@@ -38,15 +38,24 @@ free tiers (Colab/Kaggle GPUs to build, CPU to serve). The system covers three c
 Bengaluru, and Mumbai (BMC, as four exactly-tessellating $256^2$ tiles with a city-wide view) ---
 and adds a live participatory layer: citizen flood reports that feed a reward-gated nightly
 fine-tuning loop, live-forecast alerts, exact storm water-balance accounting, grounded
-multilingual advisories, and a satellite power-outage overlay. We report five findings. \textbf{(1) An
-honest negative result:} against 8 Sentinel-1 flood masks over Patna, the dynamic twin scores mean
-CSI $0.033$--$0.041$ --- statistically indistinguishable from static topographic baselines (depression
-depth $0.032$, TWI $0.042$, HAND-lite $0.051$), and gradient calibration of per-land-class
-roughness/infiltration is near-null (held-out CSI $0.048\!\to\!0.049$): the model predicts a
-comparable flooded \emph{area} but not its \emph{location}. \textbf{(2) The failure is
-terrain-fundamental, not model-specific:} under a $\pm1$\,m spatially-correlated DEM ensemble, total
-flooded area is stable (Patna $10.79\pm0.35$\,km$^2$) but only 5\% of it is co-located across members
-on deltaic flats, versus 52\% in hillier Bengaluru. \textbf{(3) Planning can survive location
+multilingual advisories, and a satellite power-outage overlay. We report five findings. \textbf{(1) A flood CSI is
+uninterpretable without its trivial baselines:} on 18 Sentinel-1 storms across two cities, a
+parameter-free climatology --- ``the cells that were wet in most other storms'' --- scores
+$0.30$--$0.58$, above any physics-model CSI we are aware of in this literature, while all-wet
+scores $0.013$--$0.047$. Against that scale our dynamic twin's $0.054$ (re-measured; we previously
+reported $0.041$ on a test set that included a scene with no ground truth) is a weak but real
+signal, and gradient calibration of per-land-class roughness/infiltration remains near-null
+(held-out CSI $0.048\!\to\!0.049$): the model predicts a comparable flooded \emph{area} but not
+its \emph{location}. \textbf{(2) That failure is specific to routing, not to the terrain data ---
+correcting our own earlier claim:} a U-Net reading the same DEM, land cover and soil rasters
+reaches CSI $0.290\pm0.006$, $5.4\times$ the twin on identical scenes, because relative
+micro-relief survives the spatially-correlated DEM error that destroys absolute elevation. Under a
+$\pm1$\,m DEM ensemble total flooded area is stable (Patna $10.79\pm0.35$\,km$^2$) but only 5\% of
+it is co-located across members on deltaic flats (52\% in hillier Bengaluru), which is why a
+downhill solver cannot place water --- yet the learned model still ties the parameter-free
+climatology ($0.288$), so what terrain buys on a \emph{known} city is nothing, and its real value
+is transfer: $0.094\pm0.021$ on a city never seen in training, where a climatology cannot be
+computed at all. \textbf{(3) Planning can survive location
 uncertainty:} intervention value is \emph{measured by re-simulation} rather than assumed. A dense
 storm-drain ``spiderweb'' routed along the real OpenStreetMap street graph --- $\sim$40 inlets, one
 reverse multi-source Dijkstra from safe low-ground outfalls (never the river, which runs high during
@@ -172,51 +181,168 @@ mode, the water-balance panel with a storage-container designer, multilingual ad
 lights, and the nightly learning log. Everything (build to serve) runs within free tiers; the total
 build for a new city window is $\sim$15--25 minutes on a free T4, including all serve artifacts.
 
-\section{Honest validation: topographic routing does not co-locate flat-city flooding}
+\section{Honest validation: what a CSI is worth here, and what terrain can actually predict}
 \label{sec:validation}
-\textbf{Protocol.} Sentinel-1 water masks for 8 Patna monsoon storms (2023--2025) are compared to
-the dynamic twin forced with the observed antecedent rain, on the same 60\,m grid, with permanent
-water (JRC $>$50\%) masked \emph{on both sides}, and a single global detection threshold per method
-chosen to maximise mean CSI (no per-date tuning).
+An earlier version of this section reported that the dynamic twin scores CSI $0.041$ against
+Sentinel-1, that static topographic indices score the same, and concluded that \emph{no}
+topographic router can co-locate ponding in this data regime. Two of those three statements
+survive re-measurement. The third does not, and we correct it here, because the experiment that
+refutes it is our own.
+
+\textbf{Protocol.} Sentinel-1 water masks for 18 monsoon storms across two domains (Patna,
+2023--2025, 7 storms; Mumbai-Northeast, 2025--2026, 11 storms) are scored on a common 60\,m grid
+with permanent water (JRC $\ge$50\%) masked \emph{on both sides}. Every method --- physical,
+index-based and learned --- sees the identical grid, mask and max-pooled truth, and every method's
+detection threshold is chosen on the \emph{other} storms of the fold, never on the scene being
+reported. One Patna date (2024-07-07) has zero observed wet cells, hence no ground truth, and
+contributed a forced $0.0$ to every method's mean in our earlier table; it is dropped. The
+scoring path is verified by re-deriving that earlier table from it under the earlier protocol
+(twin $0.0412\!\to\!0.0409$, TWI $0.0422\!\to\!0.0429$, HAND-lite $0.0505\!\to\!0.0504$).
+
+\subsection{A CSI without its trivial baselines is uninterpretable}
+The single most useful thing we can report is not a model score. It is the range a flood CSI can
+occupy on this task \emph{before any model exists} (Table~\ref{tab:trivial}).
 
 \begin{table}[t]
 \centering\small
-\caption{Mean CSI vs Sentinel-1 over 8 Patna storms. All methods sit in the same band: the
-dynamic twin buys little co-location skill over static terrain indices on deltaic flats.}
-\label{tab:baselines}
-\begin{tabular}{lcc}
+\caption{What CSI is worth on Sentinel-1 flood extent, per domain, with no model. ``Climatology''
+predicts the cells that were wet in most \emph{other} storms of that domain: no rainfall, no
+physics, no parameters. ``SAR vs SAR'' scores every date against every other date of the same
+domain --- an empirical agreement ceiling between two radar passes of the same city.}
+\label{tab:trivial}
+\begin{tabular}{lccccc}
 \toprule
-method & best global threshold & mean CSI \\
+domain & storms & all-wet & random & climatology & SAR vs SAR \\
 \midrule
-static depression depth & 0.6\,m & 0.032 \\
-TWI (topographic wetness) & 13.45 & 0.042 \\
-HAND-lite (height above drainage) & 8.57\,m & 0.051 \\
-dynamic twin (5-day antecedent) & 0.02\,m & 0.041 \\
+Patna            & 8  & 0.047 & 0.025 & \textbf{0.300} & 0.160 \\
+Mumbai-Harbour   & 11 & 0.021 & 0.010 & \textbf{0.581} & 0.462 \\
+Mumbai-Northeast & 11 & 0.013 & 0.007 & \textbf{0.391} & 0.271 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Result.} Table~\ref{tab:baselines}: the twin (mean CSI 0.033 with a 2-day window, 0.041
-with 5-day; best single storm 0.112) is indistinguishable from static indices. The twin floods
-$\sim$2{,}900 cells and SAR observes $\sim$2{,}600 --- comparable \emph{area}, only $\sim$12\%
-\emph{overlap}. Gradient calibration of 16 per-WorldCover-class Manning/infiltration multipliers
-(soft-Dice loss vs SAR, 4 training storms, 2 held out) moves held-out CSI only $0.0483\to0.0488$,
-with multipliers staying in $[0.94,1.14]$: roughness and infiltration change \emph{how deep},
-not \emph{where}, so their co-location gradient is $\approx0$. We also ruled out a georeferencing
-artifact: mirroring the SAR mask doubles CSI, but the DEM is provably correctly oriented
-(corr$(-$DEM, JRC$)=0.80$ unflipped vs 0.05 flipped; the Ganga sits 7.8\,m below domain mean), so
-the flip is a coincidental mirror and is not applied.
+A parameter-free climatology scores $0.30$--$0.58$. That is higher than any CSI we are aware of
+being reported for a physics-based urban flood model on Sentinel-1, including ours. The reason is
+that the Sentinel-1 target is dominated by storm-independent water the JRC permanent-water mask
+does not remove --- tidal flat, mangrove (WorldCover class 95 is present in both Mumbai tiles),
+seasonal pond, paddy. CSI on this task has therefore mostly been measuring \emph{can you find
+standing water}, which the twin never attempted: it predicts only the storm increment.
 
-\textbf{Why: a DEM-uncertainty diagnosis.} We re-simulate under a 10-member ensemble of
-spatially-correlated DEM perturbations ($\sigma=1$\,m, 5-cell correlation length --- FABDEM's
-nominal error class). Total flooded area is robust: Patna $10.79\pm0.35$\,km$^2$ at 100\,mm. But
-only 0.58\,km$^2$ (5\%) floods in $\ge$90\% of members. In Bengaluru, with 10$\times$ steeper
-relief, $4.56$ of $8.82$\,km$^2$ (52\%) is robust (Figure~\ref{fig:unc}). On a floodplain where
-metre-scale DEM noise exceeds the relief that decides which street ponds, \emph{no} topographic
-router --- physical or index-based --- can co-locate ponding; this is a property of the terrain-data
-regime, not of our model. It follows that (a) reported skill in this regime should always be
-accompanied by such an ensemble, and (b) planning tools should be judged on decisions that are
-robust to it, which we turn to next.
+The signature confirms the reading. On Mumbai-Northeast's one true flood (2026-07-08, 2\,937 wet
+cells against a $\sim$450 baseline) the climatology scores its \emph{worst}, $0.075$. It wins the
+quiet dates and loses the flood. We recommend that CSI in this literature always be reported
+beside all-wet and a leave-one-out climatology; the numbers below are meaningless without them,
+and so, in retrospect, was our $0.041$.
+
+\subsection{The twin, re-scored, and a correction in our own disfavour}
+\begin{table}[t]
+\centering\small
+\caption{All methods on the identical 18 storms, thresholds chosen off the reported scene.
+The learned model is a $7.9$\,M-parameter U-Net over 23 terrain channels with rainfall ablated,
+3 seeds. Every terrain method is quoted at its most favourable threshold rule.}
+\label{tab:baselines}
+\begin{tabular}{lccc}
+\toprule
+method & mean CSI & bias & POD \\
+\midrule
+random                            & 0.014 & 1.00 & --- \\
+static depression depth           & 0.032 & --- & 0.21 \\
+all-wet                           & 0.029 & --- & 1.00 \\
+TWI (topographic wetness)         & 0.039 & --- & 0.26 \\
+HAND-lite (height above drainage) & 0.039 & --- & 0.90 \\
+dynamic twin (antecedent rain)    & 0.054 & --- & 0.29 \\
+\midrule
+\textbf{learned (terrain only)}   & \textbf{0.290 $\pm$ 0.006} & 1.39 & 0.51 \\
+climatology (no model, no rain)   & 0.288 & 1.29 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:baselines} carries three results.
+
+\textbf{The twin is better than we published.} On a fair test set it reaches $0.054$, not the
+$0.041$ we reported --- dropping the dead scene and adding a second city both help it. It also
+clears all-wet ($0.029$) and every static index, which our Patna-only table did not show. We
+state this because the correction runs against our own headline.
+
+\textbf{Co-location \emph{is} learnable from terrain, so our ``terrain-fundamental'' claim was
+wrong.} The same DEM, the same land cover, the same soil rasters, read by a U-Net instead of
+routed by a solver, reach $0.290\pm0.006$ --- $5.4\times$ the twin and $9.9\times$ all-wet, on
+identical scenes. What fails in this regime is \emph{routing} water over a noisy DEM, not
+\emph{predicting} where water goes. The feature that makes the difference is available to both:
+elevation minus its own Gaussian blur at 2/8/32 cells. DEM error is spatially correlated, so
+relative micro-relief survives a bias that destroys absolute elevation --- the same $\pm1$\,m
+error the ensemble below injects.
+
+\textbf{But the learned model ties the climatology it was meant to beat.} $0.290$ against
+$0.288$, a gap of $0.0014$ against a seed standard deviation of $0.0064$. On a city with a
+Sentinel-1 archive, a neural network over 23 terrain channels is worth nothing over ``these cells
+are usually wet''. The learned model's contribution is therefore \emph{not} accuracy; it is
+transfer, which we isolate next.
+
+\subsection{The deployable claim is transfer, not accuracy}
+Held-out \emph{city} (leave-one-domain-out, 3 seeds, 3 domains), the model never having seen the
+target terrain: CSI $0.094\pm0.021$ at bias $1.07$. That is $3.6\times$ all-wet and roughly
+$2\times$ the twin, on cities it has never seen. The climatology scores $0.396$ there and wins ---
+but it does so using the held-out city's \emph{own} Sentinel-1 history. For a city with no radar
+archive the climatology cannot be computed at all, and the learned model is the only method in
+Table~\ref{tab:baselines} that runs. This is the claim that matters operationally, and it rests
+on three cities, which is thin; we report it as a floor rather than an estimate.
+
+\subsection{Three levers that are not levers}
+\textbf{Capacity is not the bottleneck.} Held-out floods, terrain only: CSI $0.221$ at 2.0\,M
+parameters, $0.232$ at 7.9\,M, $0.221$ at 31.4\,M, $0.219$ at 70.6\,M. Flat across a $35\times$
+range, entirely inside seed noise.
+
+\textbf{Resolution is not the bottleneck.} Our standing explanation for poor co-location was that
+real ponds are $\sim$810\,m$^2$ (28.5\,m across) and were being scored on 60\,m cells. Re-running
+at 30\,m quadruples the cell count and changes nothing: the skill multiple over all-wet is
+$10.4\times$ at 30\,m against $9.7\times$ at 60\,m. (Raw CSI is not comparable across grids --- the
+base rates differ --- which is why the multiple is the column to read.)
+
+\textbf{Rainfall is not usable, and it actively hurts.} Ablating the rainfall channels
+\emph{improves} the model's ranking quality by $0.124$ at $\approx$7 seed standard deviations,
+with three-seed ranges disjoint. A permutation control that preserves every rainfall distribution
+and destroys only the storm-to-rain pairing lands monotonically between real rain and no rain
+($0.184 \to 0.272 \to 0.313$): real rainfall is strictly the worst of the three inputs, because
+the network fits a rain-to-wetness mapping on the training storms that does not transfer. Two
+alternative explanations were tested and refuted --- tidal contradiction between the two Mumbai
+tiles (predicted that dropping the tidal tile would stop the harm; it did not), and failure to
+extrapolate to larger storms (rain costs $0.09$ CSI in-distribution too). The effect has one
+boundary: on an unseen city, rainfall neither helps nor hurts ($0.0939$ vs $0.0936$), so the
+claim is that rainfall lets the model shortcut a domain it has already seen, not that rainfall is
+universally harmful.
+
+Two properties of the rainfall archive explain why there is nothing to extract. Nine probe points
+spanning a 15\,km tile collapse to a single archive cell, so spatial rainfall is not merely
+unused but unavailable. And the source is not what we previously stated: Open-Meteo's archive
+endpoint, queried without an explicit \texttt{models} parameter, returns ECMWF IFS at 9\,km, not
+ERA5 --- $554.2$\,mm against ERA5's $1{,}213.4$\,mm over the same window and point, a factor of
+$2.19$ that exceeds any effect our physics calibration produced. The twin was never calibrated on
+ERA5. We now pin the model explicitly, which reproduces every number in this paper exactly.
+
+\subsection{Why the physics router fails: a DEM-uncertainty diagnosis}
+We re-simulate under a 10-member ensemble of spatially-correlated DEM perturbations
+($\sigma=1$\,m, 5-cell correlation length --- FABDEM's nominal error class). Total flooded area is
+robust: Patna $10.79\pm0.35$\,km$^2$ at 100\,mm. But only 0.58\,km$^2$ (5\%) floods in $\ge$90\% of
+members. In Bengaluru, with $10\times$ steeper relief, $4.56$ of $8.82$\,km$^2$ (52\%) is robust
+(Figure~\ref{fig:unc}). Gradient calibration of 16 per-WorldCover-class Manning/infiltration
+multipliers moves held-out CSI only $0.0483\!\to\!0.0488$, with multipliers staying in
+$[0.94,1.14]$: roughness and infiltration change \emph{how deep}, not \emph{where}. We also ruled
+out a georeferencing artifact --- mirroring the SAR mask doubles CSI, but the DEM is provably
+correctly oriented (corr$(-$DEM, JRC$)=0.80$ unflipped vs $0.05$ flipped; the Ganga sits 7.8\,m
+below domain mean), so the flip is a coincidental mirror and is not applied.
+
+The scope of this diagnosis is narrower than we previously claimed. On a floodplain where
+metre-scale DEM noise exceeds the relief that decides which street ponds, a solver that
+\emph{routes} water downhill cannot place it reliably, and its calibration gradient with respect
+to co-location is $\approx0$. That is why the twin sits at $0.054$. It is \emph{not} a proof that
+the terrain data lacks the information: a model reading relative micro-relief from the same
+rasters reaches $0.290$. The correct statement is that absolute elevation is too noisy to route
+over, while relative elevation is not too noisy to learn from. It follows that (a) reported skill
+in this regime should always be accompanied both by such an ensemble and by the trivial baselines
+of Table~\ref{tab:trivial}, and (b) planning tools should be judged on decisions that are robust
+to it, which we turn to next.
 
 \begin{figure}[t]
 \centering
@@ -226,6 +352,7 @@ stable but its location shifts --- only 5\% of flooded area is common to $\ge$90
 these deltaic flats (52\% in hillier Bengaluru).}
 \label{fig:unc}
 \end{figure}
+
 
 \section{Planning that survives location uncertainty}
 \label{sec:planning}
@@ -403,7 +530,8 @@ that single cells lack.
 
 \textbf{Honesty and deployment.} FloodGNN distils the twin, so it inherits the twin's biases: its
 claims are amortization, routing quality \emph{under} the twin's flood fields, and transfer --- not
-the co-location skill that \S\ref{sec:validation} shows no topographic method has here.
+co-location skill, which \S\ref{sec:validation} shows the twin itself largely lacks (and which a
+model learned directly from terrain does have, at $0.290$ against the twin's $0.054$).
 (Supervising directly on SAR-observed street water is the natural next step.) The $\sim$1.8\,MB
 checkpoint ships inside the dashboard image; \texttt{/api/route} answers from the GNN where present
 and from the raster emulator otherwise, reporting its backend; a full-graph risk query takes
@@ -467,16 +595,25 @@ reads as a city-wide blackout. Missing data must be sentinel-unmasked and treate
 Hydraulics run at 60\,m, coarser than the drawn street network; carved ``drains'' are full
 60\,m cells, so absolute excavation volumes are resolution artifacts even though per-metre drain
 costing is realistic. Depths are uncalibrated (and \S\ref{sec:validation} shows why per-class
-physics calibration cannot fix co-location); groundwater recharge uses sample data pending CGWB
-records. Mumbai adds regime-specific caveats: the tiles are independent closed-boundary models, so
+physics calibration cannot fix co-location \emph{within the solver}, though a learned model on the
+same rasters can); groundwater recharge site \emph{rankings} use sample well data pending CGWB
+records, while the recharge \emph{volumes} come from the twin's metered infiltration and do not
+depend on it. Mumbai adds regime-specific caveats: the tiles are independent closed-boundary models, so
 cross-seam flow is not simulated; tidal and storm-surge coupling --- often the binding constraint
 for Mumbai outfalls --- is absent, and rain falling on harbour cells ponds harmlessly inside the
-model rather than exchanging with the sea. SAR validation and the DEM ensemble have been run for
-Patna and Bengaluru but not yet the Mumbai tiles. Phase costs use a single indicative RCC rate;
+model rather than exchanging with the sea. SAR validation now covers Patna and both Mumbai tiles for
+which masks exist (29 storms in total); the DEM ensemble has been run for Patna and Bengaluru
+only. Mumbai-Harbour is excluded from headline validation because its observed water is almost
+entirely persistent --- a storm increment of exactly zero on 8 of its 11 dates --- so it measures
+a different hazard than urban pluvial flooding; a calendar-derived tide phase does not explain it
+(permutation $p=0.47$), and a real tide gauge remains untested. Phase costs use a single indicative RCC rate;
 land, utilities and O\&M are out of scope, so the ladders rank strategies rather than price
 projects. The learning loop's gate is deployed but unexercised by real reports; its first
 accepted (or correctly refused) field updates are the most interesting experiment we have not yet
-run. The natural next steps are finer national DEMs (e.g.\ CartoDEM), assimilating mapped drain
+run. The single most valuable missing measurement is more cities: the transfer result of
+\S\ref{sec:validation}, on which the learned model's entire case rests, is computed over three
+domains. The natural next steps are therefore Sentinel-1 masks for more of the fourteen served
+areas, finer national DEMs (e.g.\ CartoDEM), assimilating mapped drain
 networks where they exist, sub-grid street conveyance, SAR-supervised FloodGNN (removing the
 ``distils the twin'' caveat), tidal boundaries for coastal tiles, and validating the
 \emph{intervention deltas} (not just state) against before/after SAR where cities have actually
