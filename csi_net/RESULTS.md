@@ -56,6 +56,13 @@ Leave-one-storm-out, tidal tile excluded, terrain-only, 18 storms, width 32, **3
 
 Per-seed: 0.2806 / 0.2955 / 0.2924. Ranking 0.3219 ± 0.0059.
 
+> **The 7.1× is not yet like-for-like, and must not be printed until it is.** `all-wet` and
+> `random` above are computed on *exactly the scenes the net was scored on*, so 0.2895 vs 0.026
+> (11×) and vs 0.013 (22×) are honest comparisons. The twin / TWI / HAND figures come from the
+> older Patna-only table: 8 dates, one domain, and including the dead 2024-07-07 scene. Ours is
+> 18 storms across Patna + Mumbai-NE under leave-one-storm-out. Before the multiple goes in a
+> paper the twin has to be rerun on this protocol — see NEXT_STEPS §1.
+
 Bias matters as much as the CSI: the gain is not bought by predicting more water. The twin
 catches 8 % of wet cells at 5 % precision; this catches 51 % at 37 %. On the flood-holdout split
 the net runs at bias 0.22 — a *quarter* of the observed wet area — at 68 % precision.
@@ -235,8 +242,9 @@ Runs on one T4 in minutes. `--ablate {none,rain,persist,terrain}`, `--shuffle_ra
 
 ## 8. Open
 
-- The 30 m run (`--grid 30`) is built but not yet executed — it tests the project's own
-  28.5 m pond measurement directly.
+- The 30 m run (`--grid 30`) is built and was launched, but the session ended mid-run and it
+  produced no number. The 60 m arm of that same comparison completed: CSI 0.2810, bias 1.37,
+  all-wet 0.0291, i.e. a skill multiple of 9.7× over zero knowledge on its own grid.
 - Whether a tide-corrected Harbour becomes usable is untested.
 - Leave-one-domain-out is single-seed and was run with rainfall included; it should be rerun
   terrain-only, where §4 predicts it improves.
