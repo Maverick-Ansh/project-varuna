@@ -1,137 +1,114 @@
 # Next steps
 
 Ranked by evidence gained per hour, not by how interesting they are. Numbers referenced here
-are in `RESULTS.md`.
+are in `RESULTS.md`; every run's JSON is in `results/`.
 
 ---
 
-## Tier 1 — do these before anything goes in the paper
+## Closed on 2026-09-05
 
-### 1. Rerun the twin on our protocol, so the multiple is honest
-**~1 h, no GPU.** The headline says the net reaches 0.2895 and the twin reaches 0.041. Those are
-measured on **different test sets**: the twin's number is 8 Patna dates from the old table
-(including the dead 2024-07-07 scene), ours is 18 storms across Patna + Mumbai-NE under
-leave-one-storm-out. The comparisons against `all-wet` (11×) and `random` (22×) *are*
-like-for-like, because those are computed per-scene inside the same runs — the twin comparison
-is not.
+Kept, briefly, because what a test *ruled out* is as much a result as what it found.
 
-Run `score_twin` over the same 18 storms with the same mask and the same dead-scene exclusion,
-and report whatever comes out. If the twin improves once 2024-07-07 is dropped, that is a
-correction to the project's own record and should be stated plainly.
+| was | outcome |
+|---|---|
+| §1 rerun the twin on our protocol | **Done.** Twin 0.0536, not 0.0410 — it was *understated*. Multiple is 5.4×, not 7.1×. The scoring path reproduces the committed 8-date table to ±0.0007, and that check caught a real threshold-grid bug in our own script. |
+| §2 LODO terrain-only, 3 seeds | **Done.** 0.0936 ± 0.0205. The prediction that ablating rain would *improve* LODO was wrong: with rain is 0.0939 ± 0.0161. Identical. |
+| §3 finish the 30 m test | **Done.** 30 m 10.4× all-wet vs 60 m 9.7×. Resolution is not the lever. |
+| §4 decide what Harbour is for | **Done, and the tidal reading was tested rather than asserted.** Calendar tide phase explains nothing in Harbour (R² 0.405, permutation p = 0.47) while landlocked Patna "fits" at 0.985. Excluded, with a measured reason: 0.0000 storm increment on 8 of 11 dates. |
+| §5 fix the rainfall source | **Done.** `best_match` = `ecmwf_ifs` to the 0.1 mm (554.2 = 554.2); ERA5 would be 2.19× higher. Pinned `models=ecmwf_ifs`, which changes no existing number, and corrected the prose in 6 files. |
+| §6 train on the storm increment | **Done. Null.** 0.1757 ± 0.0038 vs 0.1723 ± 0.0054 trained on the full mask. Training on the target you are graded on does not make the increment predictable. |
+| §8 threshold calibration | **Partly.** Implemented and reported on every run. +0.0154 on LODO, −0.0106 on LOSO — one seed-sd, so kept as a suggestion, not a claim. |
+| audit `gw_levels.csv` reach | **Done, clean.** The V3 recharge *volumes* come from WorldCover perviousness × Cosby Ksat and the twin's metered infiltration; `gw_levels.csv` reaches only the site *ordering*, which already carries a gate. |
 
-**Until this is done, quote 11× over all-wet, not 7.1× over the twin.**
-
-### 2. Leave-one-domain-out, terrain-only, 3 seeds
-**~25 min GPU.** The LODO 0.099 is the single most important number for deployment — it is the
-only one measured on a city the model has never seen, and it is the regime where climatology is
-unavailable because there is no local SAR history. But it was run **with rainfall included and
-on a single seed**, and §4 shows rainfall costs ~0.09 CSI. That number is very likely a
-substantial underestimate of its own method.
-
-```bash
-python -m csi_net.run --split lodo --ablate rain --width 32 --steps 1500 --seed 0   # 1,2
-```
-
-### 3. Finish the 30 m resolution test
-**~15 min GPU.** Built and launched; the session ended mid-run so it produced nothing. This is
-the direct test of the project's own headline measurement — 810 m² ponds, 28.5 m across, scored
-on 60 m cells. The 60 m arm completed for comparison: CSI 0.2810 at all-wet 0.0291, a 9.7× skill
-multiple.
-
-```bash
-python -m csi_net.run --split loso --ablate rain --areas patna,mumbai_northeast --grid 30 --seed 0
-```
-
-Compare **CSI ÷ all-wet on each grid**, never raw CSI across grids — the base rates differ, so
-raw CSI is not comparable between 30 m and 60 m.
+The one result none of this was looking for: **the net ties the climatology baseline** (0.2895 vs
+0.2881) on the split where the city is known. The headline is now transfer, not accuracy.
 
 ---
 
-## Tier 2 — decisions the project has to make
+## Tier 1 — the paper cannot be submitted without these
 
-### 4. Decide what Mumbai-Harbour is for
-It is tidally contaminated: rainfall correlates **−0.70** with observed water at 14 days, its
-storm increment is 0.0000 on 8 of 11 dates, and including it drags the terrain-only model from
-0.206 down to 0.170. Three options, in order of preference:
+### 1. Rewrite the paper's §4
+**~3 h, no compute.** `paper/varuna-floodtwin.tex:174-215` claims *topographic routing does not
+co-locate flat-city flooding*, evidenced by four methods in a 0.032–0.051 band. That claim is now
+refuted by our own data: the same rasters, learned, reach 0.2895. The section needs:
 
-- **Exclude it**, and say why — a tidal estuary is a different hazard class from urban pluvial
-  flooding, which is a defensible scoping decision, not a convenience.
-- **Add a tide covariate** (FES2014 or a tide table sampled at the Sentinel-1 overpass time) and
-  test whether it becomes usable. This is the interesting version and it is a real experiment.
-- Keep pooling it, and accept a model trained on two contradictory targets.
+- Table 3 replaced by the like-for-like table (`RESULTS.md` §2.1), which also *raises* the twin
+  from 0.0410 to 0.0536 — a correction against our own headline, and it should be said as such.
+- The trivial baselines added beside every CSI in the paper. All-wet 0.013–0.047 and climatology
+  0.30–0.58 are the floor and the ceiling, and no CSI in this literature is interpretable
+  without them. This is the part that generalises past this paper.
+- The claim restated: co-location *is* learnable from terrain; this physics model was not
+  extracting it; and the learned model's contribution is transfer to cities with no SAR archive,
+  not accuracy on cities with one.
+- §4's "why" (DEM uncertainty) survives as an explanation of why *the twin* fails, not of why the
+  task is impossible.
 
-### 5. Fix the rainfall source, in code and in prose
-`varuna/serve/weather.py:33` sends no `models=` parameter, so Open-Meteo returns `best_match` =
-ECMWF IFS 9 km. The docstring at line 28, the Notion writeup, and the paper all say ERA5. They
-disagree 4.3× (114.1 vs 485.7 mm on 2026-07-06). Pick one:
+### 2. Pick a venue
+**~1 h.** The paper has been "done, not submitted" since 2026-07-12. Nothing below improves it
+more than choosing a deadline does. The header still targets a CCAI/EGU-style workshop; the
+learned-baseline result would also fit a remote-sensing venue, and the methodological point
+(report CSI against trivial baselines) is the most citable thing here.
 
-- pin `models=era5` to make the code match the claim, then re-verify the twin's calibration, or
-- change the claim to IFS 9 km everywhere.
-
-Either way the choice must be stated, because the spread is larger than any effect the physics
-calibration produced.
-
-### 6. Train on the storm increment directly
-**~20 min GPU, untested.** The net is currently trained on the full SAR mask and *scored* on the
-increment (0.172). Training against the increment target directly may do considerably better on
-the quantity that actually matters — and it is the target the twin was implicitly built for, so
-it is the fairest possible head-to-head.
+### 3. Decide the repo's visibility
+**~10 min.** The paper claims reproducibility on free hardware while the repo is private. Make it
+public before submission, or drop the claim. This is the user's call, not a code change.
 
 ---
 
-## Tier 3 — strengthens the claim, costs more
+## Tier 2 — strengthens the claim
 
-### 7. More domains
-Three domains is a thin basis for any cross-city claim, which is why LODO 0.099 should be read as
-a floor rather than an estimate. The V3 build serves 14 areas; SAR masks exist for only 3.
-Fetching `observed_water_*.tif` for more areas is a GEE job on the existing pipeline and would
-materially strengthen the only result that speaks to generalisation.
+### 4. More domains
+**GEE job on the existing pipeline.** Three domains is a thin basis for a cross-city claim, and
+the deployable claim now rests entirely on LODO (0.0936 ± 0.0205, n=3 cities). The V3 build
+serves 14 areas; SAR masks exist for 3. Fetching `observed_water_*.tif` for even three more
+would roughly double the evidence behind the only number that matters for deployment. **This is
+the highest-value experiment left in the project.**
 
-### 8. Threshold calibration
-Ranking quality (0.3219) sits consistently above achieved CSI (0.2895) across every run. The gap
-is pure calibration loss — the model orders cells better than its single global threshold
-exploits. A per-scene threshold rule (predicted wet fraction matched to a terrain-derived prior)
-would recover part of it for free, with no retraining.
+### 5. A real tide gauge for Harbour
+**~2 h.** Only the calendar proxy has been ruled out. FES2014, or a tide table sampled at the
+Sentinel-1 overpass time, is the version with amplitude in it. If Harbour becomes usable, it is a
+fourth domain and a genuinely interesting result; if it does not, the exclusion is settled twice
+over. Worth doing only after §4 — a new city is cheaper evidence than a rescued one.
+
+### 6. Threshold calibration across more splits
+**~20 min GPU.** One seed-sd on one split. Run it on LOSO/flood/LODO × 3 seeds with and without,
+and either promote it to a claim or drop it.
 
 ---
 
-## Carried over from the pre-existing review, still open
-
-These predate this work and are unchanged by it:
+## Tier 3 — carried over, unchanged by this work
 
 - **The nightly loop has still never run.** Either run it for 3–5 nights and get a real log, or
-  cut §6 and keep it as one line of future work. Shipping the in-between state is the risk.
+  cut §6 of the paper and keep it as one line of future work. `scripts/nightly_update.py
+  --dry-run` on Kaggle (where `HF_TOKEN` is a secret) is the zero-risk first step — it snapshots
+  the Space and pushes nothing.
 - **BMC / BRIMSTOWAD capacity lookup.** A literature lookup, not a compute job, and still the
   best value-per-hour item available: it could externally validate the 5.3 Mm³ drainage
   saturation ceiling, which would be the only externally-validated number in the project.
-- **Repo is private** while the paper claims reproducibility on free hardware. Make it public
-  before submission or drop the claim.
-- **Audit which paper numbers touch `gw_levels.csv`** (Patna's six invented wells, copied
-  byte-identically into every bundle). `csi_net` excludes `rsi.tif` for this reason, but the
-  intervention numbers have not been audited.
+- **ERA5 vs IFS is a decision, not a bug, and it can be flipped in one line.**
+  `varuna/serve/weather.py:ARCHIVE_MODEL`. Pinning IFS preserved every existing number; switching
+  to ERA5 costs a full recalibration and moves rainfall by 2.19×. Stated either way, as required.
 
 ---
 
 ## What the paper's spine should now be
 
-The previous plan was *"at 60 m with satellite-only inputs, urban pluvial flood models cannot
-co-locate."* That is no longer what the evidence says. Co-location **is** learnable from terrain —
-0.2895 at bias 1.39, 51 % recall at 37 % precision, 11× a zero-knowledge baseline on identical
-scenes. The revised claim is sharper and more useful:
+> Flood extent at 60 m is predictable from terrain alone — but so is a climatology, and the two
+> score the same. What a learned model adds is that it runs on a city with no radar archive,
+> where the climatology cannot be computed. Rainfall, as available from free reanalysis,
+> contributes nothing and measurably degrades the model where the city is already known. And CSI
+> on this task must be reported against trivial baselines, because a rainfall-free climatology
+> scores 0.58 — higher than anything a physics model in this literature reports.
 
-> Flood extent at 60 m is predictable from terrain alone. Rainfall, as available from free
-> reanalysis, contributes nothing and measurably degrades the model. And CSI on this task must be
-> reported against trivial baselines, because a rainfall-free climatology scores 0.58 — higher
-> than anything a physics model in this literature reports.
-
-Three things carry that, and all three are measured rather than argued:
+Four things carry that, and all four are measured rather than argued:
 
 1. **What CSI is worth here** — all-wet 0.013–0.047, climatology 0.30–0.58, SAR-vs-SAR ceiling
-   0.16–0.46. This is a methodological contribution that applies to other people's flood papers,
-   not only this one.
-2. **Rainfall is the wrong lever**, shown four independent ways with two alternative explanations
-   tested and refuted. Negative results this well controlled are rare and citable.
-3. **Scale is not the lever either** — flat from 2.0 M to 70.6 M parameters. Anyone repeating
-   this should spend compute on inputs and protocol, not width.
+   0.16–0.46. A methodological contribution that applies to other people's flood papers.
+2. **Terrain is learnable and the twin was leaving it on the table** — 5.4× on identical scenes,
+   with the twin's own number corrected *upward* in the process.
+3. **Rainfall is the wrong lever**, shown four independent ways, with two alternative explanations
+   tested and refuted, and now with a stated boundary: the effect vanishes on unseen cities.
+4. **Neither scale nor resolution is the lever either** — flat from 2.0 M to 70.6 M parameters,
+   flat from 60 m to 30 m.
 
 The word "honest" still appears zero times. Every weakness above is stated as a number.

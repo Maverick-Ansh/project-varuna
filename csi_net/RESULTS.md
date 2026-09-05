@@ -6,6 +6,8 @@ against the trivial baselines that make a CSI number mean something.
 All numbers below come from `csi_net/`. Protocol details are in `data.py` (splits) and
 `metrics.py` (scoring). Every run uses the same 128×128 crops, the same permanent-water mask
 on prediction and truth, and the same max-pooled SAR truth as `varuna/build/calibrate.py`.
+Every per-run JSON is committed under `csi_net/results/` — the Kaggle kernel that produced
+them is not storage, and an earlier set of headline seeds was lost that way.
 
 ---
 
@@ -26,14 +28,11 @@ Computed from artifacts already on disk. `artifacts/trivial_baselines.json`.
 - **SAR vs SAR** — every date scored against every other date of the same domain. An empirical
   ceiling: two radar passes of the same city agree with each other only this well.
 
-The existing methods, for reference (`artifacts/patna/baseline_comparison.json`, 8 Patna dates):
-static depth 0.0323, TWI 0.0422, **dynamic twin 0.0410**, HAND-lite 0.0505.
-
-**A model that ignores rainfall entirely scores 0.58 on mumbai_harbour at bias 1.29.** The twin
-scores 0.041. The Sentinel-1 target is dominated by a static, storm-independent wet field that
-the JRC ≥ 50 % permanent-water mask does not remove — tidal flat, mangrove (WorldCover class 95
-is present in both Mumbai tiles), seasonal pond, paddy. CSI as computed has mostly been a test
-of finding persistent water, which the twin never attempted; it predicts only the storm increment.
+**A model that ignores rainfall entirely scores 0.58 on mumbai_harbour at bias 1.29.** The
+Sentinel-1 target is dominated by a static, storm-independent wet field that the JRC ≥ 50 %
+permanent-water mask does not remove — tidal flat, mangrove (WorldCover class 95 is present in
+both Mumbai tiles), seasonal pond, paddy. CSI as computed has mostly been a test of finding
+persistent water, which the twin never attempted; it predicts only the storm increment.
 
 The signature confirms the reading: on mumbai_northeast's one real flood (2026-07-08, 2937 wet
 cells against a ~450 baseline) climatology scores its **worst**, 0.075. It wins the quiet dates
@@ -41,36 +40,106 @@ and loses the flood.
 
 ---
 
-## 2. Headline result
+## 2. The existing methods, re-measured on the scenes we actually report
+
+The previous version of this document compared a net measured over 18 storms under
+leave-one-storm-out against a twin measured on 8 Patna dates with one globally-swept threshold
+and a dead scene included, and printed the ratio. Different test sets, so that ratio was not a
+measurement. `twin_protocol.py` closes the gap: same 18 storms, same 60 m grid, same
+permanent-water mask, same max-pooled truth, and a threshold chosen on the *other* storms of the
+fold rather than on the scene being reported.
+
+Grid alignment is proven, not assumed — the feature stack's truth and mask are checked cell for
+cell against `calibrate.align_sar` / `valid_mask` on the twin's own crop before anything is
+scored: **0 of 16 384 cells differ in Patna, 0 of 65 536 in Mumbai-NE**, and 0 of 851 968 truth
+cells across all dates.
+
+**The scoring path is verified against the project's own committed table** (`--reproduce`, old
+protocol, 8 Patna dates, one global threshold):
+
+| method | committed | re-derived here | delta |
+|---|---|---|---|
+| dynamic twin | 0.0412 | 0.0409 | −0.0003 |
+| TWI | 0.0422 | 0.0429 | +0.0007 |
+| HAND-lite | 0.0505 | 0.0504 | −0.0001 |
+| static depression depth | 0.0323 | 0.0287 | −0.0036 |
+
+Static depth is the one known difference: `baselines.py` max-pools `depth.tif` to 60 m and the
+feature stack mean-pools it. The other three reproduce, so the new numbers below are the same
+scoring code answering a different question, not a different scoring code.
+
+That check earned its keep immediately. The first version of `twin_protocol.py` swept HAND-lite
+over pooled quantiles 0.01–0.50, which top out below 1 m in Patna — while the threshold the
+original table selected was **8.57 m**. HAND-lite was being scored at a threshold it would never
+have chosen, and the regression check is what surfaced it.
+
+### 2.1 The like-for-like table
+
+18 storms, patna + mumbai_northeast, 60 m, dead scene dropped. `csi_net/results/twin_protocol.json`.
+
+| method | LOSO threshold | per-domain threshold | old global rule | POD |
+|---|---|---|---|---|
+| **dynamic twin** | 0.0450 ± 0.0358 | **0.0536** | 0.0450 | 0.291 |
+| TWI | 0.0387 | 0.0394 | 0.0403 | 0.262 |
+| HAND-lite | 0.0324 | 0.0394 | 0.0352 | 0.897 |
+| static depression depth | 0.0310 | 0.0315 | 0.0319 | 0.206 |
+| all-wet | 0.0291 | — | — | 1.000 |
+| random | 0.0140 | — | — | |
+| **climatology** | **0.2881** | — | — | |
+
+"per-domain threshold" lets each city keep its own, chosen on that city's other storms. It is
+more generous than one pooled threshold — Patna's HAND runs to 15 m and Mumbai-NE's to 200 m —
+and the net gets per-domain standardisation, so this is the column the baselines are quoted at.
+
+**Two corrections to the project's own record, both against us:**
+
+1. **The twin is better than its published 0.0410, not worse.** On this protocol it reaches
+   **0.0536**. Dropping the dead 2024-07-07 scene (a forced 0.0 in every method's mean) and
+   adding a second domain both help it. The old number understated the twin.
+2. **The optimism in the old protocol was negligible.** Sweeping one threshold over all dates
+   including the test scene bought between +0.000 and +0.005. The old table's weakness was its
+   test set, not its threshold rule.
+
+HAND-lite's 0.897 POD is worth reading beside its CSI: at its chosen threshold it calls almost
+everything wet, so its 0.0394 is barely distinguishable from all-wet's 0.0291 by construction.
+
+---
+
+## 3. Headline result
 
 Leave-one-storm-out, tidal tile excluded, terrain-only, 18 storms, width 32, **3 seeds**:
 
-| method | CSI | bias | POD | precision | note |
-|---|---|---|---|---|---|
-| random | 0.013 | 1.00 | | | |
-| all-wet | 0.026 | — | 1.00 | 0.03 | |
-| dynamic twin | 0.041 | 1.12 | 0.08 | 0.05 | |
-| TWI | 0.042 | | | | one-line formula |
-| HAND-lite | 0.051 | | | | one-line formula |
-| **net (terrain-only)** | **0.2895 ± 0.0064** | **1.39 ± 0.05** | **0.514** | **0.37** | **7.1× the twin** |
+| method | CSI | bias | POD | precision |
+|---|---|---|---|---|
+| random | 0.0140 | 1.00 | | |
+| all-wet | 0.0291 | — | 1.00 | 0.03 |
+| static depression depth | 0.0315 | | 0.21 | |
+| TWI | 0.0394 | | 0.26 | |
+| HAND-lite | 0.0394 | | 0.90 | |
+| dynamic twin | 0.0536 | | 0.29 | |
+| **net (terrain-only)** | **0.2895 ± 0.0064** | **1.39 ± 0.05** | **0.514** | **0.37** |
+| **climatology (no model, no rain)** | **0.2881** | 1.29 | | |
 
 Per-seed: 0.2806 / 0.2955 / 0.2924. Ranking 0.3219 ± 0.0059.
 
-> **The 7.1× is not yet like-for-like, and must not be printed until it is.** `all-wet` and
-> `random` above are computed on *exactly the scenes the net was scored on*, so 0.2895 vs 0.026
-> (11×) and vs 0.013 (22×) are honest comparisons. The twin / TWI / HAND figures come from the
-> older Patna-only table: 8 dates, one domain, and including the dead 2024-07-07 scene. Ours is
-> 18 storms across Patna + Mumbai-NE under leave-one-storm-out. Before the multiple goes in a
-> paper the twin has to be rerun on this protocol — see NEXT_STEPS §1.
+- **5.4× the physics twin**, on identical scenes, with both thresholds chosen off the test scene.
+- **9.9× all-wet**, **21× random**.
+- **1.005× climatology.** The net and "these cells are usually wet" are the same number: the gap
+  is 0.0014 against a seed standard deviation of 0.0064.
 
-Bias matters as much as the CSI: the gain is not bought by predicting more water. The twin
-catches 8 % of wet cells at 5 % precision; this catches 51 % at 37 %. On the flood-holdout split
-the net runs at bias 0.22 — a *quarter* of the observed wet area — at 68 % precision.
+That last line is the honest headline and it is not the one this document previously carried.
+Where the city has been seen in training, a 7.9 M-parameter U-Net over 23 terrain channels does
+not beat a rainfall-free, model-free climatology. What it buys is not accuracy on a known city.
+It is §4: the climatology cannot be computed at all for a city with no Sentinel-1 archive, and
+the net can.
 
-Storm-increment score (wet today and not persistently wet — the honest target a rainfall model
-should be graded on) is **0.1723 ± 0.0054**.
+Bias matters as much as the CSI: the gain over the twin is not bought by predicting more water.
+The twin catches 29 % of wet cells; this catches 51 % at 37 % precision. On the flood-holdout
+split the net runs at bias 0.22 — a *quarter* of the observed wet area — at 68 % precision.
 
-### 2.1 Capacity is not the bottleneck
+Storm-increment score (wet today and not persistently wet) is **0.1723 ± 0.0054**.
+
+### 3.1 Capacity is not the bottleneck
 
 Flood holdout, terrain-only, tidal tile dropped, 1200 steps, single seed:
 
@@ -81,30 +150,43 @@ Flood holdout, terrain-only, tidal tile dropped, 1200 steps, single seed:
 | 64 | 31.4 M | 0.2213 | 0.2721 | 0.1775 | 128 s |
 | 96 | 70.6 M | 0.2194 | 0.2831 | 0.1730 | 245 s |
 
-Flat across a 35× parameter range. The entire spread (0.219–0.232) sits inside the ±0.010–0.016
-seed noise measured in §4.1, so none of it is a real difference.
+Flat across a 35× parameter range; the entire spread sits inside seed noise. Anyone repeating
+this should spend compute on inputs and protocol, not on width.
 
-**The 6.9× gain over the twin did not come from scale.** It came from the feature stack, the
-evaluation protocol, excluding the tidal domain, and deleting rainfall. Anyone repeating this
-should spend their compute on inputs and protocol, not on width — a 2 M-parameter net on one T4
-in 35 seconds reaches the same place as a 70 M one.
+### 3.2 Resolution is not the bottleneck either
+
+The project's standing explanation for poor co-location was scale: real ponds measure ~810 m²
+(28.5 m across) and were being scored on 60 m cells. Tested directly, same protocol, same seed,
+terrain-only, patna + mumbai_northeast:
+
+| grid | CSI | all-wet | **CSI ÷ all-wet** | bias | increment |
+|---|---|---|---|---|---|
+| 60 m | 0.2814 | 0.0291 | **9.7×** | 1.35 | 0.1659 |
+| 30 m | 0.2380 | 0.0228 | **10.4×** | 1.77 | 0.1516 |
+
+Raw CSI is *not* comparable across grids — the base rates differ, which is exactly why the
+skill multiple is the column to read. On that column the finer grid is 7 % better, well inside
+what a single seed can produce. Quadrupling the number of cells does not unlock co-location, so
+the 60 m cell size was not what was standing in the way.
 
 ---
 
-## 3. Generalisation
+## 4. Generalisation
 
 | protocol | what is held out | CSI | ranking | bias | increment |
 |---|---|---|---|---|---|
-| leave-one-storm-out | an ordinary storm, terrain seen | **0.290 ± 0.006** | 0.322 | 1.39 | 0.172 |
+| leave-one-storm-out | an ordinary storm, terrain seen | **0.2895 ± 0.0064** | 0.322 | 1.39 | 0.172 |
 | flood holdout | the two largest storms | 0.206 ± 0.002 | 0.278 | 0.22 | — |
-| leave-one-**domain**-out | an entire unseen city | 0.099 | 0.127 | 0.57 | 0.037 |
+| leave-one-**domain**-out | an entire unseen city | **0.0936 ± 0.0205** | 0.129 | 1.07 | 0.039 |
 
-Leave-one-domain-out (29 storms, all three domains, with rain) beats every terrain baseline —
-twin 0.041, TWI 0.042, HAND-lite 0.051, all-wet 0.026, random 0.013 — on cities the model has
-never seen. Climatology scores 0.396 there and wins, but the comparison is not like-for-like
-and the difference is the deployable one: **climatology needs a year of Sentinel-1 history at
-the target site; the net needs none.** For a new city with no SAR archive climatology does not
-exist, and the net is the only method on that list that runs at all.
+Leave-one-domain-out is now 3 seeds (it was a single seed). Per held-out city: mumbai_northeast
+0.134, patna 0.090, mumbai_harbour 0.056.
+
+On an unseen city the net beats every terrain baseline — twin 0.054, TWI 0.039, HAND-lite 0.039,
+all-wet 0.026, random 0.014 — at 3.6× all-wet. Climatology scores 0.396 there and wins, but that
+number is computed from the held-out city's *own* other Sentinel-1 dates. **For a new city with
+no SAR archive climatology does not exist, and the net is the only method on this list that runs
+at all.** That, and not accuracy on a known city, is the deployable claim.
 
 One column is loud: in mumbai_harbour the storm-increment score is 0.0000 on **eight of eleven
 dates**. Essentially all observed water there is persistent and there is almost no increment to
@@ -112,11 +194,12 @@ predict. Patna's increments run 0.15–0.20. The two Mumbai tiles and Patna are 
 
 ---
 
-## 4. Rainfall is unusable, and including it makes the model worse
+## 5. Rainfall is unusable where the city is known — and simply irrelevant where it is not
 
-This is the strongest and most surprising result, and it survived three attempts to explain it away.
+This is the strongest and most surprising result, and it survived three attempts to explain it
+away. It also now has a stated boundary, which it did not before.
 
-### 4.1 Ablation (flood split, all 3 domains, 3 seeds)
+### 5.1 Ablation (flood split, all 3 domains, 3 seeds)
 
 | input removed | CSI | ranking |
 |---|---|---|
@@ -127,11 +210,10 @@ This is the strongest and most surprising result, and it survived three attempts
 
 Removing rainfall moves CSI by +0.009 — inside seed noise. But it moves *ranking quality* by
 **+0.124 at ≈7 seed-sd**, with the three-seed ranges disjoint. Removing terrain collapses the
-model and drives bias to 0.65: with no terrain it cannot localise, so it smears water. Removing
-the persistent-water prior barely matters, so the net is not simply relocating the climatology
-baseline — it is using genuine terrain structure.
+model and drives bias to 0.65. Removing the persistent-water prior barely matters, so the net is
+not simply relocating the climatology baseline — it is using genuine terrain structure.
 
-### 4.2 Permutation control
+### 5.2 Permutation control
 
 Shuffle rain vectors *within* each domain: every rainfall distribution is preserved, only the
 storm↔rain pairing is destroyed.
@@ -142,16 +224,31 @@ storm↔rain pairing is destroyed.
 | shuffled rain | 0.1597 ± 0.0104 | **0.272 ± 0.035** |
 | no rain at all | 0.1669 ± 0.0106 | **0.313 ± 0.012** |
 
-Monotone. Breaking the pairing does not hurt — it helps; deleting rainfall helps more. Real
-rainfall is strictly the worst of the three inputs. Two effects are stacked here: *any*
-per-scene scalar gives the net something to condition on instead of learning terrain (shuffled
-0.272 < none 0.313), and *real* rain is worse still (0.184) because the net fits a rain→wetness
-mapping on the training storms that does not transfer.
+Monotone. Breaking the pairing does not hurt — it helps; deleting rainfall helps more. Two
+effects are stacked: *any* per-scene scalar gives the net something to condition on instead of
+learning terrain, and *real* rain is worse still because the net fits a rain→wetness mapping on
+the training storms that does not transfer.
 
-### 4.3 Two explanations tested and refuted
+### 5.3 Where the effect stops: unseen cities
 
-**Tidal contradiction — refuted.** Rainfall correlates with observed wet-cell count in opposite
-directions in two tiles of the same city:
+Every rainfall result above is measured on a split where the domain appears in training. On
+leave-one-domain-out, matched arms at 3 seeds each:
+
+| LODO arm | CSI | bias | increment |
+|---|---|---|---|
+| with rain | 0.0939 ± 0.0161 | 0.70 ± 0.15 | 0.0398 |
+| rain ablated | 0.0936 ± 0.0205 | 1.07 ± 0.06 | 0.0390 |
+
+**Identical** — 0.0003 apart against seed sds of 0.016–0.021. Rainfall neither helps nor hurts
+on a city the model has never seen. The claim is therefore not "rainfall is always harmful"; it
+is *rainfall is harmful when the model can use it to shortcut a domain it has already seen, and
+inert otherwise.* The one thing rainfall does change on unseen cities is bias — 0.70 with rain
+against 1.07 without, i.e. it makes the model under-predict flood area by a third.
+
+### 5.4 Two explanations tested and refuted
+
+**Tidal contradiction — refuted twice now.** Rainfall correlates with observed wet-cell count in
+opposite directions in two tiles of the same city:
 
 | domain | rain_1d | rain_3d | rain_5d | rain_7d | rain_14d | peak_3h |
 |---|---|---|---|---|---|---|
@@ -161,19 +258,18 @@ directions in two tiles of the same city:
 
 `* p < 0.05`. Pooled over 29 storms nothing survives: best is rain_3d, r = 0.30, p = 0.11.
 Mumbai-Harbour's significantly **negative** 14-day correlation is physically backwards for
-rainfall and is the expected signature of tidal forcing — Sentinel-1 overpasses at a fixed local
-time, so harbour extent tracks tide.
+rainfall, and was read as the signature of tidal forcing.
 
-That predicted a fix: drop the tidal tile and rainfall should stop hurting. **It did not.**
-Ablating rain still helped by +0.112 (+10.4 sd) with Harbour removed. The prediction failed, so
-the tidal contradiction is not the operative mechanism.
+That prediction was tested and failed: dropping the tidal tile should have stopped rainfall
+hurting, and it did not — ablating rain still helped by +0.112 (+10.4 sd) with Harbour removed.
+§6 tests the tidal reading itself, directly, and it fails there too.
 
 What *did* survive: dropping Harbour lifted the terrain-only model from 0.170 → **0.2059 ± 0.0018**.
 The tidal tile was genuinely poisoning training, just not through the rain channels.
 
-**Extrapolation failure — refuted.** The flood split holds out the two *largest* storms, so it is
-deliberately out-of-distribution in magnitude; a rain→wetness map fitted on quiet storms would
-fail there while terrain-only degraded gracefully. Tested in-distribution with leave-one-storm-out:
+**Extrapolation failure — refuted.** The flood split holds out the two *largest* storms, so a
+rain→wetness map fitted on quiet storms would fail there while terrain-only degraded gracefully.
+Tested in-distribution with leave-one-storm-out:
 
 | LOSO, no harbour | CSI | ranking | bias | increment |
 |---|---|---|---|---|
@@ -182,70 +278,170 @@ fail there while terrain-only degraded gracefully. Tested in-distribution with l
 
 Rain costs ~0.09 CSI in-distribution too. Not extrapolation.
 
-### 4.4 Why there is nothing to extract
+### 5.5 Why there is nothing to extract, and what the rain actually is
 
-- **One number per tile.** Nine probe points spanning a 15 km tile collapse to a single ERA5
-  cell (19.250, 73.000). Spatial rainfall is not merely unused — it is *unavailable* from this
-  archive, so the "uniform rain over the tile" hypothesis cannot be tested against it at all.
-- **4.3× product disagreement.** ERA5 gives 485.7 mm for Mumbai on 2026-07-06; ECMWF IFS at 9 km
-  gives 114.1 mm. That spread is larger than any effect the physics calibration produced.
-- **Misdocumented source.** `varuna/serve/weather.py:33` sends no `models=` parameter, so
-  Open-Meteo returns `best_match` = ECMWF IFS 9 km. The docstring and the project writeup both
-  claim ERA5. **The twin was never calibrated on ERA5.**
+- **One number per tile.** Nine probe points spanning a 15 km tile collapse to a single archive
+  cell. Spatial rainfall is not merely unused — it is *unavailable* from this archive.
+- **The source is ECMWF IFS 9 km, and was never ERA5.** `varuna/serve/weather.py` sent no
+  `models=` parameter, so Open-Meteo answered with `best_match`. Measured at the Mumbai-NE
+  centre over 2026-06-06 → 2026-07-06:
+
+  | `models=` | total |
+  |---|---|
+  | *(absent — `best_match`)* | 554.2 mm |
+  | `ecmwf_ifs` | **554.2 mm** — identical |
+  | `era5` | 1213.4 mm — **2.19×** |
+  | `era5_land` | 0.0 mm — no data at this coastal cell |
+
+  The docstring, `VALIDATION.md`, the paper and the project writeup all said ERA5. **The twin was
+  never calibrated on ERA5.** The model is now pinned to `ecmwf_ifs`, which reproduces every
+  existing number exactly (the function still returns 554.2 mm) and stops `best_match` drifting
+  under the project later. Switching to ERA5 remains defensible but is not free: it costs a full
+  recalibration, and the 2.2× spread is larger than any effect that calibration produced.
 
 ---
 
-## 5. Data integrity: what was excluded and why
+## 6. Mumbai-Harbour: the tidal explanation, tested
+
+Harbour has been excluded from the headline on the strength of an *interpretation* — that its
+backwards rain correlation is tidal. `tide_probe.py` tests that interpretation with the cheapest
+instrument that can carry it. `data.tide_vec` derives tide phase from the calendar alone: the
+sin/cos of the synodic phase and of its second harmonic, covering the spring–neap beat and the
+~14.8-day aliasing of the lunar semidiurnal tide at Sentinel-1's fixed overpass hour.
+
+Against each domain's observed wet fraction, with a permutation p-value because four predictors
+on eleven scenes will fit noise well:
+
+| domain | n | tide R² | perm p | rain R² | perm p |
+|---|---|---|---|---|---|
+| patna | 7 | 0.985 | 0.063 | 0.672 | 0.156 |
+| **mumbai_harbour** | 11 | **0.405** | **0.475** | 0.489 | 0.072 |
+| mumbai_northeast | 11 | 0.438 | 0.238 | 0.405 | 0.138 |
+
+**The tide story does not survive.** In the one domain where it predicted signal, random
+permutations of the labels fit as well roughly half the time. And Patna — 1 000 km inland, no
+tide — produces the best tidal fit in the table, which is exactly what four predictors on seven
+scenes buys and is the clearest possible warning against reading the R² instead of the p.
+
+The instrument's limits belong in the claim: a calendar phase carries no amplitude, no
+bathymetry and no surge, so this refutes *the cheap version* of the tide hypothesis, not the
+existence of tidal forcing. A real gauge or an FES2014 sample could still find what this cannot.
+What it does establish is that Harbour is not rescuable by anything derivable from the date, and
+that the tidal reading in §5.4 was never measured before being used to justify dropping a domain.
+
+**Decision.** Harbour stays excluded from the headline, and the stated reason changes: not
+"it is tidally contaminated" (untested, and the cheap test failed), but *its observed water is
+almost entirely persistent — a 0.0000 storm increment on 8 of 11 dates — so it is a different
+hazard class from urban pluvial flooding, and pooling it costs 0.036 CSI.* That is a scoping
+decision supported by a measurement.
+
+---
+
+## 7. Two things that did not work, reported because they were tried
+
+### 7.1 Training on the storm increment does not help
+
+The net has been trained on the full SAR mask and *scored* on the increment, while the twin
+predicts only the increment. `--target increment` trains on the same quantity it is graded on,
+with the persistent field built from training scenes only so no test label leaks in. LOSO,
+terrain-only, patna + mumbai_northeast, 3 seeds:
+
+| training target | increment CSI | full-mask CSI |
+|---|---|---|
+| full SAR mask | 0.1723 ± 0.0054 | **0.2814** |
+| storm increment | **0.1757 ± 0.0038** | 0.2444 ± 0.0064 |
+
++0.0034 on the increment, against seed sds of 0.004–0.005. A null. Training directly on the
+quantity that matters does not make the storm increment more predictable, which is the strongest
+evidence yet that the increment is close to unlearnable from these inputs rather than merely
+mis-targeted. Full-mask CSI drops as expected once the model stops being asked to find
+persistent water.
+
+### 7.2 Threshold calibration helps only where the domain is unseen
+
+Ranking quality has run consistently above achieved CSI in every experiment here, and that gap is
+calibration loss. `calibrated_threshold` picks a per-scene threshold that matches the predicted
+wet fraction to the *training* scenes' wet fraction — a number available without ever looking at
+the test label.
+
+| split | global threshold | calibrated | delta |
+|---|---|---|---|
+| LODO, with rain (3 seeds) | 0.0939 ± 0.0161 | 0.1093 ± 0.0111 | **+0.0154** |
+| LOSO, increment-trained (3 seeds) | 0.2444 ± 0.0064 | 0.2338 ± 0.0062 | −0.0106 |
+
+Suggestive, not established: +0.0154 is about one seed sd. The direction is coherent — a
+threshold fitted on other cities is miscalibrated for an unseen one, and matching the wet
+fraction repairs part of that — but it needs more splits before it is a claim.
+
+---
+
+## 8. Data integrity: what was excluded and why
 
 - **`waterlogging_frequency.tif` — excluded, label leakage.** `varuna/build/validate.py:83`
   builds it by counting wet pixels across the same Sentinel-1 passes that produce our labels.
   As a feature it would have manufactured a large fake CSI.
-- **`rsi.tif` — excluded.** Derived from `gw_levels.csv`, which is Patna's six invented wells
-  copied byte-identically into every bundle.
+- **`rsi.tif` — excluded.** Derived from `gw_levels.csv`, Patna's six invented wells copied
+  byte-identically into every bundle.
 - **`catchment_labels.tif` — excluded.** Integer IDs; a memorisation key, not a feature.
 - **`patna/2024-07-07` — dropped from scoring.** Zero observed wet cells, so no ground truth,
-  and a forced 0.0 in every method's mean including the twin's 0.041.
+  and a forced 0.0 in every method's mean including the twin's old 0.0410.
+
+**The invented-wells audit is closed, and it is good news.** `gw_levels.csv` reaches only one
+product: `gw_depth` → `rsi.tif` → the `rsi` / `recharge_score` *ranking* columns in
+`recharge_sites.csv`. The V3 recharge headline — metered m³ into the aquifer — comes from
+`varuna/serve/recharge_sites.py:193-195`, whose suitability layer is WorldCover perviousness
+modulated by Cosby Ksat from SoilGrids sand/clay (`_suitability`, lines 83-99), and whose volumes
+come from the twin's metered infiltration. Neither touches `gw_levels.csv`. The recharge
+*volumes* are clean; only the site *ordering* inherits the placeholder wells, and that path
+already carries a loud gate (`build/recharge.py:105-124`).
 
 The 23 retained channels are in `data.py`. Three deserve mention: `dem_rel_s2/s8/s32` are
 elevation minus its own Gaussian blur at 2/8/32 cells. DEM error is spatially correlated, so
-*relative* micro-relief survives a bias that destroys absolute elevation — which is the ±1 m
-vs 20 cm problem, attacked at the feature level.
+*relative* micro-relief survives a bias that destroys absolute elevation — the ±1 m vs 20 cm
+problem, attacked at the feature level.
 
 ---
 
-## 6. What this means for the paper
+## 9. What this means for the paper
 
-1. **CSI on this task has a floor and a ceiling that were never measured.** All-wet is 0.013–0.047
-   and a rainfall-free climatology is 0.30–0.58. Any CSI reported without those beside it is
-   uninterpretable — including the 0.041.
-2. **The twin's weakness is a target mismatch, not a physics failure.** It predicts the storm
-   increment and is scored against persistent water plus increment.
-3. **A learned model reaches 0.281 at bias 1.35, 6.9× the twin**, and 0.099 on entirely unseen
-   cities where climatology is unavailable.
-4. **Rainfall, as available from free reanalysis, carries no usable information about where water
-   goes at 60 m, and including it measurably degrades the model.** Shown four ways: ablation,
-   permutation, correlation, and two refuted alternative explanations.
-5. **Two live corrections to the record**: the rain source is IFS 9 km, not ERA5; and
-   Mumbai-Harbour is tidally contaminated and should be excluded or tide-corrected rather than
-   pooled with pluvial domains.
+The paper's §4 currently claims *topographic routing does not co-locate flat-city flooding*,
+supported by four methods sitting in a 0.032–0.051 band. Both halves need to change.
 
-## 7. Reproducing
+1. **CSI on this task has a floor and a ceiling that were never measured.** All-wet is
+   0.013–0.047 and a rainfall-free climatology is 0.30–0.58. Any CSI reported without those
+   beside it is uninterpretable — including the 0.041, and including our own 0.2895.
+2. **Terrain does carry the co-location signal; the twin was not extracting it.** A learned model
+   on the same rasters reaches 5.4× the twin on identical scenes. "No topographic method can
+   co-locate" is refuted; "this physics model does not" is what the evidence supports.
+3. **But the learned model ties a model-free climatology** (0.2895 vs 0.2881) where the city is
+   known. Its real contribution is transfer: on an unseen city it scores 0.094 where climatology
+   cannot be computed at all. The paper should lead with transfer, not with the multiple.
+4. **The twin's published 0.0410 understated it.** It is 0.0536 on a fair protocol. Correcting a
+   number in the direction that weakens our own claim is worth stating plainly.
+5. **Rainfall from free reanalysis carries no usable information about where water goes at 60 m**,
+   and degrades the model where the domain is seen — shown four ways, with two alternative
+   explanations refuted. On unseen cities it is simply inert. The source is IFS 9 km, not ERA5.
+6. **Neither scale nor resolution is the lever.** Flat from 2.0 M to 70.6 M parameters, and flat
+   from 60 m to 30 m on the skill multiple.
+
+## 10. Reproducing
 
 ```bash
 python -m csi_net.run --split loso  --ablate rain --areas patna,mumbai_northeast --width 32
-python -m csi_net.run --split flood --ablate none --shuffle_rain 7 --seed 1
-python -m csi_net.run --split lodo  --width 32 --steps 1500
+python -m csi_net.run --split lodo  --ablate rain --width 32 --steps 1500
+python -m csi_net.run --split loso  --ablate rain --target increment --areas patna,mumbai_northeast
+python -m csi_net.twin_protocol --areas patna,mumbai_northeast    # CPU; sims cached after run 1
+python -m csi_net.tide_probe                                      # CPU, seconds
 ```
 
-Runs on one T4 in minutes. `--ablate {none,rain,persist,terrain}`, `--shuffle_rain N`,
-`--areas a,b`, `--grid {30,60,120}`, `--width/--depth` for capacity.
+Runs on one T4 in minutes. `--ablate {none,rain,persist,terrain,tide}`, `--target {mask,increment}`,
+`--shuffle_rain N`, `--areas a,b`, `--grid {30,60,120}`, `--tide 1`, `--width/--depth`.
 
-## 8. Open
+## 11. Open
 
-- The 30 m run (`--grid 30`) is built and was launched, but the session ended mid-run and it
-  produced no number. The 60 m arm of that same comparison completed: CSI 0.2810, bias 1.37,
-  all-wet 0.0291, i.e. a skill multiple of 9.7× over zero knowledge on its own grid.
-- Whether a tide-corrected Harbour becomes usable is untested.
-- Leave-one-domain-out is single-seed and was run with rainfall included; it should be rerun
-  terrain-only, where §4 predicts it improves.
-- Three domains is a thin basis for a cross-city claim. The LODO number is a floor, not an estimate.
+- Three domains is a thin basis for a cross-city claim. The LODO number is a floor, not an
+  estimate, and it is the number the deployable claim rests on.
+- Whether a *real* tide gauge (FES2014, or a tide table at the overpass hour) rescues Harbour is
+  still untested; only the calendar proxy has been ruled out.
+- Threshold calibration on unseen domains is one seed-sd of evidence and needs more splits.
+- The nightly loop has still never run.
