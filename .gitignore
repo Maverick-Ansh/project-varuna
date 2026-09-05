@@ -32,4 +32,6 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
-csi_net/results/
+# csi_net run outputs: the JSON is the evidence and is COMMITTED - a Kaggle kernel is
+# ephemeral and results that live only there are results that get lost. Logs are not.
+csi_net/results/*.log

@@ -54,22 +54,29 @@ def csi(pred, obs, valid):
                 precision=hits / max(int(p.sum()), 1))
 
 
-def twin_grids(area, dates, work, device=None):
+def domain(work, device=None):
+    import torch
+    torch.set_num_threads(os.cpu_count() or 4)
+    from varuna.build.twin import build_domain
+    return build_domain(work, device=device)
+
+
+def twin_grids(area, dates, dom):
     """hmax for every (date, window): the twin forced with that date's antecedent rain."""
     import torch
-
-    from varuna.build.twin import build_domain
-
     rain = json.load(open(os.path.join(HERE, "data", "rain_features.json")))[area]["rain"]
-    dom = build_domain(work, device=device)
     out = {}
-    for d in dates:
+    n = len(dates) * len(WINDOWS)
+    for j, d in enumerate(dates):
+        t = time.time()
         for w in WINDOWS:
             mm = float(rain[d][f"rain_{w}d"])
             with torch.no_grad():
                 h = dom.simulate(dom.z0, rain_mm=mm, storm_hr=STORM_HR, total_hr=TOTAL_HR)
             out[(d, w)] = h.detach().cpu().numpy()
-    return dom, out
+        print(f"    {area} {d}  {len(WINDOWS)} sims in {time.time() - t:.0f}s "
+              f"({(j + 1) * len(WINDOWS)}/{n})", flush=True)
+    return out
 
 
 def check_alignment(D, area, work, dom):
@@ -131,16 +138,16 @@ def main(argv=None):
     D = VarunaData(os.path.join(HERE, "data", "varuna_stack.npz"),
                    os.path.join(HERE, "data", "rain_features.json"),
                    grid_m=args.grid, keep_areas=areas)
-    print(f"grid {args.grid} m | {len(D.samples)} storms | areas {areas}")
+    print(f"grid {args.grid} m | {len(D.samples)} storms | areas {areas}", flush=True)
+
+    doms = {a: domain(os.path.join(args.artifacts, a)) for a in areas}
+    for a in areas:                          # cheap, and it is the assumption everything rests on
+        check_alignment(D, a, os.path.join(args.artifacts, a), doms[a])
 
     t0 = time.time()
-    doms, grids = {}, {}
-    for a in areas:
-        work = os.path.join(args.artifacts, a)
-        dom, g = twin_grids(a, D.dates[a], work)
-        check_alignment(D, a, work, dom)
-        doms[a], grids[a] = dom, g
-    print(f"  {sum(len(g) for g in grids.values())} twin simulations in {time.time() - t0:.0f}s")
+    grids = {a: twin_grids(a, D.dates[a], doms[a]) for a in areas}
+    print(f"  {sum(len(g) for g in grids.values())} twin simulations in {time.time() - t0:.0f}s",
+          flush=True)
 
     # ---- candidate predictors -------------------------------------------------------------
     # The twin sweeps (tau, window) exactly as baselines.py does. The terrain indices are read
