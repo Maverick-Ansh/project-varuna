@@ -333,7 +333,7 @@ def report(rows, skipped=None, obs_set=None, thresh=WET_THRESHOLD_M):
         "overall": metrics(rows, thresh),
         "by_area": by_area(rows, thresh),
         "n_scored": len(rows),
-        "rain_source": "open-meteo (ERA5 archive / forecast past_days)",
+        "rain_source": "open-meteo (archive: ECMWF IFS 9 km / forecast past_days)",
         "note": ("Depth is compared where and when it was observed. The emulator is forced with "
                  "the observed rainfall TOTAL over the window and internally assumes a 1.5 h "
                  "design storm, so disagreement can come from storm shape as well as terrain. "

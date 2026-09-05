@@ -23,16 +23,34 @@ def forecast_rain_mm(lat, lon, hours=24):
     return float(sum(v or 0 for v in p))
 
 
+ARCHIVE_MODEL = "ecmwf_ifs"      # 9 km. See the note below before changing this.
+
+
 def historical_rain_mm(lat, lon, start_date, end_date):
     """Total observed precipitation (mm) over [start_date, end_date] inclusive, from Open-Meteo's
-    archive (ERA5 reanalysis; free, no key). Dates are ISO 'YYYY-MM-DD'.
+    archive. Dates are ISO 'YYYY-MM-DD'.
 
     Used by varuna.build.calibrate to force the twin with the real rain leading into a Sentinel-1
     overpass, so the simulated water extent is comparable to the SAR water mask of that day.
+
+    The model is pinned, and the model is NOT ERA5. This call previously sent no `models=`
+    parameter, so Open-Meteo answered with `best_match`, which on the archive endpoint resolves
+    to ECMWF IFS at 9 km - while the docstring, the paper and the project writeup all said ERA5.
+    Measured at the Mumbai-NE centre (19.2425, 72.976) on 2026-09-05, over 2026-06-06..2026-07-06:
+
+        no models= (best_match)   554.2 mm     <- what every number in this project was built on
+        models=ecmwf_ifs          554.2 mm     <- identical, hence the pin
+        models=era5              1213.4 mm     <- 2.19x higher; 2.56x over a 6-day window
+        models=era5_land            0.0 mm     <- no data at this coastal cell
+
+    Pinning ecmwf_ifs reproduces every existing calibration and every csi_net number exactly,
+    and stops `best_match` silently changing model under the project later. Switching to ERA5 is
+    a defensible alternative but is not free: the twin's calibration would have to be re-run,
+    and the 2.2x spread between the two is larger than any effect that calibration produced.
     """
     url = ("https://archive-api.open-meteo.com/v1/archive"
            f"?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}"
-           "&hourly=precipitation&timezone=Asia/Kolkata")
+           f"&hourly=precipitation&timezone=Asia/Kolkata&models={ARCHIVE_MODEL}")
     js = http_get_json(url, timeout=60)
     p = js.get("hourly", {}).get("precipitation") or []
     total = float(sum(v or 0 for v in p))
@@ -47,15 +65,17 @@ def hourly_rain_series(lat, lon, start_date, end_date):
     point observation needs the shape kept: "how much rain had fallen in the six hours BEFORE
     this person waded through it" is a different question from the daily total.
 
-    The ERA5 archive lags roughly five days, so recent dates come from the forecast endpoint's
+    The archive lags roughly five days, so recent dates come from the forecast endpoint's
     `past_days` window instead. Both return the same hourly schema; the caller cannot tell.
+    Note the two are not the same model: the archive is pinned to ECMWF IFS 9 km (see
+    `historical_rain_mm`), the forecast endpoint is Open-Meteo's own blend.
     """
     import datetime as _dt
     lag_days = (_dt.date.today() - _dt.date.fromisoformat(str(end_date))).days
     if lag_days >= 6:
         url = ("https://archive-api.open-meteo.com/v1/archive"
                f"?latitude={lat}&longitude={lon}&start_date={start_date}&end_date={end_date}"
-               "&hourly=precipitation&timezone=Asia/Kolkata")
+               f"&hourly=precipitation&timezone=Asia/Kolkata&models={ARCHIVE_MODEL}")
     else:
         past = min(92, max(1, (_dt.date.today() - _dt.date.fromisoformat(str(start_date))).days + 1))
         url = ("https://api.open-meteo.com/v1/forecast"

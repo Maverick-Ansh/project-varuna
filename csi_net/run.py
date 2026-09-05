@@ -7,7 +7,7 @@ import argparse, json, os, time
 import numpy as np
 import torch
 
-from .data import VarunaData, N_RAIN
+from .data import VarunaData, N_RAIN, N_TIDE
 from .model import UNet, masked_loss, count_params
 from .metrics import (csi_report, sweep_threshold, csi_allwet, csi_random,
                       persistent_field, storm_increment)
@@ -27,11 +27,14 @@ def dihedral(t, g):
     return torch.rot90(t, g & 3, (-2, -1))
 
 
-def ablation_mask(names, kind, n_static):
+def ablation_mask(names, kind, n_static, n_rain=N_RAIN):
     """Zero-out mask over input channels. Ablating an input is how we find out what the net used."""
-    m = np.ones(n_static + N_RAIN, dtype="float32")
+    m = np.ones(n_static + n_rain, dtype="float32")
     if kind == "rain":
-        m[n_static:] = 0.0
+        # the tide channels, when present, are NOT rainfall and survive this ablation
+        m[n_static:n_static + N_RAIN] = 0.0
+    elif kind == "tide":
+        m[n_static + N_RAIN:] = 0.0
     elif kind == "persist":                      # the persistent-water prior
         for i, n in enumerate(names):
             if n in ("jrc_occurrence", "log_dist_perm_water"):
@@ -160,7 +163,10 @@ def main(argv=None):
     ap.add_argument("--dice_w", type=float, default=1.0)
     ap.add_argument("--bce_w", type=float, default=0.5)
     ap.add_argument("--pos_weight", type=float, default=None)
-    ap.add_argument("--ablate", default="none", choices=["none", "rain", "persist", "terrain"])
+    ap.add_argument("--ablate", default="none",
+                    choices=["none", "rain", "persist", "terrain", "tide"])
+    ap.add_argument("--tide", type=int, default=0,
+                    help="add 4 calendar-derived tide-phase channels (see data.tide_vec)")
     ap.add_argument("--target", default="mask", choices=["mask", "increment"],
                     help="mask: full SAR water. increment: wet today and not persistently wet "
                          "- the quantity the physics twin predicts.")
@@ -177,11 +183,12 @@ def main(argv=None):
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     D = VarunaData(os.path.join(HERE, "data", "varuna_stack.npz"),
                    os.path.join(HERE, "data", "rain_features.json"), grid_m=args.grid,
-                   shuffle_rain=args.shuffle_rain,
+                   shuffle_rain=args.shuffle_rain, tide=bool(args.tide),
                    keep_areas=[a for a in args.areas.split(',') if a] or None)
-    print(f"grid {args.grid} m | {len(D.samples)} storms | {D.n_static} static + {N_RAIN} rain "
-          f"= {D.n_in} channels | split={args.split} ablate={args.ablate}")
-    cmask = ablation_mask(D.feature_names, args.ablate, D.n_static)
+    print(f"grid {args.grid} m | {len(D.samples)} storms | {D.n_static} static + {D.n_rain} rain"
+          f"{'/tide' if D.tide else ''} = {D.n_in} channels | split={args.split} "
+          f"ablate={args.ablate} target={args.target}")
+    cmask = ablation_mask(D.feature_names, args.ablate, D.n_static, D.n_rain)
 
     rows, t0 = [], time.time()
     for fold in range(D.n_folds(args.split)):
@@ -259,7 +266,7 @@ def main(argv=None):
 
     os.makedirs(args.out, exist_ok=True)
     name = (f"{args.split}_{args.ablate}_w{args.width}_g{args.grid}_s{args.seed}"
-        f"{'_inc' if args.target == 'increment' else ''}"
+        f"{'_inc' if args.target == 'increment' else ''}{'_tide' if args.tide else ''}"
         f"{'_shuf' + str(args.shuffle_rain) if args.shuffle_rain else ''}"
         f"{'_' + args.areas.replace(',', '+') if args.areas else ''}{args.tag}.json")
     json.dump(dict(args=vars(args), rows=rows,

@@ -153,7 +153,10 @@ def valid_mask(work, dom):
 
 
 def _rain_for_date(date, window_days=2, center=None, work=None):
-    """Total ERA5 archive rain (mm) over the `window_days` ending on the SAR overpass date.
+    """Total archive rain (mm) over the `window_days` ending on the SAR overpass date.
+
+    Source is Open-Meteo's archive pinned to ECMWF IFS 9 km, not ERA5 - see
+    varuna.serve.weather.historical_rain_mm for the measurement behind that pin.
 
     Rain is looked up at the BUNDLE's own centre (twin_meta.pt) when `work` is given — falling
     back to CFG.center silently priced Patna rain into every other city's calibration."""

@@ -2,7 +2,7 @@
 
 Run on Kaggle T4, branch `phase1-sar-calibration`. Twin scored against Sentinel-1 SAR water masks on
 the 128x128 / 60 m domain grid, with a consistent JRC permanent-water mask (`jrc<50`) applied to BOTH
-prediction and truth. Antecedent rain from Open-Meteo ERA5 archive (2-day window).
+prediction and truth. Antecedent rain from the Open-Meteo archive, ECMWF IFS 9 km (2-day window).
 
 ## 1. Corrected honest baseline (replaces the stale static number)
 The committed `validation_scores.json` (CSI 0.045) scored the **static** `depth.tif` depression-fill,

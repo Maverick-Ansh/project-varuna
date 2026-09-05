@@ -12,7 +12,7 @@ correlated DEM perturbations, quantifying how DEM error bounds cell-level co-loc
 (total flooded area is robust; WHERE it floods is not).
 
 Needs the bundle's observed_water_<date>.tif SAR masks (committed for Patna) and internet
-for the ERA5 antecedent rain — run on Colab/Kaggle; no Earth Engine.
+for the antecedent rain (Open-Meteo archive, ECMWF IFS 9 km) — run on Colab/Kaggle; no Earth Engine.
 """
 from __future__ import annotations
 
@@ -132,7 +132,7 @@ def compare_baselines(work=None, dates=None, windows=WINDOWS, taus=TWIN_TAUS,
         dates=dates, n_valid_cells=int(valid.sum()),
         protocol="single global threshold per method maximising mean CSI across all SAR dates; "
                  "identical domain grid and jrc<50 permanent-water mask on prediction AND truth",
-        rain_source="Open-Meteo ERA5 archive, per-date antecedent totals"), **results)
+        rain_source="Open-Meteo archive, ECMWF IFS 9 km, per-date antecedent totals"), **results)
     save_json(os.path.join(work, "baseline_comparison.json"), report)
 
     rows = [("static depression depth", results["static_depth"]),

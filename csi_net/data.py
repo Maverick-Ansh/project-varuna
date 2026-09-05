@@ -7,11 +7,35 @@ twin / TWI / HAND numbers) and the 30 m resolution experiment.
 SAR truth is max-pooled and features are mean-pooled, mirroring varuna.build.calibrate
 exactly - if we pooled the truth differently the numbers would not be comparable.
 """
+import datetime as _dt
 import json
+
 import numpy as np
 
 RAIN_KEYS = ["rain_1d", "rain_3d", "rain_7d", "rain_30d", "peak_1h", "peak_3h", "peak_24h"]
 N_RAIN = len(RAIN_KEYS) + 2                       # + doy_sin, doy_cos
+N_TIDE = 4                                        # sin/cos of the synodic phase and its 2nd harmonic
+
+SYNODIC = 29.530588853                            # mean lunar month, days
+NEW_MOON = _dt.date(2000, 1, 6)                   # reference new moon (2000-01-06 18:14 UTC)
+
+
+def tide_vec(date):
+    """A tide proxy derived from the calendar alone - no tide gauge, no FES2014, no download.
+
+    Sentinel-1 crosses at a fixed local solar time, so what varies between overpasses is the
+    tide's phase at that hour. The lunar semidiurnal constituent drifts ~50 min/day against the
+    clock, which aliases to a ~14.8-day cycle at a fixed observation time, and the M2/S2 beat
+    (spring-neap) runs at the 29.5-day synodic month. Both are functions of the date, so the
+    sin/cos of the synodic phase and of its second harmonic span the two periods that matter.
+
+    This is a proxy, not a tide model: it carries phase, not amplitude, and knows nothing about
+    local bathymetry or surge. It is enough to answer one question - whether a tidally forced
+    domain becomes learnable once the model is told where in the tidal cycle each scene sits.
+    """
+    d = _dt.date.fromisoformat(str(date))
+    ph = ((d - NEW_MOON).days % SYNODIC) / SYNODIC * 2 * np.pi
+    return np.array([np.sin(ph), np.cos(ph), np.sin(2 * ph), np.cos(2 * ph)], dtype="float32")
 
 # Real flood events, identified by observed wet count running far above the domain's baseline.
 FLOOD_DATES = {("patna", "2025-08-02"), ("mumbai_northeast", "2026-07-08")}
@@ -31,7 +55,7 @@ def pool(a, k, agg):
 
 class VarunaData:
     def __init__(self, npz_path, rain_json, grid_m=60, drop_dead=True, shuffle_rain=0,
-                 keep_areas=None):
+                 keep_areas=None, tide=False):
         z = np.load(npz_path, allow_pickle=True)
         self.feature_names = [str(s) for s in z["feature_names"]]
         self.areas = [str(s) for s in z["areas"]]
@@ -53,8 +77,10 @@ class VarunaData:
             for i, d in enumerate(self.dates[a]):
                 if drop_dead and (a, d) in DEAD_SCENES:
                     continue
-                self.samples.append(dict(area=a, date=d, idx=i,
-                                         rain=self._rain_vec(rain, a, d),
+                v = self._rain_vec(rain, a, d)
+                if tide:
+                    v = np.concatenate([v, tide_vec(d)])
+                self.samples.append(dict(area=a, date=d, idx=i, rain=v,
                                          flood=(a, d) in FLOOD_DATES))
         if shuffle_rain:
             # Permutation control: keep every rain vector, destroy only its pairing with the
@@ -69,8 +95,10 @@ class VarunaData:
                 vecs = [self.samples[i]["rain"] for i in idx]
                 for k, i in enumerate(idx):
                     self.samples[i]["rain"] = vecs[perm[k]]
+        self.tide = bool(tide)
+        self.n_rain = N_RAIN + (N_TIDE if tide else 0)
         self.n_static = self.X[self.areas[0]].shape[0]
-        self.n_in = self.n_static + N_RAIN
+        self.n_in = self.n_static + self.n_rain
 
     @staticmethod
     def _rain_vec(rain, area, date):
@@ -132,6 +160,6 @@ class VarunaData:
         rm, rsd = stats["_rain"]
         r = (s["rain"] - rm) / rsd
         H, W = x.shape[1:]
-        rp = np.broadcast_to(r[:, None, None], (N_RAIN, H, W))
+        rp = np.broadcast_to(r[:, None, None], (self.n_rain, H, W))
         return (np.concatenate([x, rp], 0).astype("float32"),
                 self.Y[a][s["idx"]], self.valid[a])

@@ -35,7 +35,7 @@ the report):
 Personal data (`name`, free-text `feedback`) is read and discarded at parse time and is
 test-pinned never to reach a file — see `test_personal_data_never_reaches_an_observation`.
 
-Rainfall forcing is Open-Meteo (ERA5 archive / forecast `past_days`), summed over the window
+Rainfall forcing is Open-Meteo (archive: ECMWF IFS 9 km / forecast `past_days`), summed over the window
 before each report. The mumbaiflood AWS endpoint serves **today only** and cannot force a past storm.
 
 ## Result

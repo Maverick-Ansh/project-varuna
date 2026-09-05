@@ -2,7 +2,8 @@
 
 A report is only a usable label together with the storm that caused it, so reports are
 grouped by IST calendar day and each day is tagged with the actual rain that fell (Open-Meteo:
-ERA5 archive for older days, the forecast API's past_days window for the last week — the
+Open-Meteo archive (ECMWF IFS 9 km) for older days, the forecast API's past_days window for
+the last week — the
 archive lags ~5 days). Dry-day reports are dropped (wet report + <5 mm rain is far more
 likely mischief or a burst pipe than a storm signal), and multiple reports in the same cell
 on the same day collapse to their median depth so one street corner can't dominate the loss.
@@ -25,7 +26,7 @@ MIN_RAIN_MM = 5.0
 def rain_for_day(lat, lon, day):
     """Actual rain (mm) that fell on IST calendar day `day` at (lat, lon).
 
-    Recent days (ERA5 archive lag) come from the forecast API's past_days backfill;
+    Recent days (archive lag) come from the forecast API's past_days backfill;
     older days from the archive endpoint.
     """
     day = _dt.date.fromisoformat(str(day))
