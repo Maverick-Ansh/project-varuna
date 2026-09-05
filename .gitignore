@@ -32,3 +32,4 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+csi_net/results/
