@@ -30,7 +30,7 @@ def pool(a, k, agg):
 
 
 class VarunaData:
-    def __init__(self, npz_path, rain_json, grid_m=60, drop_dead=True):
+    def __init__(self, npz_path, rain_json, grid_m=60, drop_dead=True, shuffle_rain=0):
         z = np.load(npz_path, allow_pickle=True)
         self.feature_names = [str(s) for s in z["feature_names"]]
         self.areas = [str(s) for s in z["areas"]]
@@ -50,6 +50,19 @@ class VarunaData:
                 self.samples.append(dict(area=a, date=d, idx=i,
                                          rain=self._rain_vec(rain, a, d),
                                          flood=(a, d) in FLOOD_DATES))
+        if shuffle_rain:
+            # Permutation control: keep every rain vector, destroy only its pairing with the
+            # storm it belongs to. Shuffled WITHIN an area, so each domain keeps its own rainfall
+            # distribution and only the storm<->rain correspondence is broken. If the model scores
+            # the same on shuffled rain as on real rain, the rain channels carry no information
+            # about which storm this is - they are a scene fingerprint, not a forcing.
+            rng = np.random.default_rng(shuffle_rain)
+            for a in self.areas:
+                idx = [i for i, s_ in enumerate(self.samples) if s_["area"] == a]
+                perm = rng.permutation(len(idx))
+                vecs = [self.samples[i]["rain"] for i in idx]
+                for k, i in enumerate(idx):
+                    self.samples[i]["rain"] = vecs[perm[k]]
         self.n_static = self.X[self.areas[0]].shape[0]
         self.n_in = self.n_static + N_RAIN
 

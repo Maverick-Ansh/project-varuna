@@ -116,6 +116,8 @@ def main(argv=None):
     ap.add_argument("--pos_weight", type=float, default=None)
     ap.add_argument("--ablate", default="none", choices=["none", "rain", "persist", "terrain"])
     ap.add_argument("--norm", default="per_domain", choices=["per_domain", "global"])
+    ap.add_argument("--shuffle_rain", type=int, default=0,
+                    help="permutation control: shuffle rain vectors within each area")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--tag", default="")
     ap.add_argument("--verbose", type=int, default=1)
@@ -124,7 +126,8 @@ def main(argv=None):
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     D = VarunaData(os.path.join(HERE, "data", "varuna_stack.npz"),
-                   os.path.join(HERE, "data", "rain_features.json"), grid_m=args.grid)
+                   os.path.join(HERE, "data", "rain_features.json"), grid_m=args.grid,
+                   shuffle_rain=args.shuffle_rain)
     print(f"grid {args.grid} m | {len(D.samples)} storms | {D.n_static} static + {N_RAIN} rain "
           f"= {D.n_in} channels | split={args.split} ablate={args.ablate}")
     cmask = ablation_mask(D.feature_names, args.ablate, D.n_static)
@@ -182,7 +185,8 @@ def main(argv=None):
     print(f"elapsed {time.time() - t0:.0f}s")
 
     os.makedirs(args.out, exist_ok=True)
-    name = f"{args.split}_{args.ablate}_w{args.width}_g{args.grid}_s{args.seed}{args.tag}.json"
+    name = (f"{args.split}_{args.ablate}_w{args.width}_g{args.grid}_s{args.seed}"
+        f"{'_shuf' + str(args.shuffle_rain) if args.shuffle_rain else ''}{args.tag}.json")
     json.dump(dict(args=vars(args), rows=rows,
                    mean={k: mean(k) for k in ("csi", "csi_opt", "bias", "pod", "csi_allwet",
                                               "csi_random", "csi_clim", "csi_increment")}),
