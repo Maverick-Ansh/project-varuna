@@ -329,11 +329,44 @@ existence of tidal forcing. A real gauge or an FES2014 sample could still find w
 What it does establish is that Harbour is not rescuable by anything derivable from the date, and
 that the tidal reading in §5.4 was never measured before being used to justify dropping a domain.
 
-**Decision.** Harbour stays excluded from the headline, and the stated reason changes: not
-"it is tidally contaminated" (untested, and the cheap test failed), but *its observed water is
-almost entirely persistent — a 0.0000 storm increment on 8 of 11 dates — so it is a different
-hazard class from urban pluvial flooding, and pooling it costs 0.036 CSI.* That is a scoping
-decision supported by a measurement.
+### 6.1 Giving the network the tide phase makes it worse
+
+The probe above is linear and works on a domain mean; a convolutional net could in principle use
+the phase spatially. `--tide 1` appends the four channels and retrains. LOSO, all three domains,
+terrain-only, 2 seeds:
+
+| arm | CSI | bias | patna | mumbai_ne | **mumbai_harbour** |
+|---|---|---|---|---|---|
+| no tide (control) | **0.3427 ± 0.0042** | 1.44 | 0.2726 | 0.2587 | **0.4714** |
+| + tide channels | 0.3261 ± 0.0040 | 1.18 | 0.3077 | 0.2193 | **0.4445** |
+
+Tide phase costs 0.0166 CSI at ≈4 seed-sd, and it costs the most in **Harbour**, the domain it
+was introduced to rescue. The per-domain column is the giveaway: the channels *help* landlocked
+Patna (+0.035) and hurt both coastal tiles. That is the §5.2 fingerprint effect exactly — any
+per-scene scalar gives the net something to condition on instead of learning terrain — and it is
+positive evidence that these channels carry no tidal physics, only scene identity.
+
+### 6.2 The decision, and a number that cuts the other way
+
+Harbour stays excluded from the headline. The stated reason changes: not "it is tidally
+contaminated" (never measured, and the cheap test failed), but *its observed water is almost
+entirely persistent — a 0.0000 storm increment on 8 of 11 dates — so it is a different hazard
+class from urban pluvial flooding.*
+
+The effect of pooling it depends on the split, and it is worth stating both directions rather
+than quoting the convenient one:
+
+| split | with Harbour | without | effect of pooling |
+|---|---|---|---|
+| flood holdout (train quiet → test the 2 big floods) | 0.170 | 0.2059 ± 0.0018 | **−0.036** |
+| leave-one-storm-out | 0.3427 ± 0.0042 | 0.2814 | **+0.061** |
+
+On the flood split Harbour degrades the model, which is the number this document previously
+quoted. On leave-one-storm-out it *inflates* the pooled mean by more than it degraded the other,
+because its scenes are the easiest in the dataset — a climatology scores 0.58 there. Reporting a
+headline over all three domains would therefore have been flattering, not conservative. Excluding
+Harbour is the stricter choice on the split the headline uses, and that is the honest reason to
+keep it excluded.
 
 ---
 
@@ -442,6 +475,7 @@ Runs on one T4 in minutes. `--ablate {none,rain,persist,terrain,tide}`, `--targe
 - Three domains is a thin basis for a cross-city claim. The LODO number is a floor, not an
   estimate, and it is the number the deployable claim rests on.
 - Whether a *real* tide gauge (FES2014, or a tide table at the overpass hour) rescues Harbour is
-  still untested; only the calendar proxy has been ruled out.
+  still untested. The calendar proxy is ruled out twice over — no correlation (p = 0.47) and a
+  measurable loss when fed to the network (−0.0166 at ≈4 sd).
 - Threshold calibration on unseen domains is one seed-sd of evidence and needs more splits.
 - The nightly loop has still never run.
