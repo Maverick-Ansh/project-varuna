@@ -147,6 +147,16 @@ def build_area(area, artifacts, verbose=True):
         print(f"  {area:<18} {n}x{n} @30m  {len(dates)} dates  "
               f"wet fraction {min(wet):.4f}-{max(wet):.4f}  "
               f"soil={'yes' if sand.any() else 'MISSING (zero-filled)'}")
+        # A scene with no wet cells inside the domain is not ground truth: it contributes a
+        # forced 0.0 to every method's mean and silently drags a table down. patna/2024-07-07
+        # did exactly that until it was found by hand, so name it here rather than let the
+        # min of a range be the only trace of it.
+        dead = [d for d, w in zip(dates, wet) if w <= 0.0]
+        if dead:
+            print(f"  {'':<18} !! {len(dead)} scene(s) with ZERO wet cells in the domain: "
+                  f"{', '.join(dead)}")
+            print(f"  {'':<18}    these are not ground truth - decide explicitly whether to "
+                  f"score them, do not let them average in unnoticed")
     return X, Y, jrc.astype("float16"), dates
 
 

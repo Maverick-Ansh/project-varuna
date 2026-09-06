@@ -181,11 +181,15 @@ def main(argv=None):
     ap.add_argument("--stack", default="",
                     help="alternative feature stack .npz (default: data/varuna_stack.npz). "
                          "Used to check that a rebuilt stack reproduces the headline.")
+    ap.add_argument("--rain", default="",
+                    help="rain features .json matching --stack (default: data/rain_features.json). "
+                         "A stack with more areas than the rain file is a silent mismatch, so "
+                         "these two move together.")
     args = ap.parse_args(argv)
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     D = VarunaData(args.stack or os.path.join(HERE, "data", "varuna_stack.npz"),
-                   os.path.join(HERE, "data", "rain_features.json"), grid_m=args.grid,
+                   args.rain or os.path.join(HERE, "data", "rain_features.json"), grid_m=args.grid,
                    shuffle_rain=args.shuffle_rain, tide=bool(args.tide),
                    keep_areas=[a for a in args.areas.split(',') if a] or None)
     print(f"grid {args.grid} m | {len(D.samples)} storms | {D.n_static} static + {D.n_rain} rain"

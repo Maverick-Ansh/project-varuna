@@ -82,6 +82,27 @@ def rank(area_id, dates, center):
     return scored
 
 
+def _domain_crop(work):
+    """Return a function cropping a full-AOI raster to the window csi_net actually trains on.
+
+    This guard exists because of patna/2024-07-07, and measuring the *downloaded* raster would
+    not have caught it: that scene is 0.0065 wet across the full AOI and exactly 0.0000 wet
+    inside `build_domain`'s window, which is the only part `csi_net.build_stack` ever reads. A
+    wet-fraction test on the download therefore passes the very mask it was written to reject.
+    Fall back to the identity crop if the bundle has no domain yet, so a fetch into a fresh
+    area still works -- it just reverts to the weaker full-AOI test, and says so.
+    """
+    try:
+        from varuna.build.twin import build_domain
+        dom = build_domain(work)
+        n, r0, c0 = dom.N * 2, dom.row0, dom.col0
+    except Exception as e:  # noqa: BLE001 - a missing bundle is not a reason to refuse to fetch
+        log.warning("%s: no twin domain (%s); wet fraction measured on the full AOI, "
+                    "which is the weaker test", work, type(e).__name__)
+        return lambda a: a
+    return lambda a: a[r0:r0 + n, c0:c0 + n]
+
+
 def fetch(area_id, dates, artifacts, min_wet, dry_run):
     """Write observed_water_<date>.tif for each date; skip masks that are effectively empty."""
     from varuna.areas import get_area
@@ -101,13 +122,14 @@ def fetch(area_id, dates, artifacts, min_wet, dry_run):
 
     os.makedirs(work, exist_ok=True)
     reg = region(a.aoi)
+    crop = _domain_crop(work)
     for d in dates:
         path = os.path.join(work, f"observed_water_{d}.tif")
         if os.path.exists(path):
             log.info("%s %s: already present", area_id, d)
             continue
         observed_water(d, work=work, reg=reg)
-        wet = float((read1(path)[0] > 0.5).mean())
+        wet = float((crop(read1(path)[0]) > 0.5).mean())
         if wet < min_wet:
             # A mask with (almost) no water is not ground truth; it is a forced zero in every
             # method's mean. patna/2024-07-07 is exactly this, and it cost the project a
