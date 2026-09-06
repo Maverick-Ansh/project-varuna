@@ -1,131 +1,128 @@
-# Paper 2 — outline
+# Paper 2 — outline and pre-extracted numbers
 
-**Decision: this is a measurement paper, not a system paper.** The existing 13-page
-`varuna-floodtwin.tex` is the system paper (twin, planning, GNN routing, participatory layer,
-LLM brief). Paper 2 takes only the `csi_net` evidence and makes one argument well in 6–7 pages.
-Nothing here needs a new experiment; every number is already committed in `csi_net/results/`.
+**Framing (corrected 2026-09-06): the GNN and the routing are the core.** An earlier draft of
+this outline made the `csi_net` measurement work the thesis. That was wrong. The paper is about
+**learned street-level flood risk on a real city graph, and routing on it** — the deliverable a
+reader can see is Figure 1: a live map with a flow field, orange impassable nodes, a purple
+detour, and a named road labelled *waist-deep*. Everything else is supporting evidence.
 
----
-
-## The one claim
-
-> Critical Success Index on Sentinel-1 flood extent is uninterpretable without trivial baselines.
-> Supply them and two things follow: a learned model's value is **transfer, not accuracy**, and
-> that transfer is bounded by whether the model has seen the target's *terrain type* — not by
-> capacity, resolution, or rainfall.
-
-Three contributions, in the order a reader needs them:
-
-1. **A baseline scale for this task.** A one-threshold climatology scores 0.29–0.67 across 15
-   domains — above any physics-model CSI we can find in this literature. Applies to other
-   people's papers, which is what makes it citable.
-2. **"Held out" is ambiguous and the ambiguity is worth 2×.** Leave-one-tile-out reads 0.270;
-   leave-one-*region*-out on the same data reads 0.147.
-3. **Transfer is bounded by terrain-type coverage, and that is fixable.** A coastal city with no
-   coast in training scores 1.8× all-wet; add one coastal city and it goes to 3.3× (+84 %).
+Write it long first, then cut. Ansh will say what stays.
 
 ---
 
-## Section plan (target 7 pp incl. references)
+## Figures available (all already in `paper/figures/`)
 
-### §1 Introduction — 0.75 p
-Frame: flood-extent models are reported with CSI, and CSI is compared against nothing. State the
-three contributions above. One sentence that the code, 15 bundles, 150 SAR masks and every run's
-JSON are public.
+| file | use |
+|---|---|
+| `dashboard_patna_route.png` | **Figure 1** — live dashboard: flow arrows, flooded nodes, purple detour, "Birchand Patel Path (Gardner Road) waist-deep" |
+| `route_demo_patna.png` | routing demo, shortest vs GNN vs oracle |
+| `pred_vs_true.png` | GNN calibration |
+| `auc_vs_rain.png` | AUC vs rainfall intensity — does skill hold at extremes |
+| `spiderweb_patna.png` | drainage network on the OSM graph |
+| `spiderweb_bengaluru.png`, `spiderweb_mumbai_south.png` | cross-city drainage |
+| `containers_mumbai_west.png` | buildable storage siting |
+| `dose_response.png`, `storage_dose.png` | monotone dose–response |
+| `flood_uncertainty.png` | DEM ±1 m ensemble — why the physical router fails |
+| `baseline_comparison.png` | CSI baselines |
 
-### §2 Data and protocol — 0.75 p
-- 15 domains, 150 Sentinel-1 scenes: Patna (7), 6 Mumbai tiles (62), 7 Karnataka (70),
-  Chennai (10). 60 m scoring grid, JRC ≥ 50 % permanent water masked **on both sides**.
-- Thresholds always chosen on the other storms of the fold, never the reported scene.
-- Date selection: ranked by 3-day antecedent rain from the pinned `ecmwf_ifs` archive.
-- **Two things stated as protocol, not buried:** `patna/2024-07-07` has zero wet cells in the
-  crop and is dropped; Chennai's window is Jun–Dec because it floods on the northeast monsoon.
-- Model: 7.9 M-parameter U-Net, 23 terrain channels. One paragraph. It is not the contribution.
-
-### §3 What a CSI is worth before any model exists — 1 p · **Table 1**
-Table 1 = the 15-domain trivial-baseline table (all-wet / random / climatology / SAR-vs-SAR).
-Numbers: all-wet 0.006–0.054, climatology **0.29–0.67 mean 0.55**, SAR-vs-SAR 0.21–0.59.
-Two observations that carry the section:
-- The climatology beats published physics-model CSIs on this target.
-- In 9 of 15 domains it beats the agreement between two radar passes of the *same city* —
-  averaging many passes is more self-consistent than any two, which caps what any model can be
-  asked to do here.
-
-### §4 A learned model ties the climatology it was built to beat — 1 p · **Table 2**
-Table 2 = all methods on identical scenes: random 0.014, all-wet 0.029, static depth 0.032,
-TWI 0.039, HAND-lite 0.039, dynamic twin 0.054, **learned 0.288 ± 0.007**, climatology 0.288.
-- Terrain *is* learnable: 5.4× the physics twin on identical scenes. What fails is routing water
-  over a noisy DEM, not predicting where it goes.
-- **And it ties the climatology to three decimals.** On a city with a radar archive the network
-  is worth nothing over "these cells are usually wet". Say it plainly; it sets up §5.
-
-### §5 Transfer, and what "held out" has to mean — 1.25 p · **Table 3**
-The methodological core.
-- Held-out *tile*: 0.270 ± 0.015, 12.5× all-wet.
-- But with 6 Mumbai tiles and 7 Karnataka domains, holding out one leaves siblings in training.
-- Held-out *region*: **0.147 ± 0.008**, 6.9×. Half the apparent gain was siblings.
-- **Rebuilt-stack control** (0.096 ± 0.009 vs 0.094 ± 0.025 on the same 3 domains) rules out the
-  alternative explanation. Keep this — it is what makes the comparison trustworthy.
-- Bias falls 1.20 → 0.53 on unseen regions: the model under-warns. Ranking degrades far less
-  (0.161 vs 0.303), so it is calibration, not skill.
-
-### §6 The boundary: terrain-type coverage — 1 p · **Table 4**
-The positive result, and the one a practitioner acts on.
-- Per region: Karnataka 10.6×, Patna 2.8×, **Mumbai 1.8× — near nothing**.
-- Chennai added as a 15th domain and its own region makes the test symmetric.
-- **Mumbai 0.0333 → 0.0613 (+84 %); Chennai, with Mumbai in training, 0.164 at 7.8×.**
-- **Internal control:** every fold gained the same 10 storms; only the coastal region moved
-  (+84 % vs +3.6 % and −7.4 %). For scale, 3→14 domains was 4.6× the storms for +39 % overall.
-- Rule: deploy on an unseen inland city; on an unseen coastal city only with a coast in training.
-
-### §7 Three levers that are not levers — 0.5 p
-Compress hard; one short paragraph each, no tables.
-- **Rainfall**: nothing, replicated three ways (per tile, per region, 15 domains / 4 regions:
-  0.1460 ± 0.0233 vs 0.1474 ± 0.0081). Plus the reason — 9 probe points over a 15 km tile
-  collapse to one archive cell, so spatial rainfall is unavailable, not merely unused.
-- **Capacity**: flat 2.0 M → 70.6 M parameters.
-- **Resolution**: flat 60 m → 30 m (9.7× vs 10.4× on the skill multiple).
-
-### §8 Limitations, and what this means for the literature — 0.5 p
-- Mumbai at 3.3× still trails inland; one coastal sibling narrows the gap without closing it.
-  Chennai's own figure rests on 10 scenes.
-- LOSO is 18 storms over 2 domains — the smallest evidence base here. Say so.
-- The recommendation: **report CSI against all-wet and a leave-one-out climatology, and state
-  whether "held out" means a tile or a region.** That is the transferable output.
+Also in `artifacts/gnn/figures/`: `train_curve.png`.
 
 ---
 
-## What is deliberately NOT in this paper
+## Numbers, already extracted — do not re-derive
 
-Cut, and each belongs to the system paper: the differentiable twin's construction, canal routing
-and storage siting, the GNN street-graph router, the participatory reporting layer and its reward
-gate, the LLM brief, the deployment stack, the drainage-ceiling / BMC anchor, the DEM-uncertainty
-ensemble (one sentence in §4 only, as the reason routing fails).
+### GNN per city (`artifacts/gnn/gnn_report.json`)
 
-Keeping any of these turns it back into a 13-page system paper.
+| area | nodes | edge AUC | wet RMSE (m) | GNN ms/query | emulator ms/query | speedup |
+|---|---|---|---|---|---|---|
+| patna | 37,017 (79,928 edges) | **0.9056** | 0.154 | 4.1 | 260.2 | 63× |
+| patna_east | 13,590 | **0.9422** | — | 3.9 | 110.9 | 28× |
+| patna_west | 31,961 | **0.8902** | — | 4.1 | 216.0 | 53× |
+| bengaluru | 31,675 | **0.9155** | — | 5.0 | 238.4 | 48× |
+
+Trained on patna + patna_east + patna_west + bengaluru; val rains 60/140/220 mm.
+Patna flow_spearman 0.137 (weak — state honestly, the GNN predicts *wetness*, not flow direction).
+
+### Ablation — message passing earns its keep (`artifacts/gnn/ablation.json`)
+
+| area | 0 layers (no message passing) | full | Δ AUC |
+|---|---|---|---|
+| patna | 0.8661 (rmse 0.196) | 0.9056 | +0.040 |
+| patna_east | 0.9082 (rmse 0.306) | 0.9422 | +0.034 |
+| patna_west | 0.8793 (rmse 0.140) | 0.8902 | +0.011 |
+| bengaluru | 0.8878 (rmse 0.406) | 0.9155 | +0.028 |
+
+### Zero-shot cross-city transfer (`artifacts/gnn/transfer_summary.json`)
+
+Rows = city held OUT of training; **bold = the zero-shot cell**.
+
+| trained without | patna | patna_east | patna_west | bengaluru |
+|---|---|---|---|---|
+| bengaluru | 0.8938 | 0.9371 | 0.8904 | **0.7212** |
+| patna | **0.8473** | 0.9386 | 0.8979 | 0.9216 |
+
+Zero-shot on a genuinely unseen city: **0.7212** (Bengaluru) and **0.8473** (Patna). Features are
+local and per-graph standardised, which is why it transfers at all.
+
+### Routing, 150 routes per area (`gnn_report.json` → `routing`)
+
+| area | wet m/route: shortest → **GNN** → oracle | detour %: GNN / oracle | avoidance recovered | % routes hitting water (shortest → GNN) |
+|---|---|---|---|---|
+| patna | 2297 → **1570** → 1172 | 21.2 / 37.1 | **64.6 %** at 57 % of the detour | 100.0 → 98.7 |
+| patna_east | 585 → **406** → 369 | 4.9 / 16.5 | **82.9 %** at 30 % of the detour | 71.3 → 63.3 |
+| patna_west | 2024 → **1727** → 1349 | 13.8 / 15.7 | **44.0 %** at 88 % of the detour | 98.7 → 99.3 |
+| bengaluru | 1888 → **1172** → 1333 | 24.2 / 35.2 | **129 %** — beats the oracle | 99.3 → 98.0 |
+
+Avoidance recovered = (shortest − GNN)/(shortest − oracle). **Bengaluru exceeds 100 %**: the
+oracle is greedy on true depth and the GNN's smoothed risk field finds a better global path.
+Worth a paragraph — it is the most interesting single number in the routing table.
+
+### Drainage spiderweb (from the system paper, §"Planning")
+
+Ladder: excavation 4.1 % → pits 7.8 % → sparse canals+pits 20.2–20.8 % → **street spiderweb
+80.9 %** → distributed storage 30 %. Cost ₹850/m³ removed vs ₹1,309/m³ sparse (Bengaluru
+₹1,121/m³). Per city: Patna 80.9, Patna-E 89.4, Patna-W 80.3, Bengaluru 72.6, Mumbai
+S/E/W/N 63.0/50.2/39.2/32.5 %. Exposure at 100 mm: Patna 1,205/3,749 buildings and 3,036/6,762
+road segments; Mumbai-West 15,449/31,597 buildings.
+
+### Supporting validation (`csi_net`, compressed to ONE section)
+
+15 domains, 150 SAR scenes. Climatology 0.29–0.67 (mean 0.55); all-wet 0.006–0.054; learned
+U-Net 0.288 ± 0.007 **ties** climatology 0.288; twin 0.054. Transfer: per-tile 0.270, per-region
+**0.147**. Coastal: Mumbai 0.033 → 0.061 (+84 %) once one coastal city is in training.
 
 ---
 
-## Tables (4, all from committed JSON — no new runs)
+## Section plan (write long, then cut)
 
-| # | content | source |
-|---|---|---|
-| 1 | trivial baselines, 15 domains | `csi_net/data/trivial_baselines14.json` + chennai |
-| 2 | all methods, identical scenes | existing Table 3 of the system paper |
-| 3 | transfer: tile vs region + stack control | `results/lodo_*`, `loro_*`, `*_patna+*` |
-| 4 | coastal coverage, 14 vs 15 domains | `results/loro_*_varuna_stack14/15.json` |
-
-One figure at most. If any: the per-region bar chart of §6 (Karnataka / Patna / Mumbai / Chennai,
-14 vs 15 domains). The DEM-uncertainty figure stays in the system paper.
+1. **Introduction** — lead with Figure 1. The claim: street-level flood risk is learnable on a
+   city graph, transfers zero-shot, and is fast enough to route on.
+2. **Related work** — flood mapping, GNNs on road networks, evacuation routing.
+3. **System overview** — free satellite data → twin → emulator → GNN → router → dashboard.
+4. **Building a city** — FABDEM/WorldCover/JRC/Sentinel-1 → bundle; OSM street graph.
+5. **Why a physical router is not enough** — DEM ±1 m ensemble, only 5 % of flooded area robust
+   in Patna vs 52 % in hillier Bengaluru. Motivates learning. (`flood_uncertainty.png`)
+6. **Learned street-level risk: the GNN** — graph, features, training, AUC table, ablation,
+   4.1 ms vs 260 ms. (`pred_vs_true.png`, `auc_vs_rain.png`)
+7. **Zero-shot cross-city transfer** — the transfer matrix; why local + per-graph standardised
+   features transfer.
+8. **Flood-aware routing** — the routing table, the oracle-beating Bengaluru result,
+   `route_demo_patna.png`, and Figure 1 revisited.
+9. **From routing people to routing water: the drainage spiderweb** — the ladder table,
+   `spiderweb_*.png`, cost per m³.
+10. **Buildable distributed storage** — `containers_mumbai_west.png`, phase ladder.
+11. **Validation: what a flood CSI is worth** — the whole `csi_net` story in one tight section.
+12. **The deployed system** — dashboard, API, free-tier envelope.
+13. **Limitations** — flow_spearman 0.137; zero-shot 0.72 is a real drop; oracle is greedy not
+    optimal; 150 synthetic OD pairs, not observed trips.
+14. **Conclusion.**
 
 ---
 
-## Practical notes for writing
+## Practical
 
-- Regenerate Table 1 for 15 domains first: `python -m csi_net.build_trivial --stack
-  csi_net/data/varuna_stack15.npz --out csi_net/data/trivial_baselines15.json` (~1 min, no GPU).
-- Start from a fresh `.tex`; do not fork `varuna-floodtwin.tex` — the point is that this paper is
-  short, and forking imports the structure that made the other one long.
-- Venue: *Environmental Data Science* (Cambridge) — rolling, Diamond OA, Open Practice Badges,
-  and 6–7 pp with a public artifact is exactly its shape.
-- The word "honest" appears zero times. Every weakness is a number.
+- New file `paper/varuna-gnn-routing.tex`. Reuse the preamble from `varuna-floodtwin.tex`
+  (article 10pt, geometry, booktabs, natbib, `\rupee` macro) — it compiles clean with `latexmk
+  -pdf` from Git Bash. MiKTeX is on PATH.
+- `references.bib` already exists and is shared.
+- Write the whole thing first; Ansh trims after reading.
