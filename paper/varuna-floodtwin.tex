@@ -332,7 +332,8 @@ held out & domains & mean CSI & $\times$ all-wet \\
 one tile (previously reported)  &  3 & 0.094 $\pm$ 0.021 & 3.6 \\
 one tile, rebuilt stack control &  3 & 0.096 $\pm$ 0.009 & 3.7 \\
 one tile                        & 14 & 0.270 $\pm$ 0.015 & 12.5 \\
-\textbf{one region}             & \textbf{14} & \textbf{0.131 $\pm$ 0.005} & \textbf{6.1} \\
+one region                      & 14 & 0.131 $\pm$ 0.005 & 6.1 \\
+\textbf{one region, +Chennai}    & \textbf{15} & \textbf{0.147 $\pm$ 0.008} & \textbf{6.9} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -341,10 +342,49 @@ The per-region breakdown is the operationally important part, because it is not 
 entirely, the seven Karnataka domains score $0.213$ ($10.3\times$ all-wet) and Patna $0.166$
 ($3.1\times$), but the six Mumbai tiles score $0.033$ --- $1.8\times$ all-wet, which is close to
 predicting nothing. Mumbai's Sentinel-1 water is tidal flat, creek and mangrove; neither the
-Gangetic floodplain nor the Karnataka plateau contains an example of that surface, and the model
-does not invent one. \textbf{Inland-to-inland transfer works; inland-to-coastal does not.} A
-practitioner should read this as: the model may be deployed on an unseen inland city, and must
-not be deployed on an unseen coastal one without at least one coastal domain in training.
+Gangetic floodplain nor the Karnataka plateau contains an example of that surface.
+
+That admits two readings which the fourteen domains cannot separate: either coastal ground needs
+coastal training data, or tidal water is not predictable from terrain at all. We built a
+fifteenth domain to separate them. Chennai is 1{,}300\,km from Mumbai, shares no catchment with
+it, and is kept as its own region --- so Chennai's fold trains on a set containing Mumbai while
+Mumbai's fold trains on a set containing Chennai, and one experiment tests both directions
+(Table~\ref{tab:coastal}).
+
+\begin{table}[t]
+\centering\small
+\caption{Adding one coastal city to the training set. Leave-one-region-out, terrain only, 3
+seeds. Every fold gains the same 10 Chennai storms; only the coastal region moves.}
+\label{tab:coastal}
+\begin{tabular}{lcccc}
+\toprule
+region held out & 14 domains & 15 domains & change & $\times$ all-wet \\
+\midrule
+\textbf{Mumbai} (coastal, 6 tiles)  & 0.033 & \textbf{0.061} & \textbf{+84\,\%} & 1.8 $\to$ \textbf{3.3} \\
+\textbf{Chennai} (coastal, new)     & ---   & \textbf{0.164} & ---             & \textbf{7.8} \\
+Karnataka (inland, 7 domains)       & 0.213 & 0.221 & +3.6\,\% & 10.6 \\
+Patna (inland, 1 domain)            & 0.166 & 0.154 & $-$7.4\,\% & 2.8 \\
+\midrule
+overall                             & 0.131 & \textbf{0.147} & & 6.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Adding one coastal city nearly doubles held-out performance on the other one.} Mumbai
+goes from $0.033$ to $0.061$, and Chennai --- scored with Mumbai in training --- reaches
+$7.8\times$ all-wet, close to inland Karnataka's $10.6\times$ and nothing like the $1.8\times$
+Mumbai managed as the only coast in the dataset. Tidal water is learnable from terrain; the model
+has to have seen a coast. The experiment carries its own control, because every fold gained the
+same ten storms and only the coastal region moved: $+84\,\%$ against $+3.6\,\%$ and $-7.4\,\%$
+inland. For scale, going from 3 to 14 domains was $4.6\times$ the storms for $+39\,\%$ overall;
+this was $+13\,\%$ storms for a doubling of one region.
+
+Two limits we do not overstate. Mumbai at $3.3\times$ remains well short of inland performance,
+so one coastal sibling narrows the gap without closing it, and Chennai's own figure rests on ten
+scenes. The direction replicates across three seeds; the magnitude does not yet have tight
+bounds. The practitioner's rule is therefore: deploy on an unseen inland city, and on an unseen
+coastal city only with at least one coast in training --- which is now a measured statement
+rather than a caution.
 
 The climatology scores $0.545$ on these domains and still wins wherever it can be computed --- but
 it needs the target city's own Sentinel-1 archive. For a city without one it does not exist, and

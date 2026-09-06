@@ -245,6 +245,63 @@ ranking one (ranking holds up better, 0.161 against 0.303).
 Rainfall on unseen regions changes nothing, as on unseen tiles: 0.1118 ± 0.0345 with rain against
 0.1305 ± 0.0046 without. The claim of §5 now holds at 14 domains and at two grouping levels.
 
+### 4.4 Chennai: the coastal limit is coverage, not unlearnability
+
+§4.3 left two readings of Mumbai's 0.0333 that the dataset could not separate — either coastal
+ground needs coastal training data, or tidal water is not predictable from terrain at all.
+Chennai was built to separate them, and it does, in both directions at once: Chennai's own fold
+trains on a set containing Mumbai, and Mumbai's fold now trains on a set containing Chennai.
+
+| region held out | 14 domains | 15 domains | change | × all-wet (15) |
+|---|---|---|---|---|
+| **mumbai** (coastal, 6 tiles) | 0.0333 | **0.0613** | **+84 %** | 1.8 → **3.3** |
+| **chennai** (coastal, new) | — | **0.1642** | new | **7.8** |
+| karnataka (inland, 7 domains) | 0.2131 | 0.2207 | +3.6 % | 10.6 |
+| patna (inland, 1 domain) | 0.1660 | 0.1537 | −7.4 % | 2.8 |
+| **overall** | 0.1305 ± 0.0046 | **0.1474 ± 0.0081** | | **6.9** |
+
+**Adding one coastal city nearly doubled held-out performance on the other one.** And Chennai,
+scored with Mumbai in training, reaches 7.8× all-wet — close to inland Karnataka's 10.6× and
+nothing like the 1.8× Mumbai suffered when it was the only coast in the dataset. Tidal water is
+learnable from terrain. The model simply has to have seen a coast.
+
+**The experiment contains its own control.** Every fold gained the same 10 Chennai storms, but
+only the coastal region moved: mumbai +84 %, against karnataka +3.6 % and patna −7.4 %. For
+scale, going from 3 to 14 domains — 4.6× the storms — raised overall LORO by 39 %; here a 13 %
+increase in training storms doubled one region and left the others inside their noise. The gain
+is coastal-to-coastal transfer, not data volume.
+
+Two honest limits. Mumbai at 3.3× is still well short of inland performance, so one coastal
+sibling narrows the gap without closing it — Mumbai is six tiles of harbour, creek and mangrove
+scored on 62 scenes, and Chennai is one tile scored on 10. And Chennai's own 7.8× rests on those
+10 scenes. The direction is unambiguous and replicated across three seeds; the magnitude is not
+yet tightly bounded.
+
+Rainfall on unseen regions still contributes nothing at 15 domains: 0.1460 ± 0.0233 with rain
+against 0.1474 ± 0.0081 without.
+
+### 4.5 What made this measurable: the pass window
+
+The first ten Chennai masks were wrong, and the reason generalises. `validate.list_passes` built
+its Earth Engine query as `_s1(reg, f"{year}-06-01", f"{year}-10-15")` — the southwest monsoon,
+correct for Patna, Mumbai and interior Karnataka. Chennai takes most of its rain from the
+**northeast** monsoon in October–December; the 2015 floods were in November. The candidate
+histogram showed it plainly: `{06:10, 07:9, 08:10, 09:7, 10:4}` and nothing after 15 October.
+
+A month filter downstream cannot recover dates the query never returned. With the window opened
+to June–December for this area, the picture inverts:
+
+| | passes | mean 3-day antecedent rain | wettest |
+|---|---|---|---|
+| southwest (Jun–Sep) | 36 | 14.2 mm | 40.3 mm |
+| **northeast (Oct–Dec)** | **21** | **35.1 mm** | **180.5 mm** |
+
+Eight of the final top ten are now October–December. The wettest, 2025-12-01, has a wet fraction
+of 0.0536 — five to ten times any other Chennai scene, and a real flood the first selection could
+not see. Had the coastal experiment run on the original selection it would have scored Chennai on
+its dry season and returned a confident wrong answer to the one question Chennai was added to
+settle.
+
 On an unseen region the net still beats every terrain baseline — twin 0.054, TWI 0.039,
 HAND-lite 0.039, all-wet 0.022, random 0.011. Climatology scores 0.545 across these domains and
 wins wherever it can be computed, but that uses the held-out city's *own* Sentinel-1 dates.
