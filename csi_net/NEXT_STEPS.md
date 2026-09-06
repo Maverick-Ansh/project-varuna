@@ -23,10 +23,9 @@ are in `RESULTS.md`; every run's JSON is in `results/`.
 
 ## Tier 1 — the paper cannot be submitted without these
 
-### 1. Decide the repo's visibility
-**~10 min, and it is the only true blocker left.** The paper prints the GitHub URL and claims
-reproducibility on free hardware; the repo is private. Make it public before submission or drop
-the claim. This is a call, not a code change.
+### 1. ~~Decide the repo's visibility~~ — **done, the repo is public**
+`github.com/Maverick-Ansh/project-varuna` went public on 2026-09-06 after a credential scan of
+all 178 commits of history came back clean. The paper's reproducibility claim now holds.
 
 ### 2. Submit
 The venue question is answered unless you disagree with it. What remains is one cold read of the
@@ -37,18 +36,23 @@ submission itself.
 
 ## Tier 2 — the open research question
 
-### 3. Coastal transfer, which is now the sharpest question in the project
-**The result to chase.** Held out entirely, Mumbai scores **0.0333 — 1.8× all-wet, essentially
-nothing**, while inland Karnataka scores 0.2131 (10.3×). Every non-Mumbai domain is inland, so
-the model has never seen a tidal flat or a mangrove.
+### 3. ~~Coastal transfer~~ — **answered: the limit is coverage** (see RESULTS §4.4)
+Chennai was built as the 15th domain and settles it. Mumbai, now with a coastal city in
+training, goes **0.0333 → 0.0613 (+84 %, 1.8× → 3.3× all-wet)**; Chennai, scored with Mumbai in
+training, reaches **0.1642 at 7.8×**, close to inland Karnataka's 10.6×. Tidal water *is*
+learnable from terrain — the model has to have seen a coast. Every fold gained the same 10
+storms and only the coastal region moved, so it is not data volume.
 
-The experiment is a second coastal city (Chennai, Kochi, Surat) held out against a training set
-that *contains* Mumbai. If it recovers, the limit is coastal **coverage** and more masks fix it.
-If it does not, tidal water is not predictable from terrain and the deployable claim is
-inland-only, permanently. Either answer is publishable; the current state is neither.
+**What is left of it:** Mumbai at 3.3× still trails inland performance, so one coastal sibling
+narrows the gap without closing it, and Chennai's own figure rests on 10 scenes. A third coastal
+city (Kochi, Surat, Visakhapatnam) would say whether 3.3× keeps climbing with coastal coverage
+or plateaus — the difference between "add coasts" and "coasts are simply harder". Same recipe:
+one bundle build plus ~10 masks, about 25 minutes of GPU.
 
-Tooling is ready — `fetch_sar_masks.py` works, EE is authenticated, and a new area needs a
-bundle build plus ~10 masks.
+**Mind the pass window.** `SEASON` in `fetch_sar_masks.py` must be set for any area whose rain
+does not arrive in Jun–Oct, and `list_passes` now takes the months through to the Earth Engine
+query. Kochi is southwest-monsoon (the default is fine); Visakhapatnam and anything on the
+Coromandel coast needs `(6, 12)` like Chennai.
 
 ### 4. The under-prediction on unseen regions
 **~30 min GPU.** Bias falls to **0.53** on leave-one-region-out: the model finds about half the
@@ -91,10 +95,11 @@ same question as §3.
 > Flood extent at 60 m is predictable from terrain alone — but so is a climatology, and on a city
 > with a radar archive the two score the same. What a learned model adds is that it runs where the
 > climatology cannot be computed at all. That transfer is worth 0.131 CSI, 6.1× all-wet, on a
-> region with no sibling in training — and it is **not uniform**: 10.3× inland, 1.8× on a coastal
-> city the model has never seen. Rainfall, as available from free reanalysis, contributes nothing
-> at either grouping level. And CSI on this task must be reported against trivial baselines,
-> because a rainfall-free climatology scores 0.29–0.67.
+> region with no sibling in training — and it is **not uniform**: 10.6× inland, but 1.8× on a
+> coastal city when no coast is in training, rising to 3.3× once one is. Tidal water is
+> learnable; the model has to have seen a coast. Rainfall, as available from free reanalysis,
+> contributes nothing at any grouping level. And CSI on this task must be reported against
+> trivial baselines, because a rainfall-free climatology scores 0.29–0.67.
 
 Five things carry it, all measured rather than argued:
 
@@ -106,8 +111,11 @@ Five things carry it, all measured rather than argued:
    with the twin's own number corrected *upward* in the process.
 3. **Transfer is real, smaller than it first looks, and bounded** — 0.0936 → 0.2698 per tile, but
    0.1305 per region, with the rebuilt-stack control ruling out the alternative explanation.
+   The one place it nearly fails is a coast the model has not seen, and that is a coverage
+   problem: one coastal city in training raises held-out coastal skill by 84 %.
 4. **Rainfall is the wrong lever**, shown four independent ways, with two alternative explanations
-   tested and refuted, and now replicated at 4.7× the domain count.
+   tested and refuted, and now replicated three times: at 14 domains per tile, per region, and
+   again at 15 domains across four regions.
 5. **Neither scale nor resolution is the lever either** — flat from 2.0 M to 70.6 M parameters,
    flat from 60 m to 30 m.
 
