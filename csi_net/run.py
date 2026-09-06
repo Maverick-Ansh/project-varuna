@@ -150,7 +150,7 @@ def predict(net, D, s, stats, dev, chan_mask):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", default="lodo", choices=["loso", "lodo", "flood"])
+    ap.add_argument("--split", default="lodo", choices=["loso", "lodo", "loro", "flood"])
     ap.add_argument("--grid", type=int, default=60, choices=[30, 60, 120])
     ap.add_argument("--width", type=int, default=64)
     ap.add_argument("--depth", type=int, default=4)

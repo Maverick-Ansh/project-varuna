@@ -43,6 +43,25 @@ FLOOD_DATES = {("patna", "2025-08-02"), ("mumbai_northeast", "2026-07-08")}
 # every method and silently drags every mean down by 1/8.
 DEAD_SCENES = {("patna", "2024-07-07")}
 
+# Leave-one-DOMAIN-out is not leave-one-CITY-out once the dataset has more than one tile per
+# city. Holding out mumbai_west still leaves five adjacent Mumbai tiles in training, and holding
+# out Chitradurga leaves six other Karnataka towns sharing its climate, geology and tank
+# morphology. The lodo number is therefore "unseen tile", which is a real result but not the
+# deployment question. REGIONS groups domains that share a city or a region so `loro` can hold
+# an entire one out: the model then meets a target with no sibling of any kind in training.
+REGIONS = {
+    "patna": "patna",
+    "mumbai_south": "mumbai", "mumbai_west": "mumbai", "mumbai_east": "mumbai",
+    "mumbai_north": "mumbai", "mumbai_northeast": "mumbai", "mumbai_harbour": "mumbai",
+    "bengaluru": "karnataka", "doddaballapura": "karnataka", "ramanagara": "karnataka",
+    "chitradurga": "karnataka", "chamarajanagara": "karnataka", "kolar": "karnataka",
+    "chikkaballapur": "karnataka",
+}
+
+
+def region_of(area):
+    return REGIONS.get(area, area)
+
 
 def pool(a, k, agg):
     """Block-pool the trailing two axes by factor k."""
@@ -95,6 +114,11 @@ class VarunaData:
                 vecs = [self.samples[i]["rain"] for i in idx]
                 for k, i in enumerate(idx):
                     self.samples[i]["rain"] = vecs[perm[k]]
+        seen = []
+        for a in self.areas:
+            if region_of(a) not in seen:
+                seen.append(region_of(a))
+        self.regions = seen
         self.tide = bool(tide)
         self.n_rain = N_RAIN + (N_TIDE if tide else 0)
         self.n_static = self.X[self.areas[0]].shape[0]
@@ -112,7 +136,10 @@ class VarunaData:
         """Return (train_samples, test_samples).
 
         loso  - leave one storm out (30 folds): temporal generalisation, same terrain seen in training
-        lodo  - leave one domain out (3 folds): spatial generalisation, unseen terrain. The hard test.
+        lodo  - leave one domain out (one fold per area): spatial generalisation, unseen terrain.
+                With several tiles per city this measures an unseen TILE, not an unseen city.
+        loro  - leave one region out (one fold per city/region): the deployment question, with
+                every sibling tile of the target held out alongside it.
         flood - train on quiet storms, test on the real flood events. Separates a model that
                 predicts floods from one that has only memorised where water usually sits.
         """
@@ -122,12 +149,17 @@ class VarunaData:
         if kind == "lodo":
             a = self.areas[fold]
             return [s for s in S if s["area"] != a], [s for s in S if s["area"] == a]
+        if kind == "loro":
+            r = self.regions[fold]
+            return ([s for s in S if region_of(s["area"]) != r],
+                    [s for s in S if region_of(s["area"]) == r])
         if kind == "flood":
             return [s for s in S if not s["flood"]], [s for s in S if s["flood"]]
         raise ValueError(kind)
 
     def n_folds(self, kind):
-        return {"loso": len(self.samples), "lodo": len(self.areas), "flood": 1}[kind]
+        return {"loso": len(self.samples), "lodo": len(self.areas),
+                "loro": len(self.regions), "flood": 1}[kind]
 
     # ------------------------------------------------------------------ tensors
     def stats(self, samples, per_domain=True):
