@@ -37,8 +37,24 @@ sys.path.insert(0, REPO_ROOT)
 logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
 log = logging.getLogger("fetch_sar")
 
-MONSOON = (6, 10)          # inclusive month range worth looking at in India
+MONSOON = (6, 10)          # inclusive month range: the SOUTHWEST monsoon, most of India
 MIN_GAP_DAYS = 10          # two passes three days apart are nearly the same scene
+
+# India has two monsoons and they do not overlap. The southwest monsoon (Jun-Oct) soaks Patna,
+# Mumbai and interior Karnataka; the Coromandel coast gets most of its rain from the NORTHEAST
+# monsoon (Oct-Dec) instead -- the 2015 Chennai floods were in November and December. Ranking
+# candidates by antecedent rain inside a Jun-Oct window would therefore sample Chennai's dry
+# half of the year and make it look like a domain where nothing happens, which is exactly the
+# wrong answer to get from a coastal-transfer experiment. Areas whose season differs from the
+# default are listed here; the rainfall ranking still chooses which dates to keep, this only
+# decides which ones it is allowed to see.
+SEASON = {
+    "chennai": (6, 12),    # both monsoons; the ranking picks the wet ones, and they are Oct-Dec
+}
+
+
+def season_for(area_id):
+    return SEASON.get(area_id, MONSOON)
 
 
 def antecedent_rain(lat, lon, date, window=3):
@@ -56,6 +72,7 @@ def antecedent_rain(lat, lon, date, window=3):
 def candidate_dates(area, years, reg=None):
     """Sentinel-1 monsoon passes over the area's AOI, deduplicated to one per MIN_GAP_DAYS."""
     from varuna.build.validate import list_passes
+    lo, hi = season_for(area)
     seen = []
     for y in years:
         try:
@@ -65,7 +82,7 @@ def candidate_dates(area, years, reg=None):
             continue
         for d in sorted(set(passes)):
             m = int(d[5:7])
-            if not (MONSOON[0] <= m <= MONSOON[1]):
+            if not (lo <= m <= hi):
                 continue
             dt = _dt.date.fromisoformat(d)
             if seen and (dt - _dt.date.fromisoformat(seen[-1])).days < MIN_GAP_DAYS:
