@@ -227,7 +227,14 @@ def main():
 
     token = _token()
     if not token:
-        raise SystemExit("HF_TOKEN missing (env or Kaggle secret)")
+        # A --dry-run pushes nothing: push_space, push_lineage and the news upload all return
+        # before touching HfApi. The Space and the reports dataset are public, so the read half
+        # works anonymously, and requiring a write token to exercise a no-write path is what
+        # kept this job from ever being run at all. Refuse only for a real run.
+        if not args.dry_run:
+            raise SystemExit("HF_TOKEN missing (env or Kaggle secret)")
+        log.warning("HF_TOKEN missing - continuing because --dry-run pushes nothing; "
+                    "reads will be anonymous and any write would fail loudly")
 
     workdir = tempfile.mkdtemp(prefix="varuna_nightly_")
     artdir, reports = fetch_state(token, workdir)
