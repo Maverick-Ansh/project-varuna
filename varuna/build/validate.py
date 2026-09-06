@@ -32,10 +32,27 @@ def _s1(reg, start, end):
                    .copyProperties(im, ["system:time_start"]))
 
 
-def list_passes(year=2025, reg=None):
-    """Return available Sentinel-1 monsoon acquisition dates (ISO strings) for picking EVENT_DATE."""
+def list_passes(year=2025, reg=None, months=None):
+    """Return available Sentinel-1 acquisition dates (ISO strings) for picking EVENT_DATE.
+
+    `months` is an inclusive (first, last) month pair. It defaults to the southwest monsoon as
+    originally hard-wired here (1 June - 15 October), which is the right window for Patna,
+    Mumbai and interior Karnataka and the WRONG one for the Coromandel coast: Chennai takes most
+    of its rain from the northeast monsoon in October-December, and the 2015 floods were in
+    November. With the range fixed at 1 Jun - 15 Oct there was no way to ask for those scenes at
+    all -- a month filter downstream cannot recover dates the query never returned.
+
+    The default is unchanged to the day, so every existing domain's candidate list is identical.
+    """
     reg = reg if reg is not None else region()
-    monsoon = _s1(reg, f"{year}-06-01", f"{year}-10-15")
+    if months is None:
+        start, end = f"{year}-06-01", f"{year}-10-15"
+    else:
+        lo, hi = months
+        start = f"{year}-{lo:02d}-01"
+        end = (f"{year + 1}-01-01" if hi >= 12
+               else f"{year}-{hi + 1:02d}-01")
+    monsoon = _s1(reg, start, end)
     ts = monsoon.aggregate_array("system:time_start").getInfo()
     return [_dt.datetime.utcfromtimestamp(t / 1000).strftime("%Y-%m-%d") for t in ts]
 

@@ -76,7 +76,10 @@ def candidate_dates(area, years, reg=None):
     seen = []
     for y in years:
         try:
-            passes = list_passes(year=y, reg=reg)
+            # the window must reach the EE query, not just filter its result -- list_passes
+            # defaulted to 1 Jun - 15 Oct, so Nov/Dec scenes were never returned to filter
+            passes = list_passes(year=y, reg=reg,
+                                 months=None if (lo, hi) == MONSOON else (lo, hi))
         except Exception as e:  # noqa: BLE001
             log.warning("%s: no passes for %d (%s)", area, y, e)
             continue
