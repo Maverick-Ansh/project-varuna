@@ -27,16 +27,39 @@ are in `RESULTS.md`; every run's JSON is in `results/`.
 `github.com/Maverick-Ansh/project-varuna` went public on 2026-09-06 after a credential scan of
 all 178 commits of history came back clean. The paper's reproducibility claim now holds.
 
-### 2. Submit
-The venue question is answered unless you disagree with it. What remains is one cold read of the
-rewritten §4 (it now argues against two of the project's own earlier positions) and the
-submission itself.
+### 2. The abstract and intro still carry the OLD numbers — fix before submitting
+**~30 min, and this is now the top blocker.** §4 was rewritten twice today; the abstract, the
+intro and the contributions list were not, so the paper currently contradicts itself. Found by
+grep on 2026-09-06, line numbers as of commit `6f0dc3c`:
+
+| line | says | should say |
+|---|---|---|
+| 43–44 | climatology `$0.30$--$0.58$` | **0.29–0.67** (14 domains, fixed 0.5 threshold) |
+| 44 | all-wet `$0.013$--$0.047$` | **0.006–0.054** |
+| 58 | transfer `$0.094\pm0.021$` "on a city never seen" | **0.147 ± 0.008** leave-one-region-out, and it is per-*region* now |
+| 37, 101 | "three cities" / "Deployed for three cities" | 15 domains with SAR truth; check what the deployment count actually is |
+| 414 | rainfall boundary `$0.0939$ vs $0.0936$` | replicated at 15 domains: **0.1460 vs 0.1474** |
+| 725 | "masks for the 14" | **15** |
+
+Also: §4's Protocol paragraph (line 193) and Table~2 (line 262) still describe **18 storms across
+two domains**. That is now the smallest evidence base in the paper while everything after it is
+15 domains and 150 scenes — a reviewer will ask. Either re-measure (see §5 below) or say plainly
+in the Protocol why the like-for-like table is deliberately restricted to the two domains that
+have a twin baseline to compare against.
+
+Nothing here is a new experiment; it is making the front of the paper agree with the back.
+
+### 3. Submit
+The venue question is answered unless you disagree with it: *Environmental Data Science*
+(Cambridge), rolling submission, Diamond OA, Open Practice Badges. What remains after the number
+sync above is one cold read of §4 — it now argues against two of the project's own earlier
+positions — and the submission itself.
 
 ---
 
 ## Tier 2 — the open research question
 
-### 3. ~~Coastal transfer~~ — **answered: the limit is coverage** (see RESULTS §4.4)
+### 4. ~~Coastal transfer~~ — **answered: the limit is coverage** (see RESULTS §4.4)
 Chennai was built as the 15th domain and settles it. Mumbai, now with a coastal city in
 training, goes **0.0333 → 0.0613 (+84 %, 1.8× → 3.3× all-wet)**; Chennai, scored with Mumbai in
 training, reaches **0.1642 at 7.8×**, close to inland Karnataka's 10.6×. Tidal water *is*
@@ -54,23 +77,23 @@ does not arrive in Jun–Oct, and `list_passes` now takes the months through to 
 query. Kochi is southwest-monsoon (the default is fine); Visakhapatnam and anything on the
 Coromandel coast needs `(6, 12)` like Chennai.
 
-### 4. The under-prediction on unseen regions
+### 5. The under-prediction on unseen regions
 **~30 min GPU.** Bias falls to **0.53** on leave-one-region-out: the model finds about half the
 water present, i.e. it under-warns, which is the wrong direction for a flood product. Ranking
 degrades far less (0.161 vs 0.303), so this looks like calibration rather than skill. The
 threshold-calibration experiment of §7.2 was run on the old 3-domain split and should be redone
 on `loro` × 3 seeds — it is the one lever with a plausible mechanism behind it.
 
-### 5. Re-measure LOSO at 14 domains
+### 6. Re-measure LOSO at 15 domains
 **Hours, not minutes** (139 folds per seed). The 0.2884 headline and the tie with the climatology
 are still 18 storms over 2 domains, which is now the smallest evidence base in the paper. Worth
 knowing whether the tie survives a tenfold larger dataset.
 
-### 6. A real tide gauge for Harbour
+### 7. A real tide gauge for Harbour
 **~2 h.** Only the calendar proxy is ruled out (R² 0.405, permutation p = 0.47, and −0.0127 CSI
 when fed to the net). FES2014 or a tide table at the overpass hour is the version with amplitude
 in it. This matters more now that Mumbai is six domains rather than two, and it is plausibly the
-same question as §3.
+same question as §4.
 
 ---
 
