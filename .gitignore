@@ -5,6 +5,7 @@ floodtwin/
 *.html
 !web/index.html
 *.png
+!paper/figures/*.png
 alerts_today.csv
 recharge_sites.csv
 dig_plan.json

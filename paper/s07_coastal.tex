@@ -1,0 +1,68 @@
+\section{The Coastal Limit Is Coverage, Not Unlearnability}
+\label{sec:coastal}
+
+To separate the two readings we built a fifteenth area. Chennai is 1\,300\,km from Mumbai, shares
+no catchment with it, and is kept as its own region on purpose. That way Chennai's fold trains on a
+set containing Mumbai while Mumbai's fold trains on a set containing Chennai, and one experiment
+tests both directions at once. Pooling the two into a single ``coastal'' region would hold both out
+together and destroy the test.
+
+\subsection{A data-collection bug that nearly hid the answer}
+Building Chennai exposed a defect worth reporting, because it would have produced a confident wrong
+conclusion. Our scene selector had the monsoon window hard-coded to 1 June through 15 October. India
+has two monsoons. Chennai floods in the northeast monsoon, which runs October to December, so the
+scenes we could even ask for were the dry-season ones.
+
+The first ten masks came from that broken window. After fixing it, the candidate set gained 17
+October to December passes and the picture inverted. Northeast monsoon dates average 35.1\,mm of
+three-day antecedent rain against the southwest monsoon's 14.2\,mm, the wettest date goes from
+40.3\,mm to 180.5\,mm, and 8 of the top 10 dates are now October to December. The date 2025-12-01
+has a wet fraction of 0.0536, which is five to ten times any other Chennai scene. It is an actual
+flood, and the first selection could not see it.
+
+The general lesson is that a season window is a scientific parameter and not a configuration
+detail. Any area whose rain does not arrive between June and October needs its own window, and the
+code now takes the months through to the satellite query rather than filtering afterwards.
+
+\begin{table}[!t]
+\centering
+\caption{Adding one coastal city to the training set. Leave-one-region-out, terrain only, 3 seeds.
+Every fold gains the same 10 Chennai storms, and only the coastal region moves.}
+\label{tab:coastal}
+\begin{tabular}{lcccc}
+\toprule
+region held out & 14 areas & 15 areas & change & $\times$ all-wet \\
+\midrule
+\textbf{Mumbai} (coastal, 6 tiles) & 0.033 & \textbf{0.061} & \textbf{+84\,\%} & 1.8 to \textbf{3.3} \\
+\textbf{Chennai} (coastal, new)    & n/a   & \textbf{0.164} & n/a             & \textbf{7.8} \\
+Karnataka (inland, 7 areas)        & 0.213 & 0.221 & +3.6\,\% & 10.6 \\
+Patna (inland, 1 area)             & 0.166 & 0.154 & $-$7.4\,\% & 2.8 \\
+\midrule
+overall                            & 0.131 & \textbf{0.147} & & 6.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Adding one coastal city nearly doubles held-out skill on the other one}
+Mumbai goes from 0.033 to 0.061. Chennai, scored with Mumbai in training, reaches 7.8 times
+all-wet, close to inland Karnataka's 10.6 and nothing like the 1.8 Mumbai managed as the only coast
+in the dataset. Tidal water is learnable from terrain. The model simply has to have seen a coast.
+
+The experiment carries its own control, which is what makes it worth reporting. Every fold gained
+the same ten storms, and only the coastal region moved. The change is $+84\,\%$ on the coast
+against $+3.6\,\%$ and $-7.4\,\%$ inland. For scale, going from 3 to 14 areas was 4.6 times the
+storms for $+39\,\%$ overall. This was $+13\,\%$ more storms for a doubling of one region.
+
+Two limits we do not overstate. Mumbai at 3.3 times all-wet remains well short of inland
+performance, so one coastal sibling narrows the gap without closing it. And Chennai's own figure
+rests on ten scenes. The direction replicates across three seeds. The magnitude does not yet have
+tight bounds.
+
+The practitioner's rule that follows is concrete. Deploy on an unseen inland city freely, and on an
+unseen coastal city only with at least one coast in training. That is now a measured statement
+rather than a caution.
+
+Finally, the climatology scores 0.545 on these areas and still wins wherever it can be computed.
+But it needs the target city's own Sentinel-1 archive. For a city without one it does not exist,
+and the learned model remains the only method in Table~\ref{tab:baselines} that runs at all. That,
+bounded by the coastal result above, is the claim.

@@ -1,0 +1,181 @@
+\documentclass[journal]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\rupee}{INR\,}
+
+\begin{document}
+
+\title{Varuna FloodTwin: An Open Urban Flood Digital Twin\\ Built from Free Satellite Data, and an Honest\\ Measurement of What It Can Predict}
+
+\author{Ansh~Vivek%
+\thanks{The author is an independent researcher (e-mail: anshvivek2003@gmail.com).}%
+\thanks{Code, all per-area data bundles and the live system are public. Repository:
+\url{https://github.com/Maverick-Ansh/project-varuna}. Dashboard:
+\url{https://project-varuna-iota.vercel.app}. API:
+\url{https://anshvivek-varuna-floodtwin.hf.space}.}}
+
+\markboth{Preprint}{Vivek: Varuna FloodTwin}
+
+\maketitle
+
+\begin{abstract}
+Cities in India flood every monsoon, and most of them have no calibrated flood model to plan with.
+We present Varuna FloodTwin, an open pipeline that builds a working flood model of any place on
+Earth from free satellite data, runs it fast enough to answer questions live in a web page, and
+serves it for 16 city areas in India. Every stage runs on free computing tiers. Our main claim is
+not that the model is accurate. It is that we measured what such accuracy numbers are worth, and
+the answer changes how they should be read. On 150 Sentinel-1 radar scenes across 15 city areas, a
+baseline with no physics and no rainfall, which simply predicts the cells that were wet in most
+other storms, scores a Critical Success Index (CSI, the standard flood overlap score) of 0.29 to
+0.67. That is higher than any physics-model CSI we can find published for this task, including our
+own. In all 15 areas it is also higher than the agreement between two radar passes of the same
+city, which is a ceiling on what any model can be asked to match. Our physics twin scores 0.054,
+and a learned model reading the same terrain rasters scores 0.288, which ties the no-physics
+baseline to three decimal places. The learned model's real value is therefore not accuracy but
+portability, because it still runs on a city with no radar archive, where the baseline cannot be
+computed at all. Holding out one entire region at a time it scores 0.147, and a threshold
+correction that never looks at a test label raises this to 0.175. That correction helps most
+exactly where the model is weakest, lifting held-out coastal Mumbai from 0.061 to 0.106. Rainfall
+from free reanalysis contributes nothing at any grouping level, shown four independent ways.
+Neither model size, from 2.0 to 70.6 million parameters, nor grid resolution, from 60\,m to 30\,m,
+moves the result. We then show that planning survives this location uncertainty, because the value
+of every intervention is measured by re-simulation rather than assumed. A dense storm drain network
+routed on the real street graph cuts simulated street flooding by 80.9\,\% in Patna at a lower cost
+per cubic metre removed than sparse canals, and a metered recharge planner sends 6.3 to 16.5\,\% of
+storm runoff into depleted aquifers in six Karnataka towns against 0.7 to 3.3\,\% on flood plains.
+An inferred drainage field puts Mumbai's whole-city drainage ceiling near 5.4 million cubic metres
+per storm, just above the 4.7 million cubic metres per day the municipal corporation measured
+pumping in August 2025, which is our first external anchor. Finally, a graph neural network over
+the street graph amortizes the raster pipeline into a 4.1\,ms per-street risk query against
+260\,ms, transfers to an unseen city at AUC 0.72 to 0.85, and produces evacuation routes recovering
+64.6\,\% of an oracle's floodwater avoidance at 57\,\% of its detour.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Urban flooding, digital twin, Sentinel-1, synthetic aperture radar, flood validation, graph neural
+networks, managed aquifer recharge, open data.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart{P}{luvial} flooding, which means flooding caused by rain falling on the city itself
+rather than by a river bursting its banks, is one of the most frequent climate impacts in South
+Asian cities. The planning reality in most Indian municipalities is a drainage map older than the
+city that grew around it, no calibrated hydraulic model, and no budget to buy one.
+
+A tool that could change decisions in that setting has to meet three conditions. It must be
+buildable from free and global data for any area, because nobody is going to survey the city for
+us. It must be cheap enough to run interactively, because planning is a conversation and not a
+batch job. And it must be honest about what it can and cannot claim, because a confident wrong
+answer about which street floods is worse than no answer at all.
+
+This paper describes such a system, and it also argues for a particular way of reporting its skill.
+Fig.~\ref{fig:teaser} is what a planner actually sees. It is a live map of Patna at a chosen
+rainfall. Blue shading is predicted water depth, arrows point the way water is flowing, orange
+circles are drain inlets the system placed, purple lines are the storm drain network it designed,
+and the dark labels name real roads with a depth a person can picture.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.93\textwidth]{figures/live_patna_city.png}
+\caption{The live system for Patna at a 100\,mm design storm. Blue shading is predicted water depth
+and the arrows show flow direction, with darker arrows meaning deeper water. Purple lines are the
+storm drain network the planner designed on the real street graph, and the line gets wider as more
+water accumulates in that trunk. Orange circles are drain inlets, pink circles are storage pits,
+and green circles are outfalls placed on safe low ground rather than on the river. Red circles are
+danger zones sized by severity. The dark labels name real streets and give the depth in words,
+because ``waist-deep'' is a decision and ``0.94\,m'' is only a measurement. Everything here is
+computed from free satellite data and served from a free hosting tier.}
+\label{fig:teaser}
+\end{figure*}
+
+Our contributions are the following.
+
+\begin{enumerate}
+\item \textbf{A reproducible pipeline from satellite to dashboard on free infrastructure.} A
+      differentiable two-dimensional flood model \cite{bates2010} is built per city from FABDEM
+      \cite{hawker2022fabdem}, ESA WorldCover \cite{zanaga2021worldcover} and JRC surface water
+      \cite{pekel2016}. A U-Net emulator \cite{ronneberger2015} answers what-if questions in
+      milliseconds. A public dashboard serves rainfall sliders, planners, exposure views and a
+      grounded text brief. It is deployed for 16 city areas.
+\item \textbf{A measurement of what a flood CSI is actually worth}, using trivial baselines that
+      cost nothing to compute and that we think should accompany every CSI reported in this
+      literature.
+\item \textbf{Three corrections against our own earlier published claims}, each forced by an
+      experiment we ran ourselves, and each reported with the number that forced it.
+\item \textbf{A transfer result measured the hard way}, holding out an entire region rather than one
+      tile, with a control that rules out the obvious alternative explanation.
+\item \textbf{A coverage result for coastal cities}, which turns a suspected hard limit into a
+      data-collection instruction.
+\item \textbf{A threshold correction that costs nothing} and helps most where the model is worst.
+\item \textbf{Planning surfaces whose value is measured by re-simulation}, covering storm drains,
+      distributed storage and aquifer recharge, with an external anchor against real municipal
+      pumping records.
+\item \textbf{A learned street-level risk model} that amortizes the physics, transfers between
+      cities without retraining, and routes people around water.
+\item \textbf{A reproducibility hazard} in which a fixed random seed made a training failure
+      perfectly repeatable, together with the guard that fixes it.
+\end{enumerate}
+
+We have tried to write this paper in plain language. Where a technical term is unavoidable, it is
+explained the first time it appears.
+
+\section{Related Work}
+\textbf{Flood physics.} Our numerical core is the local inertial shallow water scheme of Bates
+\emph{et al.} \cite{bates2010}, the reduced-complexity formulation that made metre-scale
+two-dimensional urban flood modelling tractable. Its operational descendant is LISFLOOD-FP
+\cite{shaw2021lisflood}. Our contribution is not the scheme. It is a re-implementation in PyTorch
+so that every simulation is differentiable from end to end, which means we can take the gradient of
+the flood with respect to the model's own physical parameters. Recent work moves the same way.
+Inunda \cite{li2026inunda} is a near-concurrent GPU-native differentiable solver with essentially
+the same core, and universal shallow water equations with differentiable programming
+\cite{liu2025uswe} learn a flow-resistance closure inside the full equations. Neither ships an
+emulator, a hosted twin or a planning stack, and we do not claim to predate either.
+
+\textbf{Flood digital twins and emulators.} CLDNet \cite{cldnet2026} and FlowsDT \cite{flowsdt2026}
+build AI-driven twins for metropolitan flooding. Google's Flood Hub work \cite{nearing2024}
+predicts extreme floods in ungauged river basins at global scale, which is the river-flood
+counterpart of what we do for rain-driven city flooding.
+
+\textbf{Graph neural networks for flooding.} SWE-GNN \cite{bentivoglio2023swegnn} and its
+multi-scale successor \cite{bentivoglio2025mswegnn} put hydraulics into message passing on a mesh.
+FloodGNN-GRU \cite{kazadi2024gru} and hydraulics-informed message passing \cite{kazadi2024icml} do
+the same for spatio-temporal prediction, and HydroGAT \cite{hydrogat2025} adds graph attention. Our
+graph is different in kind. It is the road network itself, so what gets predicted is the flooding
+of a named street rather than of a mesh cell, and the training labels are generated by our own twin
+rather than by a commercial solver.
+
+\textbf{Validation and elevation uncertainty.} Wing \emph{et al.} \cite{wing2017} set the standard
+for validating a continental flood model against observations. Marsh \emph{et al.} \cite{marsh2024}
+measure the vertical accuracy of free global elevation models in flood-prone terrain, which is the
+error budget driving our own uncertainty analysis in Section~\ref{sec:dem}. Assump\c{c}\~ao
+\emph{et al.} \cite{assumpcao2018} and Mazzoleni \emph{et al.} \cite{mazzoleni2017} study whether
+citizen observations can improve flood models, which is the question our participatory layer is
+built to ask.
+
+\textbf{Drainage design and recharge.} Hesarkazzazi \emph{et al.} \cite{hesarkazzazi2022} generate
+optimal centralized and decentralized drainage layouts by graph-theoretic optimisation. On the
+water-supply side, managed aquifer recharge as a joint answer to urban floods and groundwater
+depletion is studied in \cite{mar2026}, and the Underground Taming of Floods for Irrigation concept
+\cite{pavelic2015utfi} is its best-known field implementation in the Ganges basin. Our recharge
+planner differs by metering the water it claims to bank through a re-simulated physical model
+instead of assuming an infiltration rate.
+
+\textbf{What is missing from this literature.} We could not find a paper in it that reports its CSI
+beside a trivial baseline computed on the same scenes. Section~\ref{sec:worth} argues that this
+single omission makes most reported flood CSI values impossible to interpret, including the ones we
+published ourselves.
+
+%% ---- body sections ----
+\input{sections}
+
+\bibliographystyle{IEEEtran}
+\bibliography{varuna-ieee}
+
+\end{document}

@@ -1,0 +1,49 @@
+\section{Limitations}
+\label{sec:limits}
+
+\textbf{Resolution.} The hydraulics run at 60\,m, which is coarser than the streets they describe.
+Carved drains are full 60\,m cells, so absolute excavation volumes are resolution artifacts even
+though the per-metre drain costing is realistic. Section~\ref{sec:twin} measures the consequence
+directly. Depth is diluted by a factor of 4.45, implying a real ponding footprint near 28.5\,m
+across. A finer grid is the single clearest next step, and it has a quantitative target.
+
+\textbf{Depths are uncalibrated,} and Section~\ref{sec:dem} shows why per-class physics calibration
+cannot fix location inside the solver, even though a learned model on the same rasters can.
+
+\textbf{The evidence base is uneven.} The like-for-like comparison of Table~\ref{tab:baselines}
+rests on 18 storms across two areas, because those are the only areas with a twin baseline to
+compare against. Everything after it rests on 15 areas and 150 scenes. We consider re-measuring the
+like-for-like table across all 15 areas the most valuable single experiment we have not run.
+
+\textbf{Mumbai has regime-specific caveats.} The tiles are independent closed-boundary models, so
+flow across the seams is not simulated. Tidal and storm-surge coupling, often the binding
+constraint for Mumbai outfalls, is absent, and rain falling on harbour cells ponds harmlessly inside
+the model instead of exchanging with the sea. Mumbai-Harbour is excluded from headline validation
+because its observed water is almost entirely persistent, with a storm increment of exactly zero on
+8 of its 11 dates, so it measures a different hazard than urban rain flooding. A calendar-derived
+tide phase does not explain it, with a permutation test at $p = 0.47$, and a real tide gauge remains
+untested.
+
+\textbf{The coastal result rests on two cities.} One coastal sibling raises held-out Mumbai by
+84\,\% without closing the gap to inland performance, and Chennai's own figure rests on ten scenes.
+Whether coastal skill keeps climbing with a third coast or plateaus is unresolved, and it is a
+cheap experiment.
+
+\textbf{Recharge site rankings use placeholder well data,} as stated in Section~\ref{sec:recharge},
+while the recharge volumes come from the twin's metered infiltration and do not depend on it.
+
+\textbf{Costs are indicative.} Phase costs use a single civil-works rate. Land, utilities and
+operations are out of scope, so the ladders rank strategies rather than price projects.
+
+\textbf{The learning loop is unexercised.} Its gate is deployed and tested offline, and no field
+report has ever reached it.
+
+\textbf{Routing is evaluated on synthetic trips.} The 150 origin and destination pairs per area are
+random, not observed journeys, and the oracle they are measured against is greedy rather than
+optimal.
+
+\textbf{What we would do next.} A finer national elevation model, assimilating mapped drain networks
+where cities have them, sub-grid street conveyance, supervising FloodGNN directly on radar-observed
+street water to remove the ``distils the twin'' caveat, tidal boundaries for coastal tiles, a third
+coastal city, and validating intervention \emph{deltas} rather than state against before and after
+radar where a city has actually built drainage.

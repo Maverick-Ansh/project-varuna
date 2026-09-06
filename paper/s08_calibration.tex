@@ -1,0 +1,86 @@
+\section{A Free Threshold Correction, Worth Most Where the Model Is Worst}
+\label{sec:calibration}
+
+In every experiment in this paper, the model's ranking quality has run above its achieved CSI. That
+gap is calibration loss. The model orders cells better than any single global cut-off can exploit.
+A cell either goes above the threshold or it does not, and if the threshold is in the wrong place
+then good ordering is wasted.
+
+The fix costs nothing. For each scene, pick the threshold that makes the \emph{predicted} wet
+fraction match the mean observed wet fraction of the \emph{training} scenes. That prior is a number
+available without ever looking at the test label, so this is a free correction and not a peek at the
+answer. Concretely, if the training scenes are 3\,\% wet on average, take the top 3\,\% of predicted
+cells for this scene, whatever the raw probabilities happen to be.
+
+\subsection{The result, and why the two holdout schemes disagree}
+Table~\ref{tab:calibration} reports it. On the leave-one-region-out split, which is the deployment
+question, calibration is worth $+0.0272$ CSI at 15 areas. That is 3.4 seed standard deviations, and
+it captures 73\,\% of the gap between the deployed threshold and an oracle threshold chosen with
+knowledge of the test scene. It replicates at 14 areas at $+0.0261$, which is 5.7 seed standard
+deviations.
+
+On the per-tile split the same correction \emph{hurts}, at $-0.0155$.
+
+\begin{table}[!t]
+\centering
+\caption{Threshold calibration, terrain only, 3 seeds each. The oracle-threshold column is the CSI
+achievable if the best single threshold were chosen with knowledge of the test scene, so it is an
+upper bound rather than a method. The last column is how much of that gap the free correction
+recovers.}
+\label{tab:calibration}
+\begin{tabular}{lcccc}
+\toprule
+held out & global thr. & calibrated & oracle thr. & gap closed \\
+\midrule
+region, 15 areas & 0.1474 & \textbf{0.1746} & 0.1845 & \textbf{73\,\%} \\
+region, 14 areas & 0.1305 & \textbf{0.1566} & 0.1615 & \textbf{84\,\%} \\
+tile, 14 areas   & 0.2698 & 0.2542 & 0.3030 & $-$47\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+That sign flip is the mechanism, not noise. Hold out one tile and five sibling tiles of the same
+city stay in training, so the training wet-fraction prior already describes the held-out tile well
+and the swept global threshold is already close to right. Forcing the wet fraction to a prior can
+then only move it away. Hold out an entire region and the global threshold is genuinely
+miscalibrated for ground the model has never seen, so matching the prior recovers most of what the
+ranking was already capable of.
+
+This supersedes an earlier reading of ours. We previously measured $+0.0154$ from this correction
+on a three-area per-tile split, called it about one seed standard deviation, and left it as a
+suggestion. On the split that actually corresponds to deployment, and with five times the data, it
+is a replicated effect.
+
+\subsection{It helps most exactly where the model is weakest}
+Table~\ref{tab:calregion} breaks it down by region. Every region gains, and the coastal one gains
+most.
+
+\begin{table}[!t]
+\centering
+\caption{Calibration by held-out region, terrain only, 15 areas, 3 seeds. Bias is the ratio of
+predicted wet cells to observed wet cells at the global threshold, so a value below 1 means the
+model is under-warning.}
+\label{tab:calregion}
+\begin{tabular}{lcccc}
+\toprule
+region held out & global & calibrated & change & bias \\
+\midrule
+\textbf{Mumbai} (coastal)   & 0.0613 & \textbf{0.1061} & \textbf{+73\,\%} & 0.78 \\
+Chennai (coastal)           & 0.1642 & 0.1889 & +15\,\% & 0.81 \\
+Patna (inland)              & 0.1537 & 0.1711 & +11\,\% & 0.51 \\
+Karnataka (inland)          & 0.2207 & 0.2335 & +5.8\,\% & 0.71 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The bias column explains why. At the global threshold the model finds only half to four-fifths of
+the water that is actually there. Under-warning is the wrong direction for a flood product, because
+the cost of missing a flooded street is not the same as the cost of falsely flagging a dry one.
+Ranking degrades far less than CSI does, which is what told us this was calibration rather than a
+failure of skill.
+
+Put together with the coverage result of Section~\ref{sec:coastal}, held-out coastal Mumbai has
+moved from 0.033, when no coast was in training, to 0.061 once one coast was added, to 0.106 with
+the free threshold correction applied. That is 3.2 times the starting figure, and it is roughly
+5.7 times the all-wet baseline for that region. Neither step required a larger model or a finer
+grid. One was data coverage and the other was arithmetic.

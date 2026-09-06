@@ -1,0 +1,98 @@
+\section{Three Levers That Are Not Levers}
+\label{sec:levers}
+
+When a model underperforms, the reflex is to make it bigger, give it a finer grid, or feed it more
+inputs. We tried all three. None of them is the bottleneck here, and we report that because a
+negative result about the obvious fix saves other people the same weeks.
+
+\subsection{Capacity is not the bottleneck}
+On held-out floods with terrain only, CSI is 0.221 at 2.0\,M parameters, 0.232 at 7.9\,M, 0.221 at
+31.4\,M and 0.219 at 70.6\,M. That is flat across a 35-fold range and entirely inside seed noise.
+
+\subsection{Resolution is not the bottleneck either}
+Our standing explanation for poor co-location was that real ponds are around 810\,m$^2$, roughly
+28.5\,m across, and were being scored on 60\,m cells. Section~\ref{sec:twin} is where that 810\,m$^2$
+figure comes from, and it is a good explanation for the \emph{magnitude} error. It is not the
+explanation for the location error. Re-running the whole experiment at 30\,m quadruples the cell
+count and changes nothing. The skill multiple over all-wet is 10.4 at 30\,m against 9.7 at 60\,m.
+Raw CSI is not comparable across grids because the base rates differ, which is why the multiple is
+the column to read.
+
+\subsection{Rainfall is not usable, and it actively hurts}
+This is the most counter-intuitive result in the paper, so we tested it four ways.
+
+\textbf{Ablation.} Removing the rainfall channels \emph{improves} the model's ranking quality by
+0.124, at about seven seed standard deviations, with the three-seed ranges disjoint.
+
+\textbf{Permutation control.} We shuffled which rainfall vector goes with which storm, preserving
+every rainfall distribution exactly and destroying only the pairing. The result lands monotonically
+between real rain and no rain, at 0.184 then 0.272 then 0.313. Real rainfall is strictly the worst
+of the three inputs. The network fits a rain-to-wetness mapping on the training storms that does
+not transfer.
+
+\textbf{Two alternative explanations, tested and refuted.} The first was tidal contradiction
+between the two Mumbai tiles, which predicted that dropping the tidal tile would stop the harm. It
+did not. The second was failure to extrapolate to larger storms, but rain costs 0.09 CSI within the
+training distribution too.
+
+\textbf{The boundary.} On an unseen region, rainfall neither helps nor hurts, at 0.1460 with rain
+against 0.1474 without, replicated at 15 areas. So the claim is not that rainfall is universally
+harmful. It is that rainfall lets the model take a shortcut on a city it has already seen, and that
+shortcut does not survive the move to new ground.
+
+\subsection{Why there is nothing in the rainfall to extract}
+Two properties of the free rainfall archive explain the result. Nine probe points spanning a 15\,km
+tile collapse to a single archive cell, so spatial rainfall is not merely unused. It is
+unavailable.
+
+And the source was not what we previously stated. Open-Meteo's archive endpoint, queried without an
+explicit model parameter, returns ECMWF IFS at 9\,km rather than ERA5. Over the same window and
+point that is 554.2\,mm against ERA5's 1\,213.4\,mm, a factor of 2.19 which exceeds any effect our
+physics calibration ever produced. The twin was never calibrated on ERA5. We now pin the model
+explicitly, which reproduces every number in this paper exactly. This is the third correction we
+make against our own earlier statements.
+
+\section{Why the Physics Router Fails}
+\label{sec:dem}
+
+Sections \ref{sec:twin} and \ref{sec:levers} say that terrain contains the information and that the
+solver cannot use it. This section says why, and the answer is a property of the elevation data
+rather than of the solver.
+
+We re-simulate under a ten-member ensemble of elevation perturbations that are spatially
+correlated, with a standard deviation of 1\,m and a correlation length of five cells, which is
+FABDEM's nominal error class \cite{marsh2024}. Spatially correlated means neighbouring cells are
+wrong together rather than independently, which is how real elevation error behaves.
+
+Total flooded area is robust. Patna gives $10.79 \pm 0.35$\,km$^2$ at 100\,mm. But only
+0.58\,km$^2$, which is 5\,\%, floods in at least 90\,\% of the ensemble members. In Bengaluru, with
+ten times steeper relief, 4.56 of 8.82\,km$^2$, or 52\,\%, is robust. Fig.~\ref{fig:unc} shows it.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.86\linewidth]{figures/flood_uncertainty.png}
+\caption{Elevation ensemble at $\pm1$\,m, showing flood probability over ten members for Patna at
+100\,mm. The total area is stable but its location moves. Only 5\,\% of flooded area is common to
+at least 90\,\% of members on these flat deltaic plains, against 52\,\% in hillier Bengaluru.}
+\label{fig:unc}
+\end{figure}
+
+Calibrating 16 per-land-class roughness and infiltration multipliers by gradient descent moves
+held-out CSI only from 0.0483 to 0.0488, with the multipliers staying between 0.94 and 1.14.
+Roughness and infiltration change \emph{how deep} the water is, not \emph{where} it is. We also
+ruled out a georeferencing bug, because mirroring the radar mask doubles CSI, which is alarming
+until you check that the elevation model is provably correctly oriented. The correlation between
+negative elevation and JRC water is 0.80 unflipped against 0.05 flipped, and the Ganga sits 7.8\,m
+below the domain mean. The flip is a coincidental mirror and is not applied.
+
+The scope of this diagnosis is narrower than we previously claimed. On a flood plain where
+metre-scale elevation noise exceeds the relief that decides which street ponds, a solver that
+routes water downhill cannot place it reliably, and its calibration gradient with respect to
+location is essentially zero. That is why the twin sits at 0.054. It is \emph{not} a proof that the
+terrain data lacks the information, because a model reading relative micro-relief from the same
+rasters reaches 0.288. The correct statement is that absolute elevation is too noisy to route over,
+while relative elevation is not too noisy to learn from.
+
+Two things follow. Reported skill in this regime should always come with both such an ensemble and
+the trivial baselines of Table~\ref{tab:trivial}. And planning tools should be judged on decisions
+that survive this uncertainty, which is what we turn to next.

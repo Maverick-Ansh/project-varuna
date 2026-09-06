@@ -1,0 +1,121 @@
+\section{The Twin, Re-Scored, and Two Corrections Against Ourselves}
+\label{sec:twin}
+
+An earlier version of this work reported that the dynamic twin scores CSI 0.041 against Sentinel-1,
+that static terrain indices score the same, and concluded that \emph{no} terrain-based router can
+place ponding in this data regime. Two of those three statements survive re-measurement. The third
+does not, and we correct it here, because the experiment that refutes it is our own.
+
+\subsection{Protocol}
+Sentinel-1 water masks for 18 monsoon storms across two areas, Patna with 7 storms from 2023 to
+2025 and Mumbai-Northeast with 11 storms from 2025 to 2026, are scored on a common 60\,m grid with
+permanent water masked \emph{on both sides}. Every method, whether physical, index-based or
+learned, sees the identical grid, mask and target. Every method's detection threshold is chosen on
+the \emph{other} storms of the fold and never on the scene being reported. One Patna date,
+2024-07-07, has zero observed wet cells and therefore no ground truth, and it contributed a forced
+0.0 to every method's mean in our earlier table. It is dropped. We verified the scoring path by
+re-deriving the earlier table from it under the earlier protocol, which moved the twin from 0.0412
+to 0.0409, TWI from 0.0422 to 0.0429, and HAND-lite from 0.0505 to 0.0504.
+
+We keep this like-for-like table restricted to these two areas deliberately. They are the only
+areas for which a twin baseline exists to compare against, and mixing in areas where only the
+learned model can be run would not be a fair head-to-head. The larger 15-area evidence base is used
+everywhere else in this paper.
+
+\begin{table}[!t]
+\centering
+\caption{All methods on the identical 18 storms, with every threshold chosen off the reported
+scene. The learned model is a 7.9\,M-parameter U-Net over 23 terrain channels with rainfall
+removed, averaged over 3 seeds. Every terrain method is quoted at its most favourable threshold
+rule. POD is probability of detection, the fraction of truly wet cells found.}
+\label{tab:baselines}
+\begin{tabular}{lccc}
+\toprule
+method & mean CSI & bias & POD \\
+\midrule
+random                            & 0.014 & 1.00 & n/a \\
+all-wet                           & 0.029 & n/a  & 1.00 \\
+static depression depth           & 0.032 & n/a  & 0.21 \\
+TWI (topographic wetness)         & 0.039 & n/a  & 0.26 \\
+HAND-lite (height above drainage) & 0.039 & n/a  & 0.90 \\
+dynamic twin (antecedent rain)    & 0.054 & n/a  & 0.29 \\
+\midrule
+\textbf{learned (terrain only)}   & \textbf{0.288 $\pm$ 0.007} & 1.41 & 0.52 \\
+climatology (no model, no rain)   & 0.288 & 1.29 & n/a \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Correction one: the twin is better than we published}
+On a fair test set the twin reaches 0.054, not the 0.041 we reported. Dropping the dead scene and
+adding a second city both help it. It also clears all-wet at 0.029 and every static index, which
+our Patna-only table did not show. We state this plainly because the correction runs against our
+own earlier headline in our favour, and a correction that only ever runs one way is not a
+correction.
+
+\subsection{Correction two: co-location is learnable, so our terrain-fundamental claim was wrong}
+The same elevation, the same land cover and the same soil rasters, read by a U-Net instead of routed
+by a solver, reach $0.288 \pm 0.007$. That is 5.4 times the twin and 9.9 times all-wet on identical
+scenes. What fails in this regime is \emph{routing} water over a noisy elevation model, not
+\emph{predicting} where water goes.
+
+The feature that makes the difference is available to both methods. It is elevation minus its own
+blurred copy at 2, 8 and 32 cells, which is a measure of whether a spot is locally low. Elevation
+error is spatially correlated, meaning neighbouring cells are wrong together and by similar
+amounts, so this relative micro-relief survives a bias that destroys absolute elevation.
+
+\subsection{But the learned model ties the climatology it was meant to beat}
+The learned model scores 0.2884 and the climatology scores 0.2881. That is the same number to three
+decimal places, a gap of 0.0003 against a seed standard deviation of 0.0066. On a city that has a
+Sentinel-1 archive, a neural network over 23 terrain channels is worth nothing over the statement
+``these cells are usually wet''.
+
+This is the hinge of the paper. The learned model's contribution is not accuracy. It is
+portability, which we isolate in Section~\ref{sec:transfer}.
+
+\subsection{An independent check with a different instrument}
+Radar tells us where water was. It does not tell us how deep. To test depth we used crowdsourced
+reports from the public mumbaiflood.in service, run by IIT Bombay's climate studies group with the
+municipal corporation. Each report gives a reporter's height and the fraction of themselves the
+water reached, so depth is the product of the two.
+
+Of 147 raw reports, 38 carry no depth value, 15 fall outside the region because the app is
+reachable worldwide and the live feed contains points in Argentina and Australia, and 2 report
+more than a metre of standing water after under 4\,mm of rain, which is not rainfall-driven
+waterlogging whatever else it is. That leaves 94, of which 85 fall inside a built Mumbai tile and
+83 are scored. Personal fields are read and discarded at parse time, and a test pins that they
+never reach a file. These observations train nothing. They are held for scoring only.
+
+The result is bad for the twin, and it is bad in an informative way. Mean absolute error is
+0.207\,m and root mean square error is 0.310\,m, with a bias of $-0.162$\,m, meaning systematic
+under-prediction. Against the best trivial baseline, which is simply predicting the observed mean
+depth everywhere, the skill score is $-0.46$. Negative skill means the model is \emph{worse} than
+predicting one constant number for the whole city. No tile is positive, and the range runs from
+$-0.40$ on Mumbai-West to $-0.64$ on Mumbai-South. Correlation with observed depth is $+0.055$
+overall and $-0.23$ on the genuinely wet sites.
+
+\subsection{Two failure modes, separated}
+This experiment splits the failure cleanly into a part that is fixable and a part that is not.
+
+\textbf{Magnitude is a resolution artifact, and it is curable.} On wet sites the model
+under-predicts by a stable factor of 4.45, identical at the 0.15\,m and 0.30\,m thresholds. That
+ratio is not mysterious. A person reports the depth where they are standing, and the model reports
+the average over a 3\,600\,m$^2$ cell. If the same water sits in a pond of area $A$ inside that
+cell, then observed over predicted is roughly cell area over $A$. That implies a ponding footprint
+of $3\,600 / 4.45 \approx 810$\,m$^2$, a square 28.5\,m across. That is a flooded street junction.
+The model is not wrong about how much water there is. It is spreading it over sixty metres of
+ground.
+
+\textbf{Ranking is the real failure, and resolution will not fix it.} Correlation with observed
+depth is zero to negative, and it stays that way across every rainfall window and every
+neighbourhood size we tried. The model cannot say which street floods worse. This is the same
+co-location failure the radar work found, now confirmed by an independent data source measuring an
+independent quantity. Two methods, two datasets, one verdict.
+
+We state the limits of this result rather than leaning on it. There are 83 points from one city in
+one season, so the negative correlation on wet sites is suggestive and not established. People
+report water where it is surprising or bad, which is plausibly where the model least expects it,
+and that reporting bias alone could produce anti-correlation without the model being wrong in the
+way it appears to be. A point measurement and a cell average are genuinely different quantities,
+so the 4.45 factor is a consistency argument rather than proof. And a report made hours after the
+peak is compared against a storm maximum the model is entitled to predict.

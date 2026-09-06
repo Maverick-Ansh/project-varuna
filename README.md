@@ -1,9 +1,50 @@
-# FloodTwin Patna — flood-to-drought water system
+# Varuna FloodTwin — an open urban flood twin for 16 Indian city areas
 
-Map where Patna's monsoon water pools, push it into the depleted aquifer instead of onto
-streets, verify everything against satellite radar, warn wards a day ahead, and let gradient
-descent design the interventions. Everything runs on Google Colab's free tier (GPU only for
-notebook 05) using free public data.
+**Build a working flood model of any city on Earth from free satellite data, plan drainage and
+aquifer recharge on it, route people around the water, and measure honestly what it can and cannot
+predict.** Every stage runs on free tiers.
+
+<table>
+<tr>
+<td width="55%">
+
+### 📄 The paper
+
+**[Varuna FloodTwin: An Open Urban Flood Digital Twin Built from Free Satellite Data, and an Honest
+Measurement of What It Can Predict](paper/varuna-ieee.pdf)** — 17 pages, IEEE format.
+
+The full account: the pipeline, what a flood CSI is actually worth, three corrections against our
+own earlier claims, cross-region transfer, the coastal coverage result, drainage and recharge
+planning measured by re-simulation, the inferred drainage ceiling checked against real municipal
+pumping records, and the street-graph GNN that routes around floodwater in 4 ms.
+
+Source: [`paper/varuna-ieee.tex`](paper/varuna-ieee.tex) · builds with `latexmk -pdf varuna-ieee`
+
+</td>
+<td width="45%">
+
+### 🌐 Live
+
+- **Dashboard:** [project-varuna-iota.vercel.app](https://project-varuna-iota.vercel.app)
+- **API:** [anshvivek-varuna-floodtwin.hf.space](https://anshvivek-varuna-floodtwin.hf.space)
+
+**16 areas served.** Patna and 2 sub-windows, Bengaluru, 6 Mumbai tiles, 6 Karnataka towns.
+**15 areas** have Sentinel-1 ground truth (150 scenes).
+
+</td>
+</tr>
+</table>
+
+### The one result to read first
+
+A baseline with **no physics, no rainfall and one fixed parameter** — "the cells that were wet in
+most other storms" — scores **CSI 0.29 to 0.67** across 15 areas. That is higher than any
+physics-model CSI we can find published for this task, including our own, and in **all 15 areas** it
+also beats the agreement between two radar passes of the same city. A flood CSI reported without
+its trivial baselines beside it cannot be interpreted. See §IV of the paper and
+[`csi_net/RESULTS.md`](csi_net/RESULTS.md).
+
+---
 
 ## Results on real Patna data (honest)
 

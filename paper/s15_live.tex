@@ -1,0 +1,60 @@
+\section{The Deployed System and Its Learning Gate}
+\label{sec:live}
+
+Everything above is computed from satellites and simulation. The people being flooded know things
+neither can see. The deployed system closes that loop under strict honesty constraints, and we
+report the loop's status accurately, which is that its machinery works and its evidence does not
+yet exist.
+
+\subsection{Citizen reports as data}
+Dashboard users drop a pin with a water level they can actually judge, being ankle, knee, waist or
+chest, mapped to depth bands with explicit tolerances of $\pm$0.15 to 0.35\,m, plus an optional
+note. This is why the labels in Fig.~\ref{fig:teaser} are words rather than numbers. A person can
+confirm or contradict ``knee-deep''. Nobody can confirm 0.47\,m.
+
+Reports are validated against the area's model window and rate-limited by salted address hash, with
+five per hour, a per-cell cool-down, a global daily cap and a honeypot field for bots. They are held
+in memory for the live map and mirrored by a background scheduler to a public dataset repository,
+which doubles as durable storage across free-tier restarts. No personal data is served, and the
+hashes never leave the backend.
+
+\subsection{From reports to supervision}
+A report is only a label together with the storm that caused it. The nightly job groups reports by
+calendar day in local time, tags each day with the rainfall that actually fell, and drops dry days
+below 5\,mm. A knee-deep report without rain is far more likely to be mischief or a burst pipe than
+a storm signal. Same-cell same-day reports collapse to their median, so one street corner cannot
+dominate.
+
+\subsection{The reward gate}
+Citizen reports carry no dry labels, so a model that predicts deep water everywhere would score
+perfectly on wet points. That is the same failure mode as the emulator's sparse targets, now in the
+field, and it is why the loop needs a gate rather than a learning rate.
+
+A candidate emulator is fine-tuned with a band-tolerant loss on report points, meaning zero gradient
+inside the reported band, anchored by a simulation replay buffer in every batch. It ships only if
+all four of the following hold. There are at least 15 held-out points from at least two distinct
+storm days, held out \emph{by day} because points within a day are correlated. Held-out point error
+improves by at least 5\,\%. Replay error degrades by at most 10\,\%, which is the all-wet guard. And
+it wins at least 70\,\% of bootstrap resamples of the held-out errors.
+
+Every decision, accepted or held, with all four numbers, is appended to a public learning log
+surfaced on the dashboard, so the loop is auditable by the people whose reports feed it.
+
+\textbf{Status, stated plainly.} The loop is deployed and the gate is tested offline. The refresh
+half, which pulls weather and recomputes outlooks, runs end to end. The learning half has never
+fired, because the reports dataset is empty. Running it nightly today would produce a log of nights
+with zero model updates, which is the correct behaviour and not a result. We therefore claim a
+mechanism and an audit trail here, and no learning outcome. The first accepted or correctly refused
+field update remains the most interesting experiment we have not been able to run.
+
+\subsection{Live context layers}
+The same discipline applies to the ambient layers. Live forecast alerts recompute the outlook
+read-only and never mutate committed artifacts. Advisories are generated in English, Hindi and
+Marathi from only the system's own numbers, with a deterministic template fallback so the panel
+works with no language model at all. A Black Marble night lights overlay \cite{roman2018} marks
+built-up cells whose latest good-quality night radiance dropped more than 50\,\% below their 90-day
+median, which is a proxy for a power outage.
+
+One trap there is worth recording for anyone building the same layer. During monsoon cloud cover a
+fully quality-masked composite downloads as \emph{zero radiance}, which reads naively as a city-wide
+blackout. Missing data must be treated as unknown and not as dark.

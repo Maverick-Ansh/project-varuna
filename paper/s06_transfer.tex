@@ -1,0 +1,60 @@
+\section{The Deployable Claim Is Transfer, and It Depends on What ``Unseen'' Means}
+\label{sec:transfer}
+
+If a learned model ties a parameter-free climatology on a city that has a radar archive, then the
+only reason to prefer the model is that it runs where the climatology cannot be computed. A city
+with no Sentinel-1 history has no climatology at all. So the question that matters is how well the
+model does on ground it has never seen.
+
+We previously reported held-out-city CSI of $0.094 \pm 0.021$ over three areas and called it a
+floor rather than an estimate. With eleven further areas, being Bengaluru, the four remaining
+Mumbai tiles and six Karnataka towns, adding 110 new Sentinel-1 masks, it was indeed a floor. The
+reason it was so low is that a model trained on two areas has almost nothing to generalise from.
+
+\subsection{The size of the correction depends entirely on how you hold data out}
+Leaving out one \emph{tile} gives $0.270 \pm 0.015$, which is 12.5 times all-wet. That looks like a
+threefold improvement, and it is misleading. With six Mumbai tiles and seven Karnataka areas in the
+dataset, holding out Mumbai-West leaves five adjacent Mumbai tiles in training, and holding out
+Chitradurga leaves six other Karnataka towns that share its climate and its tank morphology. That is
+generalisation to unseen \emph{ground}, not to an unseen city.
+
+So we group the areas into regions and hold out an entire region at a time. That gives
+$0.131 \pm 0.005$, half the per-tile figure, and it is the number we report as the deployable one.
+It is still 6.1 times all-wet and 1.4 times our earlier three-area floor, at a fifth of that
+figure's seed spread.
+
+\begin{table}[!t]
+\centering
+\caption{Transfer depends on what is held out. All terrain only, 3 seeds, identical training budget.
+The rebuilt-stack control separates the effect of adding areas from the effect of rebuilding the
+feature stack with the new builder's own definitions.}
+\label{tab:transfer}
+\begin{tabular}{lccc}
+\toprule
+held out & areas & mean CSI & $\times$ all-wet \\
+\midrule
+one tile (previously reported)  &  3 & 0.094 $\pm$ 0.021 & 3.6 \\
+one tile, rebuilt stack control &  3 & 0.096 $\pm$ 0.009 & 3.7 \\
+one tile                        & 14 & 0.270 $\pm$ 0.015 & 12.5 \\
+one region                      & 14 & 0.131 $\pm$ 0.005 & 6.1 \\
+\textbf{one region, with Chennai} & \textbf{15} & \textbf{0.147 $\pm$ 0.008} & \textbf{6.9} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The control that stops this being overstated}
+Between the old result and the new one we also rewrote the dataset builder, so the feature stack
+itself changed. That gives an alternative explanation for the gain which has nothing to do with
+adding cities. We tested it directly by running the same three original areas on the rebuilt stack.
+The answer is $0.096 \pm 0.009$ against the committed $0.094 \pm 0.021$. The rebuild moved nothing.
+The gain is areas.
+
+\subsection{Transfer is not uniform, and that is the operationally important part}
+Held out entirely, the seven Karnataka areas score 0.213 at 10.3 times all-wet and Patna scores
+0.166 at 3.1 times. The six Mumbai tiles score 0.033, which is 1.8 times all-wet and close to
+predicting nothing at all.
+
+Mumbai's Sentinel-1 water is tidal flat, creek and mangrove. Neither the Gangetic flood plain nor
+the Karnataka plateau contains a single example of that kind of surface. That admits two readings
+which fourteen areas cannot separate. Either coastal ground needs coastal training data, or tidal
+water is not predictable from terrain at all. Section~\ref{sec:coastal} separates them.

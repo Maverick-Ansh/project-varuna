@@ -1,0 +1,129 @@
+\section{Inferring the Drains a City Will Not Give You}
+\label{sec:sinkfield}
+
+The largest known physics gap in the twin is that no storm sewer is modelled at all. The model
+over-floods precisely where working drains exist. Mumbai will not hand out a drainage map, so the
+question is whether the drains can be inferred from what a satellite can see.
+
+Two independent validations had already said the twin knows \emph{how much} water and not
+\emph{where}. Fitting more constants was not going to help, because the 16 per-land-class
+multipliers of Section~\ref{sec:dem} change depth and not location. So instead of more constants we
+give the model the missing object.
+
+\subsection{Method}
+After each solver step, water leaves a cell at a fitted rate. This is a sewer and not infiltration,
+so it never fills the soil column and never counts as recharge. The field is
+$\mathrm{softplus}(\theta) \times \mathrm{max\ rate} \times \mathrm{built}$, which forces it
+positive and restricts it to built land. It is fitted with Adam through the checkpointed simulator
+on 8 training storms and held out on 3, giving 65\,536 parameters per tile instead of 16. There is
+freedom to move water, priors to keep it physical, and held-out storms to keep it honest.
+
+Three design decisions are worth stating, because each one was a failure first.
+
+Soft-Dice alone cannot train this field. The smooth wet indicator saturates in deeply flooded
+cells, so the gradient vanishes exactly where the model is most wrong. We added depth hinges whose
+slope is constant regardless of depth. The first run did 60 iterations and learned nothing.
+
+The loss terms must share units. Expressed as volume fractions of the storm's rain they are
+commensurate. With arbitrary weights the fit either drains everything, giving six times more
+outflow than truth in a synthetic recovery test, or nothing at all.
+
+A minimum-outflow prior charges for every cubic metre drained. This is what makes the volume
+interpretable, because the fit then picks the \emph{smallest} drainage that explains the observed
+extent. Every outflow number below is therefore a lower bound and not an estimate.
+
+\subsection{Result one: held-out extent improves by predicting less water}
+Across four Mumbai tiles the mean held-out CSI goes from 0.0435 to 0.0479, a gain of 10\,\%, while
+predicted wet cells fall by 10\,\%. Per tile the gains are $+8\,\%$, $+2\,\%$, $+3\,\%$ and
+$+25\,\%$.
+
+Those are small numbers and we would not report them alone. What makes them worth reporting is the
+direction of the trade. Section~\ref{sec:twin} established that CSI can be bought simply by
+predicting more water. This is the opposite. Every tile improves while getting drier, which is why
+the wetness is quoted beside every CSI.
+
+\subsection{Result two: it is the spatial field, not the extra freedom}
+The obvious objection is that 65\,536 parameters will beat 16 parameters at anything. We tested it
+with a ladder on one tile, holding the loss, the storms and the held-out dates fixed and changing
+only the parameter count.
+
+\begin{table}[!t]
+\centering
+\caption{The controls ladder on Mumbai-East. Only the parameter count changes. A single city-wide
+drain rate does nothing, the 16-parameter physics calibration makes held-out extent worse, and only
+the spatial field improves it.}
+\label{tab:ladder_sink}
+\begin{tabular}{lcccc}
+\toprule
+model & params & train & held-out & held-out wet cells \\
+\midrule
+textbook physics          & 0      & 0.0428 & 0.0442 & 19\,691 \\
+one uniform drain rate    & 1      & 0.0426 & 0.0439 & 19\,433 \\
+per-class Manning/infil.  & 16     & 0.0354 & 0.0402 & 18\,612 \\
+\textbf{per-cell field}   & \textbf{65\,536} & \textbf{0.0488} & \textbf{0.0478} & \textbf{17\,454} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A single city-wide drain rate does nothing. The 16-parameter physics calibration makes held-out
+extent \emph{worse}, because it fits the training storms by turning every multiplier up about 1.8
+times, which is what ``change depth, not location'' looks like when you let it try harder. Only the
+spatial field improves held-out extent. The gain comes from spatial structure and not from
+parameter count, which is the claim the ladder exists to test.
+
+\subsection{Result three: the decisive test, which it fails}
+We replayed the 83 quarantined crowdsourced depth reports through both arms with identical
+machinery, changing only the drain field. Skill against the best baseline moves from $-0.918$ to
+$-0.921$. Correlation moves from $+0.037$ to $+0.032$. Root mean square error is 0.356\,m in both
+arms. Nothing moves, and the differences are in the fourth decimal, far below meaningful at
+$n = 83$.
+
+The interpretation is clean. Learning where water \emph{leaves} the surface is not the same as
+learning where it \emph{goes}. The field is fitted on radar extent, which is a wet or dry mask. That
+constrains where drainage must exist and says almost nothing about the relative depth of two wet
+streets. So it improves the quantity it was trained on and leaves the ranking failure untouched.
+Co-location remains open after three independent attacks, being physics calibration, resolution
+analysis and now drainage inversion.
+
+\subsection{Result four: what the city pours out, and an external anchor}
+Integrating the drained volume over each storm answers a question the project could not previously
+ask. Because the prior selects the smallest drainage consistent with the radar, these are lower
+bounds.
+
+On the complete six-tile city with design storms, inferred surface outflow is at least
+3.48 million\,m$^3$ at 25\,mm, 4.63 at 50\,mm, 5.21 at 100\,mm and 5.41 at 200\,mm. Flooded land
+over the same range goes from 70.7 to 241.5\,km$^2$.
+
+\textbf{The outflow saturates.} Eight times the rain buys 56\,\% more drained water, and the last
+doubling from 100 to 200\,mm buys 4\,\%. The field is rate limited. Once the streets are wet for
+the whole storm, extra rainfall cannot leave any faster, so it ponds. Note how differently the two
+columns behave. Drained volume flattens while flooded area keeps climbing. That is the mechanism.
+Beyond the drainage ceiling, additional rain has nowhere to go but outward across the ground. This
+is a concrete and falsifiable statement about Mumbai's drainage limit, at roughly 5.4 million cubic
+metres per storm however hard it rains.
+
+\textbf{We can now check it against a real municipal measurement.} The six municipal stormwater
+pumping stations are rated at 258\,m$^3$/s combined, a theoretical ceiling of 22.3 million\,m$^3$
+per day with every pump at full rate. More useful than the rating is a measurement. The Brihanmumbai
+Municipal Corporation reported pumping 16\,451.55 million litres, which is 16.45 million\,m$^3$,
+between 16 and 19 August 2025 through those six stations. That is about 4.7 million\,m$^3$ per day.
+
+Our inferred ceiling of at least 5.41 million\,m$^3$ per storm sits just above that daily pumped
+volume, which is the right side to sit on. Our number is total surface outflow, and Mumbai has 186
+outfalls, most of them gravity fed to the sea at low tide. The municipal figure counts only what six
+pump houses lifted. A total drainage estimate should exceed pump-only throughput, and it does, by a
+modest factor rather than an implausible one.
+
+This is a consistency check and not yet a validation, for two reasons we state plainly. Our number
+is a lower bound by construction, so agreement in magnitude cannot be pushed further than ``not
+contradicted''. And the time bases differ, because ours is per storm and theirs is per day over a
+three and a half day wet spell. Closing it properly needs the per-event pumped volume for a specific
+storm that we also model, and two dates in our mask set qualify.
+
+Design capacity is the wrong quantity to compare against, incidentally. The city's drainage master
+plan is specified as a rate over an area, at 25\,mm/h existing and 50\,mm/h designed, which converts
+to roughly 10.9 million\,m$^3$ per hour over the 437\,km$^2$ of the municipal area and so exceeds
+our per-storm figure by two orders of magnitude. That comparison says nothing, because only 28 of
+58 project phases were complete as of 2019 and the rate is nominal. The pumped volume is the number
+with teeth. Inferred capacities themselves are physically plausible for urban drainage, averaging
+0.3 to 3.0\,mm/h over built land and peaking at 4 to 50\,mm/h.

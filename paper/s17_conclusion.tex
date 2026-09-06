@@ -1,0 +1,65 @@
+\section{Conclusion}
+
+We built a working urban flood twin for 16 Indian city areas out of free satellite data, on free
+computing, and put it on the public internet. That part is engineering. The part we think matters
+more is what happened when we measured it properly.
+
+A flood overlap score on this task is uninterpretable on its own. A baseline with no physics, no
+rainfall and one fixed parameter scores 0.29 to 0.67 across 15 areas, beating every physics-model
+score we can find published, and beating the agreement between two radar passes of the same city in
+all fifteen. Any CSI in this literature, ours included, should be read next to those numbers or not
+read at all.
+
+Once that scale is fixed, the rest of the results change shape. Our physics twin scores 0.054 and a
+learned model on the identical rasters scores 0.288, which refutes our own earlier claim that
+terrain fundamentally lacks the information. But that same learned model ties the parameter-free
+baseline exactly, so its value is not accuracy. Its value is that it runs on cities with no radar
+history at all, and held out one whole region at a time that is worth 0.147, rising to 0.175 with a
+threshold correction that costs nothing and never looks at a test label. The one place it nearly
+fails is a coast it has not seen, and we showed that is a coverage problem rather than a hard
+limit, because adding a single coastal city lifted held-out coastal skill by 84\,\%.
+
+Three things that ought to have helped did not. Model size across a 35-fold range did nothing.
+Grid resolution from 60 to 30\,m did nothing. Rainfall from free reanalysis did nothing at best and
+actively hurt at worst, shown four independent ways with two alternative explanations refuted.
+
+Meanwhile planning works despite the location uncertainty, because we measure every intervention by
+re-simulation instead of assuming it. A dense street-routed drain network cuts simulated street
+flooding by 80.9\,\% in Patna and costs less per cubic metre than the sparse alternative. A metered
+recharge planner banks 6.3 to 16.5\,\% of a storm's runoff in six depleted Karnataka towns against
+0.7 to 3.3\,\% on the flood plain, and cuts flooding at the same time. An inferred drainage field
+puts a falsifiable ceiling on Mumbai's whole-city drainage near 5.4 million cubic metres per storm,
+which sits on the correct side of the 4.7 million cubic metres per day the city measured itself
+pumping. And a graph network over the streets makes all of it fast enough to route a person around
+the water in four milliseconds.
+
+We have reported the failures beside the successes throughout, including three corrections against
+our own published claims, a negative result against 83 crowdsourced depth measurements, a drainage
+inversion that improved the quantity it was trained on and did nothing for the one that matters,
+and a learning loop whose gate has never fired because nobody has filed a report yet. We would
+rather the record be useful than flattering.
+
+\section*{Reproducibility}
+Code, all per-area artifact bundles including the Sentinel-1 water masks for the 15 areas that have
+them, road graphs, replay buffers and ranked site lists, together with 253 offline tests and
+step-by-step runbooks, are public at
+\url{https://github.com/Maverick-Ansh/project-varuna}. The live dashboard is at
+\url{https://project-varuna-iota.vercel.app} and its API at
+\url{https://anshvivek-varuna-floodtwin.hf.space}.
+
+A new city builds with one script on a free GPU and serves from the committed bundle. Every headline
+number in this paper is regenerable from a committed artifact. The learned-baseline dataset is
+rebuilt by three builders, each with a verify mode that reports agreement with the committed copy
+rather than asserting it. The headline is unchanged on a fully rebuilt dataset, at
+$0.288 \pm 0.008$ against $0.288 \pm 0.007$. The trivial-baseline builder reproduces all previously
+published values before extending them, which is how the fifteenth area was added to
+Table~\ref{tab:trivial} without disturbing the other fourteen. Sentinel-1 masks for a new area are
+fetched by a script that needs one interactive Earth Engine login and ranks candidate dates by
+antecedent rainfall, so scenes are chosen for having weather in them rather than by hand.
+
+\section*{Acknowledgment}
+This work uses FABDEM, ESA WorldCover, JRC Global Surface Water, Copernicus Sentinel-1,
+OpenStreetMap, Open-Meteo, NASA Black Marble, SoilGrids, HydroSHEDS and Central Ground Water Board
+data, all of which are free to use. The crowdsourced depth observations come from the public
+mumbaiflood.in service. The system runs on free tiers provided by Google Colab, Kaggle, Hugging Face
+and Vercel. None of this work would be possible if those datasets and services were not open.

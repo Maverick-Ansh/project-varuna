@@ -1,0 +1,78 @@
+\section{The System}
+\label{sec:system}
+
+\subsection{Build layer, run once per city on a free GPU}
+For any area of interest, Google Earth Engine exports four free global datasets. FABDEM
+\cite{hawker2022fabdem} gives ground elevation at 30\,m with forests and buildings stripped out, so
+that the surface is what water actually runs over. ESA WorldCover \cite{zanaga2021worldcover} gives
+land cover at 10\,m, which tells us whether a cell is concrete, soil or vegetation. JRC surface
+water \cite{pekel2016} tells us which cells are permanently wet, so that a lake is not mistaken for
+a flood. Sentinel-1 radar scenes \cite{torres2012} give observed water on real storm dates, and
+radar is used because it sees through cloud, which matters when the thing being observed is a
+monsoon.
+
+The model domain is a square grid at 60\,m. Patna-family and Bengaluru bundles use $128^2$ cells,
+which is a window about 7.7\,km across, and each Mumbai tile uses $256^2$ cells, about 15.4\,km.
+The Mumbai tiles share exact latitude and longitude edges, so adding them up never double-counts
+any ground. Those tiles are independent models with closed boundaries, which means water does not
+flow from one tile into its neighbour and tides are not simulated. The dashboard says so on the
+page.
+
+The solver is the local inertial shallow water scheme of Bates \emph{et al.} \cite{bates2010},
+written in PyTorch. Writing it in PyTorch is the point. Every step is differentiable, so we can ask
+what change in a physical parameter would have changed the flood, and answer it with a gradient
+rather than by trying values one at a time. Land cover classes map to Manning roughness, which is a
+number describing how much a surface slows water down, and to infiltration, which is how fast water
+soaks into the ground. Rainfall forcing comes from Open-Meteo reanalysis and forecast
+\cite{openmeteo}.
+
+\subsection{Metered infiltration, and a physics correction that made our floods worse}
+An earlier version let every pervious cell soak up water at a constant rate for as long as the storm
+lasted, which is wrong. Real soil fills up. Version~3 meters infiltration against a finite soil
+storage capacity and caps the rate at the saturated hydraulic conductivity of the soil, which is
+the fastest water can physically move through it. This change makes our predicted flooding
+\emph{worse}, by design, and we committed the before and after comparison so the change is
+auditable. At Patna and 100\,mm of rain, water that soaks in falls from 465\,449 to
+391\,525\,m$^3$, ponded water rises by 1.4\,\%, and predicted flooded area goes from 20.63 to
+20.78\,km$^2$. Soil fills to only 2.7\,\% of its capacity in that storm, which is the useful part
+of the result. It says the earlier model was not merely mis-parameterised. It was letting a nearly
+empty sponge absorb water forever.
+
+\subsection{A millisecond emulator, and a reproducibility hazard}
+A U-Net \cite{ronneberger2015} is trained to imitate the solver so the dashboard can answer what-if
+questions instantly. Wet cells carry twenty times the weight in the loss, because flooding is rare
+in space and a plain average error is minimised by predicting no flood anywhere. Validation error
+across the bundles is 5 to 21\,cm and the dose-response is monotone, meaning more rain always
+produces more water.
+
+Building this exposed a failure worth reporting. Our dataset generator seeds the global random
+number generator so that storm sampling is reproducible. That also makes the network's starting
+weights bit-identical on every rebuild. On the Mumbai Island-City tile, where much of the window is
+harbour, that particular starting point collapses deterministically. Within one epoch the optimizer
+pushes the softplus output head so far negative that its gradient vanishes, and the emulator is
+stuck predicting zero water everywhere. The validation error looks plausible at 16.3\,cm, which is
+exactly the root mean square of the targets, and it stays frozen to the last digit for 40 epochs.
+A frozen metric is the tell, because it means the gradients are exactly zero.
+
+The important part is that rebuilding cannot fix this. We measured three bit-identical collapses
+before diagnosing it. A fixed seed makes failures reproducible too. The shipped trainer now detects
+a collapsed validation prediction, meaning no cell above the wetness threshold despite wet targets,
+and retrains from an explicit alternate seed. The first alternate seed turned the worst tile into
+the best-fitting emulator in the system, at 5.0\,cm validation error. We flag the pattern because
+build pipelines that reseed globally for data reproducibility are common, and a frozen validation
+metric is an easy and general warning sign.
+
+\subsection{Serve layer, on free CPU hosting}
+A FastAPI backend serves the committed per-city bundles, including cached OpenStreetMap road graphs
+\cite{osm} and exposure counts, so the deployed service needs no external API access at run time.
+It re-runs interventions live in seconds. A React and Leaflet front end exposes rainfall what-ifs,
+ward alerts, drainage, storage and excavation planners, building and road level exposure, validation
+panels, and a text brief grounded in the bundle's own numbers. A night lights layer
+\cite{roman2018} overlays satellite-observed power outages. Everything from build to serve fits
+inside free tiers, and a new city window takes roughly 15 to 25 minutes to build on a free T4 GPU,
+including every artifact the server needs.
+
+The system is deployed for 16 areas. These are Patna and two sub-windows, Bengaluru, six Mumbai
+tiles, and six towns in Karnataka. A seventeenth area, Chennai, exists as a data bundle used for
+the coastal experiment of Section~\ref{sec:coastal} but is not served, which is why the count of
+deployed areas and the count of areas with radar ground truth are different numbers in this paper.
