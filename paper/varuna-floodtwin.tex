@@ -643,19 +643,24 @@ networks where they exist, sub-grid street conveyance, SAR-supervised FloodGNN (
 built drainage.
 
 \section*{Reproducibility}
-Code, all 16 per-area artifact bundles (including SAR masks, road graphs, replay buffers, and
-the ranked storage-site lists), 253 offline tests, and step-by-step runbooks:
+Code, all 16 per-area artifact bundles (including the Sentinel-1 water masks for the 14
+domains that have them, road graphs, replay buffers, and the ranked storage-site lists),
+253 offline tests, and step-by-step runbooks:
 \url{https://github.com/Maverick-Ansh/project-varuna}. Live dashboard:
 \url{https://project-varuna-iota.vercel.app} (API: \texttt{anshvivek-varuna-floodtwin.hf.space});
 citizen-report dataset: \texttt{AnshVivek/varuna-reports} on Hugging Face. A new city builds with
 one script on a free Colab/Kaggle T4 and serves from the committed bundle; every headline number
 in this paper is regenerable from a committed artifact (the provenance table in
 \texttt{paper/README.md} maps each one to its file). The learned-baseline dataset of
-\S\ref{sec:validation} is rebuilt from those bundles by \texttt{csi\_net/build\_stack.py} and
-\texttt{csi\_net/build\_rain.py}, each with a \texttt{--verify} mode that reports
-channel-by-channel agreement with the committed copy rather than asserting it; the headline
-is unchanged on a fully rebuilt dataset ($0.288\pm0.008$ against $0.288\pm0.007$, $0.02$ seed
-standard deviations apart).
+\S\ref{sec:validation} is rebuilt from those bundles by \texttt{csi\_net/build\_stack.py},
+\texttt{csi\_net/build\_rain.py} and \texttt{csi\_net/build\_trivial.py}, each with a
+\texttt{--verify} mode that reports agreement with the committed copy rather than asserting
+it; the headline is unchanged on a fully rebuilt dataset ($0.288\pm0.008$ against
+$0.288\pm0.007$, $0.02$ seed standard deviations apart), and \texttt{build\_trivial} reproduces
+all twelve published values of Table~\ref{tab:trivial} before correcting them. Sentinel-1 masks
+for a new domain are fetched by \texttt{scripts/fetch\_sar\_masks.py}, which needs one
+interactive Earth Engine login and ranks candidate acquisition dates by antecedent rainfall so
+that scenes are chosen for having weather in them rather than by hand.
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}
