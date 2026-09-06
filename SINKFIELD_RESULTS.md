@@ -132,8 +132,33 @@ On the complete six-tile city domain, with design storms:
 **The outflow saturates.** Eight times the rain (25 → 200 mm) buys 56% more drained water, and the
 last doubling (100 → 200 mm) buys 4%. The field is *rate*-limited: once streets are wet for the
 whole storm, extra rainfall cannot leave any faster — it ponds. That is a concrete, falsifiable
-statement about Mumbai's drainage ceiling (~5.4 million m³ per storm, however hard it rains), and
-the obvious next step is to check it against BMC/BRIMSTOWAD published pumping capacities.
+statement about Mumbai's drainage ceiling (~5.4 million m³ per storm, however hard it rains).
+
+**Checked against BMC's published pumping figures (2026-09-06) — consistent, first external
+anchor in this project.** The six municipal stormwater pumping stations are rated (BMC, Aug 2025)
+Lovegrove 60,000 l/s, Irla 48,000, Cleveland Bunder 42,000, Gazdhar Bandh 36,000, Haji Ali 36,000
+and Britannia 36,000 — **258 m³/s combined**, a theoretical ceiling of 22.3 Mm³/day
+with every pump at full rate. More useful than the rating is a measurement: BMC reported pumping
+**16,451.55 million litres = 16.45 Mm³ between 16 and 19 August 2025** through those six
+stations, i.e. **≈ 4.7 Mm³/day**, about a fifth of the nameplate rate.
+
+Our inferred ceiling of ≥ 5.41 Mm³ per storm sits just above that daily pumped volume, which
+is the right side to sit on: the sinkfield number is *total surface outflow* — Mumbai has 186
+outfalls, most of them gravity-fed to sea at low tide — while BMC's figure counts only what six
+pump houses lifted. A total drainage estimate should exceed pump-only throughput, and it does, by
+a modest factor rather than an implausible one.
+
+Two reasons this is a consistency check and not yet a validation. Our number is a *lower* bound by
+construction (the minimum-outflow prior), so agreement in magnitude cannot be pushed further than
+"not contradicted". And the time bases differ: ours is per storm, BMC's is per day over a 3.5-day
+wet spell. Closing it properly needs BMC's per-event pumped volume for a *specific* storm that we
+also model — the 2025-09-28 or 2026-07-08 dates are both in our mask set.
+
+Design capacity is the wrong quantity to compare against, incidentally: BRIMSTOWAD is specified as
+a *rate over an area* (25 mm/h existing, 50 mm/h designed), which converts to ≈ 10.9 Mm³/h
+over BMC's 437 km² and so exceeds our per-storm figure by two orders of magnitude. That
+comparison says nothing, because only 28 of 58 BRIMSTOWAD phases were complete as of 2019 and the
+rate is nominal. The pumped-volume measurement is the number with teeth.
 
 Note how differently the two columns behave: drained volume flattens while flooded area keeps
 climbing. That *is* the mechanism — beyond the drainage ceiling, additional rain has nowhere to go
