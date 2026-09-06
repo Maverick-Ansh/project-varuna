@@ -180,16 +180,76 @@ the 60 m cell size was not what was standing in the way.
 |---|---|---|---|---|---|
 | leave-one-storm-out | an ordinary storm, terrain seen | **0.2884 ± 0.0066** | 0.322 | 1.41 | 0.171 |
 | flood holdout | the two largest storms | 0.2211 ± 0.0064 | 0.273 | 0.26 | 0.177 |
-| leave-one-**domain**-out | an entire unseen city | **0.0936 ± 0.0205** | 0.129 | 1.07 | 0.039 |
+| leave-one-**domain**-out, 3 domains | one tile, 2 domains to learn from | 0.0936 ± 0.0251 | 0.128 | 1.07 | 0.039 |
+| leave-one-**domain**-out, 14 domains | one tile, 13 domains to learn from | **0.2698 ± 0.0146** | 0.303 | 1.20 | 0.110 |
+| leave-one-**region**-out, 14 domains | an entire city or region | **0.1305 ± 0.0046** | 0.161 | 0.53 | 0.057 |
 
-Leave-one-domain-out is now 3 seeds (it was a single seed). Per held-out city: mumbai_northeast
-0.134, patna 0.090, mumbai_harbour 0.056.
+### 4.1 Eleven more domains, and what they did to the transfer claim
 
-On an unseen city the net beats every terrain baseline — twin 0.054, TWI 0.039, HAND-lite 0.039,
-all-wet 0.026, random 0.014 — at 3.6× all-wet. Climatology scores 0.396 there and wins, but that
-number is computed from the held-out city's *own* other Sentinel-1 dates. **For a new city with
-no SAR archive climatology does not exist, and the net is the only method on this list that runs
-at all.** That, and not accuracy on a known city, is the deployable claim.
+The three-domain LODO number was reported as *a floor, not an estimate*. That was the right call.
+`scripts/fetch_sar_masks.py` fetched **110 Sentinel-1 masks across 11 new areas** (Bengaluru, the
+four remaining Mumbai tiles, six Karnataka towns) after one interactive Earth Engine login, taking
+the dataset from 3 domains to **14** and from 30 scenes to 140. All 110 cleared the wet-fraction
+floor; median wet fractions 0.003–0.012, in line with the three existing domains.
+
+`patna_east` and `patna_west` were deliberately **not** fetched: they carry `source_work="patna"`
+and share its exact AOI, so they are sub-crops of one scene and would have added duplicate masks
+under different names.
+
+Retraining with 13 domains available instead of 2 nearly triples per-tile transfer, 0.0936 to
+**0.2698**, and tightens the seed spread from ±0.0251 to ±0.0146.
+
+### 4.2 The number that survives the control: leave-one-REGION-out
+
+Per-tile LODO stops meaning "unseen city" once the dataset has six Mumbai tiles and seven
+Karnataka domains. Holding out `mumbai_west` leaves five adjacent Mumbai tiles in training;
+holding out Chitradurga leaves six other Karnataka towns with the same climate, geology and tank
+morphology. The three best LODO folds are exactly Chikkaballapur, Chitradurga and Kolar.
+
+`--split loro` groups the domains into `patna` / `mumbai` / `karnataka` and holds an entire region
+out, so the target has no sibling of any kind in training. It **halves** the result:
+
+| held out | CSI | × all-wet | seed sd |
+|---|---|---|---|
+| one tile, 3 domains, original stack | 0.0936 | 3.6 | 0.0251 |
+| one tile, 3 domains, rebuilt stack (control) | 0.0960 | 3.7 | 0.0090 |
+| one tile, 14 domains | 0.2698 | 12.5 | 0.0146 |
+| **one region, 14 domains** | **0.1305** | **6.1** | **0.0046** |
+
+So roughly half the apparent gain was siblings. What remains is real but smaller: **0.1305 against
+0.0936, a 1.4× improvement at a fifth of the seed spread.** The rebuilt-stack control rules out
+the alternative explanation — rebuilding the feature stack with `build_stack`'s own TWI
+definition, on the same three domains, changes nothing.
+
+### 4.3 Inland transfer works; coastal transfer does not
+
+The per-region result is not uniform, and this is the part with operational consequences:
+
+| region held out | test scenes | CSI | × all-wet |
+|---|---|---|---|
+| karnataka (7 domains) | 210 | 0.2131 | 10.3 |
+| patna (1 domain) | 21 | 0.1660 | 3.1 |
+| **mumbai (6 tiles)** | 186 | **0.0333** | **1.8** |
+
+With no Mumbai tile in training, the model is barely above all-wet on Mumbai. Mumbai's Sentinel-1
+water is tidal flat, creek and mangrove (WorldCover class 95); neither the Gangetic floodplain nor
+the Karnataka plateau contains that surface, and the model does not invent it. The honest
+statement is **inland-to-inland transfer works, inland-to-coastal does not** — deploy on an
+unseen inland city, do not deploy on an unseen coastal one without a coastal domain in training.
+
+Bias is also worth reading: 1.20 on unseen tiles but **0.53** on unseen regions. On genuinely new
+ground the model predicts about half the water that is there, so it under-warns rather than
+over-warns — the wrong direction for a flood product, and a calibration problem rather than a
+ranking one (ranking holds up better, 0.161 against 0.303).
+
+Rainfall on unseen regions changes nothing, as on unseen tiles: 0.1118 ± 0.0345 with rain against
+0.1305 ± 0.0046 without. The claim of §5 now holds at 14 domains and at two grouping levels.
+
+On an unseen region the net still beats every terrain baseline — twin 0.054, TWI 0.039,
+HAND-lite 0.039, all-wet 0.022, random 0.011. Climatology scores 0.545 across these domains and
+wins wherever it can be computed, but that uses the held-out city's *own* Sentinel-1 dates.
+**For a new city with no SAR archive climatology does not exist, and the net is the only method on
+this list that runs at all.** That, bounded by the coastal result, is the deployable claim.
 
 One column is loud: in mumbai_harbour the storm-increment score is 0.0000 on **eight of eleven
 dates**. Essentially all observed water there is persistent and there is almost no increment to
@@ -482,14 +542,21 @@ which is exactly the failure mode this whole document exists to avoid.
 `scripts/fetch_sar_masks.py` is the remaining piece: Sentinel-1 monsoon passes over an area's
 AOI, deduplicated to one per 10 days, ranked by 3-day antecedent rainfall, top N downloaded.
 `--dry-run` imports no Earth Engine at all and ranks candidates from the rainfall archive, so the
-selection is reviewable before any quota is spent. `--min-wet` deletes any mask whose wet
-fraction is below a floor — `patna/2024-07-07` has zero observed wet cells, which is not ground
-truth but a forced 0.0 in every method's mean, and it sat in the published twin baseline for
-months.
+selection is reviewable before any quota is spent.
 
-It needs `earthengine authenticate` and `VARUNA_PROJECT_ID`, which is an interactive login. That
-is the only thing standing between this project and a fourth, fifth and sixth domain — and the
-transfer claim, which is the model's whole case, currently rests on three.
+**`--min-wet` did not do what this section claimed it did, and the proof is the scene it was
+named after.** It measured the wet fraction of the *downloaded* raster. `csi_net.build_stack`
+only ever reads `build_domain`'s crop window, and `patna/2024-07-07` is `0.0065` wet across the
+full AOI while being exactly `0.0000` wet inside that window:
+
+    full AOI  (521, 1040)   wet 0.006494   ->  old guard: KEEP
+    crop      (256,  256)   wet 0.000000   ->  new guard: DROP
+
+So the guard written specifically to reject `patna/2024-07-07` would have accepted
+`patna/2024-07-07`. It now crops before measuring, and falls back to the full-AOI test only for
+an area with no bundle yet, saying so when it does. `build_stack` additionally names any scene
+with zero wet cells rather than letting it appear only as the low end of a printed range, which
+is how this one hid for months.
 
 ---
 
@@ -559,10 +626,23 @@ Runs on one T4 in minutes. `--ablate {none,rain,persist,terrain,tide}`, `--targe
 
 ## 12. Open
 
-- Three domains is a thin basis for a cross-city claim. The LODO number is a floor, not an
-  estimate, and it is the number the deployable claim rests on.
+- **Coastal transfer is the open problem now, and it is a data problem.** Held out entirely,
+  Mumbai scores 0.0333 — 1.8× all-wet, essentially nothing. Every non-Mumbai domain is inland,
+  so the model has never seen a tidal flat or a mangrove. The test is a second coastal city
+  (Chennai, Kochi, Surat) held out against a training set containing Mumbai: if it recovers, the
+  limit is coastal *coverage*; if it does not, tidal water is not predictable from terrain and
+  the deployable claim is inland-only, permanently.
+- **On unseen regions the model under-predicts, bias 0.53.** It finds roughly half the water that
+  is there. Ranking degrades far less than calibration (0.161 against 0.303), so this is probably
+  fixable with a per-domain threshold rule that does not need local SAR history — but the
+  calibration experiment of §7.2 was run on the old 3-domain split and needs redoing at 14.
+- **LOSO has not been re-measured at 14 domains.** The 0.2884 headline and the tie with the
+  climatology are still 18 storms over 2 domains. Re-running is 139 folds per seed, which is
+  hours rather than minutes, and would say whether the tie survives a tenfold larger dataset.
 - Whether a *real* tide gauge (FES2014, or a tide table at the overpass hour) rescues Harbour is
   still untested. The calendar proxy is ruled out twice over — no correlation (p = 0.47) and a
-  measurable loss when fed to the network (−0.0127 at ≈2–4 sd).
-- Threshold calibration on unseen domains is one seed-sd of evidence and needs more splits.
-- The nightly loop has still never run.
+  measurable loss when fed to the network (−0.0127 at ≈2–4 sd). This matters more now that
+  Mumbai is six domains rather than two.
+- The nightly loop **has now run** (`--areas patna --dry-run --skip-ee`, all stages reached). What
+  it revealed is the real blocker: the reports dataset is empty, so the fine-tune and reward-gate
+  half of the loop has nothing to learn from regardless of credentials.

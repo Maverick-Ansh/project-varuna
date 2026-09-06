@@ -303,14 +303,53 @@ Sentinel-1 archive, a neural network over 23 terrain channels is worth nothing o
 are usually wet''. The learned model's contribution is therefore \emph{not} accuracy; it is
 transfer, which we isolate next.
 
-\subsection{The deployable claim is transfer, not accuracy}
-Held-out \emph{city} (leave-one-domain-out, 3 seeds, 3 domains), the model never having seen the
-target terrain: CSI $0.094\pm0.021$ at bias $1.07$. That is $3.6\times$ all-wet and roughly
-$2\times$ the twin, on cities it has never seen. The climatology scores $0.396$ there and wins ---
-but it does so using the held-out city's \emph{own} Sentinel-1 history. For a city with no radar
-archive the climatology cannot be computed at all, and the learned model is the only method in
-Table~\ref{tab:baselines} that runs. This is the claim that matters operationally, and it rests
-on three cities, which is thin; we report it as a floor rather than an estimate.
+\subsection{The deployable claim is transfer, and it depends on what ``unseen'' means}
+We previously reported held-out-city CSI $0.094\pm0.021$ over three domains and called it a floor
+rather than an estimate. With eleven further domains --- Bengaluru, the four remaining Mumbai
+tiles and six Karnataka towns, 110 new Sentinel-1 masks --- it was a floor, and the reason it was
+low is that a model trained on two domains has almost nothing to generalise \emph{from}.
+
+The size of the correction depends entirely on how a held-out domain is chosen
+(Table~\ref{tab:transfer}). Leaving out one \emph{tile} gives $0.270\pm0.015$, $12.5\times$
+all-wet. But with six Mumbai tiles and seven Karnataka domains in the dataset, holding out
+\texttt{mumbai\_west} leaves five adjacent Mumbai tiles in training, and holding out Chitradurga
+leaves six other Karnataka towns sharing its climate and tank morphology. That is generalisation
+to unseen \emph{ground}, not to an unseen city. Grouping the domains into three regions and
+holding an entire region out gives $0.131\pm0.005$ --- half the per-tile figure, and the number
+we report as the deployable one. It is still $6.1\times$ all-wet and $1.4\times$ our earlier
+three-domain floor, at a fifth of its seed spread.
+
+\begin{table}[t]
+\centering\small
+\caption{Transfer depends on what is held out. All terrain-only, 3 seeds, identical training
+budget. The rebuilt-stack control isolates the effect of adding domains from the effect of
+rebuilding the feature stack with \texttt{build\_stack}'s own TWI definition.}
+\label{tab:transfer}
+\begin{tabular}{lccc}
+\toprule
+held out & domains & mean CSI & $\times$ all-wet \\
+\midrule
+one tile (previously reported)  &  3 & 0.094 $\pm$ 0.021 & 3.6 \\
+one tile, rebuilt stack control &  3 & 0.096 $\pm$ 0.009 & 3.7 \\
+one tile                        & 14 & 0.270 $\pm$ 0.015 & 12.5 \\
+\textbf{one region}             & \textbf{14} & \textbf{0.131 $\pm$ 0.005} & \textbf{6.1} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The per-region breakdown is the operationally important part, because it is not uniform. Held out
+entirely, the seven Karnataka domains score $0.213$ ($10.3\times$ all-wet) and Patna $0.166$
+($3.1\times$), but the six Mumbai tiles score $0.033$ --- $1.8\times$ all-wet, which is close to
+predicting nothing. Mumbai's Sentinel-1 water is tidal flat, creek and mangrove; neither the
+Gangetic floodplain nor the Karnataka plateau contains an example of that surface, and the model
+does not invent one. \textbf{Inland-to-inland transfer works; inland-to-coastal does not.} A
+practitioner should read this as: the model may be deployed on an unseen inland city, and must
+not be deployed on an unseen coastal one without at least one coastal domain in training.
+
+The climatology scores $0.545$ on these domains and still wins wherever it can be computed --- but
+it needs the target city's own Sentinel-1 archive. For a city without one it does not exist, and
+the learned model remains the only method in Table~\ref{tab:baselines} that runs at all. That,
+bounded by the coastal result above, is the claim.
 
 \subsection{Three levers that are not levers}
 \textbf{Capacity is not the bottleneck.} Held-out floods, terrain only: CSI $0.221$ at 2.0\,M
