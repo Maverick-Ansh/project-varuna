@@ -56,6 +56,10 @@ REGIONS = {
     "bengaluru": "karnataka", "doddaballapura": "karnataka", "ramanagara": "karnataka",
     "chitradurga": "karnataka", "chamarajanagara": "karnataka", "kolar": "karnataka",
     "chikkaballapur": "karnataka",
+    # Chennai is its own region on purpose. It is 1,300 km from Mumbai and shares no catchment
+    # with it, so holding one out leaves the other in training -- which is exactly the coastal
+    # coverage test. Grouping the two as one "coastal" region would destroy that.
+    "chennai": "chennai",
 }
 
 

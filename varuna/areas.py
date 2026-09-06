@@ -97,6 +97,20 @@ _AREAS = [
     Area("mumbai_harbour", "Mumbai — Harbour (Trombay-Vashi)",
          (72.891, 18.884, 73.061, 19.047), (18.9655, 72.9760), n_grid=256, city="mumbai",
          note="Trombay, Mahul, Mankhurd, Sewri mudflats, Vashi creek; harbour outfalls"),
+    # --- Chennai: a SECOND coastal city, added to answer one question.
+    # On leave-one-region-out over 14 domains, Mumbai held out scores 0.0333 CSI (1.8x all-wet,
+    # i.e. nearly nothing) while inland Karnataka scores 0.2131 (10.3x). Every non-Mumbai domain
+    # is inland, so the model has never seen a tidal flat or a mangrove. Chennai makes the test
+    # symmetric: its own fold trains on a set that CONTAINS Mumbai, and Mumbai's fold trains on
+    # a set that contains Chennai. If either recovers, the limit is coastal *coverage*; if
+    # neither does, tidal water is not predictable from terrain and the deployable claim is
+    # inland-only. Geometry matches the Mumbai tiles exactly (n_grid=256, 0.170 x 0.163 deg AOI)
+    # so the comparison is like-for-like rather than confounded by domain size.
+    # Centre (13.020, 80.220) puts the Adyar basin, Velachery, the Pallikaranai marsh and the
+    # Bay of Bengal shoreline inside one 15.36 km tile -- the ground that flooded in 2015.
+    Area("chennai", "Chennai — Adyar basin & coast", (80.140, 12.940, 80.310, 13.103),
+         (13.0200, 80.2200), n_grid=256, city="chennai",
+         note="Adyar river, Guindy, Velachery, Pallikaranai marsh, Besant Nagar shoreline"),
 ]
 
 
