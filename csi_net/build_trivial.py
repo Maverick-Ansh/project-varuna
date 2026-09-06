@@ -30,7 +30,11 @@ CLIM_GRID = np.arange(0.05, 1.0, 0.05)   # the committed file's thresholds are a
 # it is not parameter-free, and the paper's caption should not call it that. Both are reported:
 # `mean_csi` (swept, reproduces the committed table) and `mean_csi_fixed` at a single threshold
 # shared by every domain, which is the honestly out-of-sample version.
-FIXED_THRESHOLD = 0.15
+# 0.5 = "wet in MOST of the other storms", which is what the paper's caption actually says and
+# what csi_net.metrics.persistent_field uses, so Table 1 and Table 2 describe the same object.
+# Across 14 domains this costs almost nothing against the swept version (mean 0.548 vs 0.571)
+# and it is not tuned on the scenes being reported.
+FIXED_THRESHOLD = 0.5
 
 
 def csi(pred, obs, valid):
