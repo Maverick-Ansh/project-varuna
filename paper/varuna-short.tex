@@ -1,0 +1,424 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{balance}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\rupee}{INR\,}
+
+\IEEEoverridecommandlockouts
+
+\begin{document}
+
+\title{Varuna FloodTwin: An Open Urban Flood Digital Twin\\
+from Free Satellite Data, and an Honest Measurement\\
+of What Its Accuracy Score Is Worth}
+
+\author{\IEEEauthorblockN{Ansh Vivek}
+\IEEEauthorblockA{Independent Researcher \quad
+anshvivek2003@gmail.com \quad
+\url{https://github.com/Maverick-Ansh/project-varuna}}}
+
+\maketitle
+
+\begin{abstract}
+Indian cities flood every monsoon, and most have no calibrated flood model to plan with. We present
+Varuna FloodTwin, an open pipeline that builds a flood model of any place on Earth from free
+satellite data, runs fast enough to answer questions live in a web page, and is deployed for 16
+city areas in India entirely on free computing tiers. Our main claim is not that the model is
+accurate. It is that we measured what such accuracy scores are worth. On 150 Sentinel-1 radar
+scenes across 15 areas, a baseline with no physics and no rainfall, which simply predicts the cells
+wet in most other storms, scores a Critical Success Index of 0.29 to 0.67. That beats every
+physics-model score we can find published for this task, including our own, and in all 15 areas it
+beats the agreement between two radar passes of the same city. A learned model on the same terrain
+rasters scores 0.288 and ties that baseline to three decimal places, so its value is portability
+rather than accuracy. Held out one whole region at a time it scores 0.147, which a threshold
+correction that never sees a test label raises to 0.175, and adding a single coastal city to
+training lifts held-out coastal Mumbai by 84\,\%, turning a suspected hard limit into a
+data-coverage instruction. Model size, grid resolution and free reanalysis rainfall all change
+nothing. Planning nonetheless survives this location uncertainty, because every intervention is
+valued by re-simulation. A dense storm drain network routed on the real street graph cuts simulated
+street flooding by 80.9\,\% in Patna at a lower cost per cubic metre than sparse canals, and a
+metered recharge planner banks 6.3 to 16.5\,\% of storm runoff in six depleted Karnataka towns
+against 0.7 to 3.3\,\% on the flood plain.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Urban flooding, digital twin, Sentinel-1, flood validation, managed aquifer recharge, open data.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart{P}{luvial} flooding, meaning flooding caused by rain falling on the city itself rather
+than by a river bursting its banks, is one of the most frequent climate impacts in South Asian
+cities. The planning reality in most Indian municipalities is a drainage map older than the city
+that grew around it, no calibrated hydraulic model, and no budget to buy one. A tool that could
+change decisions there must be buildable from free global data, because nobody will survey the city
+for us, cheap enough to run interactively, because planning is a conversation and not a batch job,
+and honest about what it cannot claim, because a confident wrong answer about which street floods
+is worse than no answer. Fig.~\ref{fig:teaser} is what a planner sees.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.52\linewidth]{figures/live_patna_city.png}
+\caption{The live system for Patna at a 100\,mm design storm. Blue is predicted depth, arrows show
+flow, purple lines are the drain network the planner designed on the real street graph, and labels
+name real streets with a depth in words, because ``waist-deep'' is a decision and ``0.94\,m'' is
+only a measurement.}
+\label{fig:teaser}
+\end{figure}
+
+\textbf{Related work.} Our numerical core is the local inertial shallow water scheme of Bates
+\emph{et al.} \cite{bates2010}, re-implemented in PyTorch so that every simulation is
+differentiable end to end, and near-concurrent differentiable solvers \cite{li2026inunda} ship no
+emulator, hosted twin or planning stack. Flood Hub's global river-flood forecasts \cite{nearing2024}
+are the closest deployed system and the river counterpart of what we do for rain-driven city
+flooding, while graph networks for flooding put hydraulics into message passing on a mesh
+\cite{bentivoglio2023swegnn}, whereas our graph is the road network itself, so what gets predicted
+is the flooding of a named street. Wing \emph{et al.} \cite{wing2017} set the standard for
+validation against observations, Marsh \emph{et al.} \cite{marsh2024} give the elevation error
+budget behind our uncertainty analysis, and managed aquifer recharge is studied as a joint answer
+to floods and groundwater depletion \cite{pavelic2015utfi}. What we could not find anywhere is a
+paper reporting its accuracy score beside a trivial baseline computed on the same scenes, and
+Section~\ref{sec:worth} argues that this omission makes most reported flood scores impossible to
+interpret.
+
+\section{The System}
+\label{sec:system}
+For any area, Google Earth Engine exports four free global datasets. FABDEM \cite{hawker2022fabdem}
+gives ground elevation at 30\,m with forests and buildings stripped out, so the surface is what
+water actually runs over. ESA WorldCover \cite{zanaga2021worldcover} gives land cover at 10\,m, JRC
+surface water \cite{pekel2016} marks permanently wet cells so a lake is not mistaken for a flood,
+and Sentinel-1 radar \cite{torres2012} gives observed water on real storm dates, because radar sees
+through the cloud that a monsoon guarantees.
+
+The domain is a square grid at 60\,m, using $128^2$ cells for Patna and Bengaluru and $256^2$ for
+each Mumbai tile. Mumbai tiles share exact edges so summing them never double-counts ground, and
+they are independent models with closed boundaries, so tides are not simulated and the dashboard
+says so. The solver is the Bates scheme in PyTorch, so we can ask what change in a physical
+parameter would have changed the flood and answer with a gradient rather than by trying values one
+at a time. Land cover maps to Manning roughness and to infiltration, which is metered against a
+finite soil storage capacity and capped at the saturated conductivity of the soil. A U-Net
+\cite{ronneberger2015} imitates the solver so the dashboard answers what-if questions instantly,
+with wet cells carrying twenty times the loss weight because flooding is rare in space, reaching 5
+to 21\,cm validation error. A FastAPI backend serves committed per-city bundles including cached
+OpenStreetMap road graphs \cite{osm}, so the deployed service needs no external API at run time,
+and a new city window takes 15 to 25 minutes to build on a free T4 GPU.
+
+\section{What a Flood Accuracy Score Is Worth}
+\label{sec:worth}
+The most useful thing we can report is not a model score. It is the range a flood score can occupy
+on this task \emph{before any model exists}.
+
+The Critical Success Index (CSI) is the standard overlap measure in flood mapping, being the number
+of cells the model and the radar agree are wet divided by the number either one calls wet. Three
+baselines cost nothing and bracket it. \emph{All-wet} predicts every cell is flooded, so its CSI is
+exactly the observed wet fraction, earned with zero knowledge. \emph{Random} scatters the correct
+number of wet cells uniformly. \emph{Climatology} predicts the cells wet in most \emph{other}
+storms of that same area, using no rainfall, no physics and no elevation, with one threshold fixed
+at 0.5 for every area rather than tuned per area. We also score every radar date of an area against
+every other date of it, which is not a baseline but an empirical ceiling, because it measures how
+much two radar passes of one city agree.
+
+\begin{table}[!t]
+\centering
+\caption{What a CSI is worth on Sentinel-1 flood extent, with no model at all. 150 radar scenes
+across 15 areas, of which 149 are scored. Multi-area rows are means, over per-area climatology
+ranges of 0.39 to 0.60 for Mumbai and 0.52 to 0.67 for Karnataka.}
+\label{tab:trivial}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lccccc}
+\toprule
+region & areas & storms & all-wet & clim. & SAR/SAR \\
+\midrule
+Patna (inland)     & 1 &  7 & 0.054 & \textbf{0.286} & 0.214 \\
+Bengaluru (inland) & 1 & 10 & 0.022 & \textbf{0.577} & 0.502 \\
+Mumbai (coastal)   & 6 & 62 & 0.019 & \textbf{0.520} & 0.426 \\
+Chennai (coastal)  & 1 & 10 & 0.021 & \textbf{0.500} & 0.383 \\
+Karnataka (inland) & 6 & 60 & 0.021 & \textbf{0.615} & 0.532 \\
+\midrule
+all                & 15 & 149 & 0.022 & \textbf{0.545} & 0.456 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:trivial} is the answer. A climatology with one fixed threshold and no other
+parameter scores 0.29 to 0.67 per area, with a mean of 0.545. That is higher than any CSI we are
+aware of being reported for a physics-based urban flood model on Sentinel-1, including our own. It
+is also higher, in all fifteen areas individually, than the agreement between two Sentinel-1 passes
+of that same city. Averaging many passes is more self-consistent than any two of them, which is a
+property of the target and not of a model, and it caps what any model can honestly be asked to do
+here.
+
+The level is so high because the Sentinel-1 target is dominated by water that has nothing to do
+with the storm and that the permanent-water mask does not remove, being tidal flat, mangrove,
+seasonal pond and paddy field. CSI on this task has therefore mostly been measuring \emph{can you
+find standing water}, which our twin never attempted, because it predicts only the water the storm
+adds. The signature confirms this. On Mumbai-Northeast's one genuine flood, with 2\,937 wet cells
+against a baseline near 450, the climatology scores its \emph{worst} value of 0.075. It wins the
+quiet dates and loses the flood. CSI in this literature should therefore always be reported beside
+all-wet and a leave-one-out climatology on the same scenes. Without them the number is
+uninterpretable, and in retrospect that applied to the 0.041 we published ourselves.
+
+\section{The Twin Re-Scored, and Where the Information Is}
+\label{sec:twin}
+Sentinel-1 masks for 18 monsoon storms across Patna and Mumbai-Northeast are scored on a common
+60\,m grid with permanent water masked \emph{on both sides}. Every method sees the identical grid,
+mask and target, and every threshold is chosen on the \emph{other} storms of the fold and never on
+the scene reported.
+
+\begin{table}[!t]
+\centering
+\caption{All methods on the identical 18 storms, every threshold chosen off the reported scene. The
+learned model is a 7.9\,M-parameter U-Net over 23 terrain channels with rainfall removed, averaged
+over 3 seeds.}
+\label{tab:baselines}
+\begin{tabular}{lcc}
+\toprule
+method & mean CSI & $\times$ all-wet \\
+\midrule
+random                          & 0.014 & 0.5 \\
+all-wet                         & 0.029 & 1.0 \\
+best static index (HAND, TWI)   & 0.039 & 1.3 \\
+dynamic twin (antecedent rain)  & 0.054 & 1.9 \\
+\midrule
+\textbf{learned (terrain only)} & \textbf{0.288 $\pm$ 0.007} & \textbf{9.9} \\
+climatology (no model, no rain) & 0.288 & 9.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:baselines} carries two results. First, the same elevation, land cover and soil
+rasters, read by a U-Net instead of routed by a solver, reach $0.288 \pm 0.007$, which is 5.4 times
+the twin on identical scenes and refutes our own earlier claim that terrain fundamentally lacks the
+information. What fails in this regime is \emph{routing} water over a noisy elevation model, not
+\emph{predicting} where water goes. The feature that makes the difference is available to both
+methods, being elevation minus its own blurred copy at 2, 8 and 32 cells. Elevation error is
+spatially correlated, so neighbouring cells are wrong together and by similar amounts, and this
+relative micro-relief survives a bias that destroys absolute elevation.
+
+Second, the learned model scores 0.2884 and the climatology scores 0.2881, a gap of 0.0003 against
+a seed standard deviation of 0.0066. On a city with a radar archive, a neural network over 23
+terrain channels is worth nothing over the statement ``these cells are usually wet''. This is the
+hinge of the paper. The learned model's contribution is not accuracy but portability.
+
+\textbf{Why the physics router fails.} Under a ten-member ensemble of spatially correlated
+elevation perturbations at FABDEM's nominal 1\,m error class \cite{marsh2024}, total flooded area
+for Patna at 100\,mm is robust at $10.79 \pm 0.35$\,km$^2$, but only 5\,\% of it floods in at least
+90\,\% of members, against 52\,\% in ten times hillier Bengaluru. Calibrating 16 per-land-class
+roughness and infiltration multipliers by gradient descent moves held-out CSI only from 0.0483 to
+0.0488, because those parameters change \emph{how deep} the water is, not \emph{where} it is. Where
+metre-scale elevation noise exceeds the relief that decides which street ponds, a solver that
+routes water downhill cannot place it.
+
+\section{Portability, Coverage, and a Free Correction}
+\label{sec:transfer}
+If a learned model ties a parameter-free climatology on a city with a radar archive, the only
+reason to prefer it is that it runs where the climatology cannot be computed at all. A city with no
+Sentinel-1 history has no climatology, so the question that matters is unseen ground.
+
+\textbf{Holding out a tile is not holding out a city.} Leaving out one \emph{tile} gives
+$0.270 \pm 0.015$, which is 12.5 times all-wet and misleading. With six Mumbai tiles and seven
+Karnataka areas in the dataset, holding out Mumbai-West leaves five adjacent Mumbai tiles in
+training, and holding out Chitradurga leaves six other Karnataka towns sharing its climate and tank
+morphology. That is generalisation to unseen \emph{ground}, not to an unseen city. Holding out an
+entire region instead gives $0.147 \pm 0.008$, half the per-tile figure and 6.9 times all-wet, and
+it is the number we report as deployable. Because we also rewrote the dataset builder between our
+earlier three-area figure of $0.094 \pm 0.021$ and this one, we ran those three areas on the
+rebuilt stack as a control. It gives $0.096 \pm 0.009$, so the rebuild moved nothing and the gain
+is areas. Transfer is not uniform, which is the operationally important part. Held out entirely,
+the seven Karnataka areas score 0.213 at 10.3 times all-wet and Patna scores 0.166, while the six
+Mumbai tiles score 0.033, close to predicting nothing. Mumbai's radar water is tidal flat, creek
+and mangrove, and neither the Gangetic flood plain nor the Karnataka plateau contains one example
+of that surface. Either coastal ground needs coastal training data, or tidal water is not
+predictable from terrain at all.
+
+\textbf{The coastal limit is coverage, not unlearnability.} To separate those readings we built a
+fifteenth area. Chennai is 1\,300\,km from Mumbai, shares no catchment with it, and is kept as its
+own region on purpose, so that Chennai's fold trains on a set containing Mumbai while Mumbai's fold
+trains on a set containing Chennai, and one experiment tests both directions at once. Building it
+exposed a defect worth reporting. Our scene selector had the monsoon window hard-coded to 1 June
+through 15 October, but India has two monsoons and Chennai floods in the northeast monsoon from
+October to December, so the scenes we could even ask for were dry-season ones. After the fix the
+wettest available date went from 40.3 to 180.5\,mm of antecedent rain and one date turned out to
+have five to ten times the wet fraction of any other Chennai scene, an actual flood the first
+selection could not see. A season window is a scientific parameter and not a configuration detail.
+
+The result is that held-out Mumbai goes from 0.033 to 0.061, and Chennai scored with Mumbai in
+training reaches 0.164, which is 7.8 times all-wet, close to inland Karnataka's 10.6 and nothing
+like the 1.8 Mumbai managed as the only coast in the dataset. Tidal water is learnable from
+terrain. The model simply has to have seen a coast. The experiment carries its own control, because
+every fold gained the same ten storms and only the coastal region moved, at $+84\,\%$ on the coast
+against $+3.6\,\%$ for Karnataka and $-7.4\,\%$ for Patna, lifting the overall figure from 0.131 to
+0.147. For scale, going from 3 to 14 areas was 4.6 times the storms for $+39\,\%$ overall, whereas
+this was $+13\,\%$ more storms for a doubling of one region. The rule that follows is concrete.
+Deploy on an unseen inland city freely, and on an unseen coastal city only with a coast in
+training.
+
+\textbf{A threshold correction that costs nothing.} In every experiment here the model's ranking
+quality runs above its achieved CSI, which is calibration loss. The fix is free. For each scene,
+pick the threshold that makes the \emph{predicted} wet fraction match the mean observed wet
+fraction of the \emph{training} scenes, a prior that never looks at a test label. On the
+leave-one-region-out split, which is the deployment question, this lifts CSI from 0.1474 to 0.1746
+at 15 areas and from 0.1305 to 0.1566 at 14, which is 3.4 and 5.7 seed standard deviations and
+captures 73 and 84\,\% of the gap to an oracle threshold chosen knowing the test scene. On the
+per-tile split the same correction \emph{hurts}, at 0.2698 to 0.2542, and that sign flip is the
+mechanism rather than noise, because holding out one tile leaves five sibling tiles in training, so
+the training prior already describes it, whereas an entire held-out region is genuinely
+miscalibrated. It therefore helps most exactly where the model is weakest, gaining $+73\,\%$ for
+coastal Mumbai against $+5.8\,\%$ for Karnataka, because at the global threshold the model finds
+only half to four-fifths of the water actually there, and under-warning is the wrong direction for
+a flood product. Held-out coastal Mumbai has now moved from 0.033 with no coast in training, to
+0.061 with one coast, to 0.106 with the free correction. That is 3.2 times the starting figure, and
+neither step needed a larger model or a finer grid. One was data coverage and the other was
+arithmetic.
+
+\section{Three Levers That Are Not Levers}
+\label{sec:levers}
+When a model underperforms, the reflex is to make it bigger, give it a finer grid, or feed it more
+inputs. We tried all three and report the negative result, because it saves other people the same
+weeks. \textbf{Capacity does nothing.} On held-out floods with terrain only, CSI is 0.221 at 2.0\,M
+parameters, 0.232 at 7.9\,M, 0.221 at 31.4\,M and 0.219 at 70.6\,M, flat across a 35-fold range and
+inside seed noise. \textbf{Resolution does nothing.} Re-running at 30\,m quadruples the cell count
+and changes nothing, at 10.4 times all-wet against 9.7 at 60\,m, the multiple being the column to
+read because raw CSI is not comparable across grids.
+
+\textbf{Rainfall is not usable and actively hurts.} Removing the rainfall channels \emph{improves}
+ranking quality by 0.124, about seven seed standard deviations with the three-seed ranges disjoint.
+Shuffling which rainfall vector goes with which storm, which preserves every distribution and
+destroys only the pairing, lands monotonically between real rain and no rain, at 0.184 then 0.272
+then 0.313, so real rainfall is strictly the worst of the three inputs. Two alternative
+explanations were tested and refuted, being tidal contradiction between Mumbai tiles and failure to
+extrapolate to larger storms. On an unseen region rainfall neither helps nor hurts, at 0.1460
+against 0.1474, so the claim is not that rainfall is universally harmful. It is that rainfall lets
+the model take a shortcut on a city it has already seen, and that shortcut does not survive the
+move to new ground. There is nothing to extract because nine probe points spanning a 15\,km tile
+collapse to a single archive cell. Spatial rainfall is not merely unused. It is unavailable.
+
+\section{Planning That Survives Location Uncertainty}
+\label{sec:planning}
+Section~\ref{sec:twin} says we cannot reliably name the street that ponds first, but planning is
+still possible, because the quantities that drive a plan are not the quantity that fails. Every
+intervention is evaluated the same way. Modify the terrain, re-simulate the design storm at 100\,mm
+over 24\,h, and measure flooding on built-up cells, \emph{excluding} the intervention's own cells
+from both masks, because moving water onto a drain does not count as removing it.
+
+\textbf{A storm drain spiderweb on the real street graph.} Sparse worst-basin-to-nearest-outfall
+canals are how our earlier planner worked, and anecdotally how much real retrofitting works. They
+cut 20.8\,\% of street flooding in Patna and 25.7\,\% in Bengaluru. Scaling the idea up, we route a
+dense network on the actual street graph, whose nodes carry elevations, with 42.8\,k nodes for
+Patna, and whose edge cost is street length plus an uphill penalty of 2\,400\,m per metre of climb.
+One reverse multi-source Dijkstra search from all outfalls labels every street with its
+gravity-cheapest exit, about 40 inlets are placed at the deepest cell of each flood basin, and
+their exit chains trace a forest with shared trunks that accumulate flow. The outfalls encode a
+safety principle, which is \emph{never the river}, because during a flood the river runs high and a
+drain into it runs backwards, so we use the lowest \emph{safe} ground instead. The chosen streets
+are carved into the elevation as 2\,m channels with descending beds, and the storm is re-simulated.
+
+Across the eight built areas the spiderweb cuts street flooding by 80.9\,\% in Patna, 89.4\,\% in
+Patna-East, 80.3\,\% in Patna-West, 72.6\,\% in Bengaluru, and 63.0 down to 32.5\,\% on the four
+largest Mumbai tiles, against 21 to 26\,\% for the sparse plans, with monotone dose-response over
+25 to 200\,mm. For Patna that is 0.87 million m$^3$ of flood water removed against 0.28 million for
+the sparse plan, and density improves the economics as well as the effectiveness, at \rupee850 per
+cubic metre removed against \rupee1\,309, because shared trunks spread their length across many
+basins. For comparison, excavation alone at eight sites cuts 4.1\,\%, detention pits alone cut
+7.8\,\%, and 727 distributed storage basins cut 30\,\% at \rupee9\,200 per cubic metre. The lower
+Mumbai cuts are informative rather than disappointing, because those tiles are four times larger
+and partly harbour, so a fixed budget of 40 inlets covers a smaller share of the flooding. A separate storage
+planner ranks detention tanks by pooled depth at dynamic local minima, excluding building
+footprints because you cannot dig a tank under an occupied house. It has never seen a flood report
+or a news archive, yet its top-ranked sites land on each city's chronically flooded places,
+including Koramangala in Bengaluru and the Parel and Byculla belt in Mumbai where the municipal
+corporation actually built its underground tanks.
+
+\textbf{From flood to aquifer, metered rather than assumed.} The water that floods an Indian city
+in July is water the same region is short of in April. Most recharge plans assume an infiltration
+rate and multiply. We can do better, because the model already meters infiltration against a finite
+soil capacity, so we build recharge structures into it, re-simulate the storm, and read off how
+much water actually went underground. Choosing where to build a twin is itself a decision, so we
+screen an entire state first, combining Central Ground Water Board stage-of-extraction, a
+GRACE-assimilated storage trend, HydroSHEDS flow accumulation and SoilGrids conductivity over
+Karnataka's 27 district units, which ranks Bangalore Rural, Chitradurga, Chamarajanagara, Kolar and
+Bangalore Urban first at 111 to 187\,\% extraction, all officially over-exploited or critical. The
+measurement across fourteen built areas then splits cleanly. The six Karnataka towns send 6.3 to
+16.5\,\% of a 100\,mm storm's runoff into the aquifer, led by Chikkaballapur at 607\,172\,m$^3$ and
+Kolar at 667\,548\,m$^3$, while the flood plain and the coast manage 0.7 to 3.3\,\% and
+Mumbai-South is indistinguishable from zero. That gap is what the screen predicted and it has a
+physical reason. On a flood plain the water table is already close to the surface and the soil
+column is nearly full, so there is nowhere to put the water, whereas on the Karnataka plateau the
+aquifer is mined and hard rock sits under thin soil, so the storage is real and empty. The same
+structures cut flooding by 46.9 to 88.2\,\% in those towns, so this is no trade between flood
+control and water supply. Where recharge works, it is the same intervention.
+
+\textbf{An external anchor from inferred drainage.} The largest known gap in the twin is that no
+storm sewer is modelled, so it over-floods precisely where working drains exist. Mumbai will not
+hand out a drainage map, so we fit a per-cell outflow field through the checkpointed simulator on 8
+storms and hold out 3, with a minimum-outflow prior charging for every cubic metre drained, so the
+fit picks the \emph{smallest} drainage explaining the observed extent and every volume is a lower
+bound. Held-out extent improves by 10\,\% while predicted wet cells \emph{fall} by 10\,\%, the
+opposite of the usual trade where CSI is bought by predicting more water. Integrating the drained
+volume gives Mumbai's whole-city surface outflow as at least 3.48 million m$^3$ at 25\,mm rising to
+only 5.41 million at 200\,mm, so outflow saturates while flooded area keeps climbing, a falsifiable
+ceiling near 5.4 million cubic metres per storm however hard it rains. The municipal corporation
+reported pumping about 4.7 million m$^3$ per day through six pump houses over 16 to 19 August 2025,
+and a total-outflow lower bound sitting just above a pump-only throughput is the right side to sit
+on, though this is a consistency check and not a validation.
+
+\textbf{Learned street-level risk and routing.} A planner asks where to build, but a person
+standing in the rain asks which way to walk. A message-passing network over the street graph,
+conditioned on rainfall, distils the twin into per-street risk at 0.890 to 0.942 AUC on held-out
+storm sizes in about 4\,ms against 260\,ms for the raster pipeline, and held out of Bengaluru
+entirely it still ranks that city's flooded streets at 0.721 AUC, the same coverage lesson the
+coastal experiment taught. Routing on the inflated cost, judged on oracle depths over 150 random
+trips, recovers 64.6\,\% of the oracle's floodwater avoidance in Patna for 57\,\% of its detour.
+
+\section{Limitations and Conclusion}
+\label{sec:limits}
+The hydraulics run at 60\,m, coarser than the streets they describe. Against 83 quarantined
+crowdsourced depth reports from the public mumbaiflood.in service, the twin under-predicts depth by
+a stable factor of 4.45, implying a real ponding footprint about 28.5\,m across, so a finer grid is
+the clearest next step and it has a quantitative target, while correlation with observed depth
+there is near zero, the same co-location failure the radar work found, now confirmed by an
+independent instrument. The evidence base is uneven, because Table~\ref{tab:baselines} rests on 18
+storms across two areas while everything after it rests on 15 areas and 150 scenes. The Mumbai
+tiles are closed-boundary models, so seam flow and tidal coupling are absent, and the coastal
+result rests on two cities. Recharge volumes come from metered infiltration and stand on their own,
+but within-town site rankings use placeholder groundwater data, and recharge has a water quality
+dimension a flood model cannot see. Costs are indicative and rank strategies rather than price
+projects. This planner prioritises. It does not certify.
+
+What we would keep from all this is one habit. A flood overlap score on this task is
+uninterpretable on its own, because a baseline with no physics, no rainfall and one fixed parameter
+scores 0.29 to 0.67 across 15 areas, beats every physics-model score we can find published, and
+beats the agreement between two radar passes of the same city in all fifteen. Any CSI in this
+literature, ours included, should be read next to those numbers or not read at all. Once that scale
+is fixed the rest changes shape. Our physics twin scores 0.054 and a learned model on the identical
+rasters scores 0.288, refuting our own earlier claim that terrain fundamentally lacks the
+information, but that model ties the parameter-free baseline exactly, so its value is not accuracy.
+Its value is that it runs on cities with no radar history at all, worth 0.147 held out one whole
+region at a time and 0.175 with a free threshold correction, and the one place it nearly fails is a
+coast it has not seen, which is coverage rather than a hard limit. Meanwhile planning works despite
+that uncertainty, because every intervention is measured by re-simulation instead of assumed. We
+have reported the failures beside the successes throughout, because we would rather the record be
+useful than flattering.
+
+\section*{Reproducibility and Acknowledgment}
+Code, all per-area artifact bundles including the Sentinel-1 water masks, road graphs and ranked
+site lists, with offline tests and runbooks, are public at
+\url{https://github.com/Maverick-Ansh/project-varuna}, and the live dashboard is at
+\url{https://project-varuna-iota.vercel.app}. Every headline number here is regenerable from a
+committed artifact, and the headline is unchanged on a fully rebuilt dataset, at
+$0.288 \pm 0.008$ against $0.288 \pm 0.007$. This work uses FABDEM, ESA WorldCover, JRC Global
+Surface Water, Copernicus Sentinel-1, OpenStreetMap, Open-Meteo, SoilGrids, HydroSHEDS and Central
+Ground Water Board data, all free to use, plus crowdsourced observations from mumbaiflood.in, and
+runs on free tiers from Google Colab, Kaggle, Hugging Face and Vercel.
+
+\balance
+\bibliographystyle{IEEEtran}
+\bibliography{varuna-ieee}
+
+\end{document}
