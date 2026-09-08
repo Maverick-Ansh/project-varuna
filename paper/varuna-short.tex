@@ -15,14 +15,22 @@
 
 \begin{document}
 
-\title{Varuna FloodTwin: An Open Urban Flood Digital Twin\\
-from Free Satellite Data, and an Honest Measurement\\
-of What Its Accuracy Score Is Worth}
+\title{Varuna FloodTwin: Baseline-Calibrated Urban Flood\\
+Digital Twins from Free Satellite Data}
 
-\author{\IEEEauthorblockN{Ansh Vivek}
-\IEEEauthorblockA{Independent Researcher \quad
-anshvivek2003@gmail.com \quad
-\url{https://github.com/Maverick-Ansh/project-varuna}}}
+\author{
+\IEEEauthorblockN{Ansh Vivek}
+\IEEEauthorblockA{\textit{B.Tech, VLSI Design and Technology}\\
+\textit{Vellore Institute of Technology}\\
+Vellore, India\\
+ansh.vivek2024@vitstudent.ac.in}
+\and
+\IEEEauthorblockN{Sumathi G}
+\IEEEauthorblockA{\textit{School of Electronics Engineering}\\
+\textit{Vellore Institute of Technology}\\
+Vellore, India\\
+sumathi.g@vit.ac.in}
+}
 
 \maketitle
 
@@ -59,7 +67,7 @@ cities. The planning reality in most Indian municipalities is a drainage map old
 that grew around it, no calibrated hydraulic model, and no budget to buy one. A tool that could
 change decisions there must be buildable from free global data, because nobody will survey the city
 for us, cheap enough to run interactively, because planning is a conversation and not a batch job,
-and honest about what it cannot claim, because a confident wrong answer about which street floods
+and explicit about what it cannot claim, because a confident wrong answer about which street floods
 is worse than no answer. Fig.~\ref{fig:teaser} is what a planner sees.
 
 \begin{figure}[!t]
@@ -67,8 +75,7 @@ is worse than no answer. Fig.~\ref{fig:teaser} is what a planner sees.
 \includegraphics[width=0.52\linewidth]{figures/live_patna_city.png}
 \caption{The live system for Patna at a 100\,mm design storm. Blue is predicted depth, arrows show
 flow, purple lines are the drain network the planner designed on the real street graph, and labels
-name real streets with a depth in words, because ``waist-deep'' is a decision and ``0.94\,m'' is
-only a measurement.}
+name real streets with a depth in words rather than a number.}
 \label{fig:teaser}
 \end{figure}
 
@@ -151,7 +158,7 @@ parameter scores 0.29 to 0.67 per area, with a mean of 0.545. That is higher tha
 aware of being reported for a physics-based urban flood model on Sentinel-1, including our own. It
 is also higher, in all fifteen areas individually, than the agreement between two Sentinel-1 passes
 of that same city. Averaging many passes is more self-consistent than any two of them, which is a
-property of the target and not of a model, and it caps what any model can honestly be asked to do
+property of the target and not of a model, and it caps what any model can reasonably be asked to do
 here.
 
 The level is so high because the Sentinel-1 target is dominated by water that has nothing to do
@@ -254,10 +261,9 @@ like the 1.8 Mumbai managed as the only coast in the dataset. Tidal water is lea
 terrain. The model simply has to have seen a coast. The experiment carries its own control, because
 every fold gained the same ten storms and only the coastal region moved, at $+84\,\%$ on the coast
 against $+3.6\,\%$ for Karnataka and $-7.4\,\%$ for Patna, lifting the overall figure from 0.131 to
-0.147. For scale, going from 3 to 14 areas was 4.6 times the storms for $+39\,\%$ overall, whereas
-this was $+13\,\%$ more storms for a doubling of one region. The rule that follows is concrete.
-Deploy on an unseen inland city freely, and on an unseen coastal city only with a coast in
-training.
+0.147. For scale, that was $+13\,\%$ more storms for a doubling of one region. The rule that
+follows is concrete. Deploy on an unseen inland city freely, and on an unseen coastal city only
+with a coast in training.
 
 \textbf{A threshold correction that costs nothing.} In every experiment here the model's ranking
 quality runs above its achieved CSI, which is calibration loss. The fix is free. For each scene,
@@ -342,9 +348,9 @@ soil capacity, so we build recharge structures into it, re-simulate the storm, a
 much water actually went underground. Choosing where to build a twin is itself a decision, so we
 screen an entire state first, combining Central Ground Water Board stage-of-extraction, a
 GRACE-assimilated storage trend, HydroSHEDS flow accumulation and SoilGrids conductivity over
-Karnataka's 27 district units, which ranks Bangalore Rural, Chitradurga, Chamarajanagara, Kolar and
-Bangalore Urban first at 111 to 187\,\% extraction, all officially over-exploited or critical. The
-measurement across fourteen built areas then splits cleanly. The six Karnataka towns send 6.3 to
+Karnataka's 27 district units, which ranks five districts first at 111 to 187\,\% extraction, all
+officially over-exploited or critical. The measurement across fourteen built areas then splits
+cleanly. The six Karnataka towns send 6.3 to
 16.5\,\% of a 100\,mm storm's runoff into the aquifer, led by Chikkaballapur at 607\,172\,m$^3$ and
 Kolar at 667\,548\,m$^3$, while the flood plain and the coast manage 0.7 to 3.3\,\% and
 Mumbai-South is indistinguishable from zero. That gap is what the screen predicted and it has a
@@ -382,40 +388,37 @@ The hydraulics run at 60\,m, coarser than the streets they describe. Against 83 
 crowdsourced depth reports from the public mumbaiflood.in service, the twin under-predicts depth by
 a stable factor of 4.45, implying a real ponding footprint about 28.5\,m across, so a finer grid is
 the clearest next step and it has a quantitative target, while correlation with observed depth
-there is near zero, the same co-location failure the radar work found, now confirmed by an
-independent instrument. The evidence base is uneven, because Table~\ref{tab:baselines} rests on 18
-storms across two areas while everything after it rests on 15 areas and 150 scenes. The Mumbai
-tiles are closed-boundary models, so seam flow and tidal coupling are absent, and the coastal
-result rests on two cities. Recharge volumes come from metered infiltration and stand on their own,
-but within-town site rankings use placeholder groundwater data, and recharge has a water quality
-dimension a flood model cannot see. Costs are indicative and rank strategies rather than price
-projects. This planner prioritises. It does not certify.
+there is near zero, the same co-location failure the radar work found. The evidence base is uneven,
+because Table~\ref{tab:baselines} rests on 18 storms across two areas while everything after it
+rests on 15 areas and 150 scenes. The Mumbai tiles are closed-boundary models, so seam flow and
+tidal coupling are absent, and the coastal result rests on two cities. Recharge volumes come from
+metered infiltration and stand on their own, but within-town site rankings use placeholder
+groundwater data, and recharge has a water quality dimension a flood model cannot see. Costs are
+indicative and rank strategies rather than price projects. This planner prioritises. It does not
+certify.
 
-What we would keep from all this is one habit. A flood overlap score on this task is
+Our central recommendation is a reporting habit. A flood overlap score on this task is
 uninterpretable on its own, because a baseline with no physics, no rainfall and one fixed parameter
 scores 0.29 to 0.67 across 15 areas, beats every physics-model score we can find published, and
 beats the agreement between two radar passes of the same city in all fifteen. Any CSI in this
-literature, ours included, should be read next to those numbers or not read at all. Once that scale
-is fixed the rest changes shape. Our physics twin scores 0.054 and a learned model on the identical
-rasters scores 0.288, refuting our own earlier claim that terrain fundamentally lacks the
-information, but that model ties the parameter-free baseline exactly, so its value is not accuracy.
-Its value is that it runs on cities with no radar history at all, worth 0.147 held out one whole
-region at a time and 0.175 with a free threshold correction, and the one place it nearly fails is a
-coast it has not seen, which is coverage rather than a hard limit. Meanwhile planning works despite
-that uncertainty, because every intervention is measured by re-simulation instead of assumed. We
-have reported the failures beside the successes throughout, because we would rather the record be
-useful than flattering.
+literature, ours included, should be read next to those numbers. Once that scale is fixed the rest
+changes shape. Our physics twin scores 0.054 and a learned model on the identical rasters scores
+0.288, but that model ties the parameter-free baseline exactly, so its value is not accuracy. Its
+value is that it runs on cities with no radar history at all, worth 0.147 held out one whole region
+at a time and 0.175 with a free threshold correction, and the one place it nearly fails is a coast
+it has not seen, which is coverage rather than a hard limit. Planning meanwhile survives that
+uncertainty, because every intervention is measured by re-simulation instead of assumed.
 
 \section*{Reproducibility and Acknowledgment}
 Code, all per-area artifact bundles including the Sentinel-1 water masks, road graphs and ranked
 site lists, with offline tests and runbooks, are public at
 \url{https://github.com/Maverick-Ansh/project-varuna}, and the live dashboard is at
 \url{https://project-varuna-iota.vercel.app}. Every headline number here is regenerable from a
-committed artifact, and the headline is unchanged on a fully rebuilt dataset, at
-$0.288 \pm 0.008$ against $0.288 \pm 0.007$. This work uses FABDEM, ESA WorldCover, JRC Global
-Surface Water, Copernicus Sentinel-1, OpenStreetMap, Open-Meteo, SoilGrids, HydroSHEDS and Central
-Ground Water Board data, all free to use, plus crowdsourced observations from mumbaiflood.in, and
-runs on free tiers from Google Colab, Kaggle, Hugging Face and Vercel.
+committed artifact, and is unchanged on a fully rebuilt dataset, at $0.288 \pm 0.008$ against
+$0.288 \pm 0.007$. This work uses FABDEM, ESA WorldCover, JRC Global Surface Water, Copernicus
+Sentinel-1, OpenStreetMap, Open-Meteo, SoilGrids, HydroSHEDS and Central Ground Water Board data,
+all free to use, plus crowdsourced observations from mumbaiflood.in, and runs on free tiers from
+Google Colab, Kaggle, Hugging Face and Vercel.
 
 \balance
 \bibliographystyle{IEEEtran}
