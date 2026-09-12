@@ -21,6 +21,33 @@ survive intact.
 - `GNN_SECTION.md` — provenance + experiment checklist for §5 (historical; all numbers now live
   in the tex)
 
+## Figures in `varuna-short.tex` (the 5-page conference cut)
+
+The short paper carries twelve figures: two colour flowcharts drawn in TikZ **inside the tex**
+(no external file, nothing to regenerate), six charts built from the artifacts, and four map or
+dashboard images that already lived in `figures/`.
+
+| figure | file | how to regenerate |
+|---|---|---|
+| 1 teaser | `figures/live_patna_city.png` | dashboard screenshot |
+| 2 the whole process | TikZ, inline in `varuna-short.tex` | edit the tex |
+| 3 what a CSI is worth | `figures/f_csi_worth.pdf` | `python scripts/make_short_paper_figures.py` |
+| 4 method ladder | `figures/f_method_ladder.pdf` | same script |
+| 5 DEM ensemble | `figures/flood_uncertainty.png` | `varuna/build/baselines.py` |
+| 6 transfer + calibration | `figures/f_transfer.pdf` | same script |
+| 7 the three non-levers | `figures/f_nonlevers.pdf` | same script |
+| 8 spiderweb algorithm | TikZ, inline in `varuna-short.tex` | edit the tex |
+| 9 spiderweb on real streets | `figures/spiderweb_patna.png` | `python scripts/make_paper_figures.py --spiderweb patna` |
+| 10 planning results | `figures/f_planning.pdf` | same script |
+| 11 metered recharge | `figures/f_recharge.pdf` | same script |
+| 12 flood-safe routing | `figures/route_demo_patna.png` | FloodGNN routing demo |
+
+`scripts/make_short_paper_figures.py` holds no computation. Every value in it is transcribed from a
+committed artifact named in a `SOURCE:` comment above the block that uses it, so a chart cannot
+drift away from the text. The colour slots (blue, orange, aqua, yellow) are defined twice on
+purpose, once in that script and once in the `varuna-short.tex` preamble, so a colour means the
+same thing in a flowchart as it does in a chart.
+
 ## Build
 ```bash
 pdflatex varuna-floodtwin && bibtex varuna-floodtwin && pdflatex varuna-floodtwin && pdflatex varuna-floodtwin
