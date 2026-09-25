@@ -171,7 +171,7 @@ def fig_transfer():
     ax.set_ylim(0, 0.425)
     ax.set_yticks([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
     ax.set_ylabel("leave-one-out CSI")
-    ax.set_title("(a) holding out a tile is not\nholding out a city", color=INK, pad=3)
+    ax.set_title("(a) one tile held out vs\none region held out", color=INK, pad=3)
     ax.legend(frameon=False, loc="upper left", handlelength=1.2, borderpad=0.1,
               labelspacing=0.28, bbox_to_anchor=(-0.03, 1.03))
 
@@ -192,7 +192,7 @@ def fig_transfer():
     ax.set_xticklabels(regs, fontsize=5.9)
     ax.set_ylim(0, 0.29)
     ax.set_ylabel("held-out region CSI")
-    ax.set_title("(b) the correction helps most\nwhere the model is weakest", color=INK, pad=3)
+    ax.set_title("(b) gain from the threshold\ncorrection, by region", color=INK, pad=3)
 
     # (c) the coastal ladder
     ax = axes[2]
@@ -207,13 +207,13 @@ def fig_transfer():
                 arrowprops=dict(arrowstyle="-|>", color=VIOLET, lw=0.9,
                                 connectionstyle="arc3,rad=-0.22"))
     ax.text(1.0, 0.088, "3.2$\\times$", color=VIOLET, fontsize=7, fontweight="bold", ha="center")
-    ax.text(1.0, 0.0755, "no bigger model,\nno finer grid", color=INK2, fontsize=5.8, ha="center")
+    ax.text(1.0, 0.0755, "same model,\nsame grid", color=INK2, fontsize=5.8, ha="center")
     chrome(ax)
     ax.set_xticks(x)
     ax.set_xticklabels(stages)
     ax.set_ylim(0, 0.125)
     ax.set_ylabel("held-out coastal Mumbai CSI")
-    ax.set_title("(c) coverage, then arithmetic", color=INK, pad=3)
+    ax.set_title("(c) held-out coastal Mumbai", color=INK, pad=3)
 
     fig.subplots_adjust(wspace=0.34)
     save(fig, "f_transfer.pdf")
@@ -243,7 +243,7 @@ def fig_nonlevers():
     ax.set_ylim(0, 0.30)  # zero baseline: the claim is flatness, not the wiggle
     ax.set_xlabel("parameters (35$\\times$ range)")
     ax.set_ylabel("CSI")
-    ax.set_title("(a) capacity does nothing", color=INK, pad=3)
+    ax.set_title("(a) model size", color=INK, pad=3)
     ax.legend(frameon=False, loc="lower left", handlelength=1.1, borderpad=0.1, labelspacing=0.22)
 
     # (b) resolution -- the skill multiple, because raw CSI is not comparable across grids
@@ -254,7 +254,7 @@ def fig_nonlevers():
     for xi, m in zip(x, mult):
         ax.text(xi, m + 0.15, f"{m:.1f}$\\times$", ha="center", va="bottom",
                 fontsize=7, color=INK, fontweight="bold")
-    ax.text(0.5, 12.9, "4$\\times$ the cells,\n7 % of a skill multiple", ha="center",
+    ax.text(0.5, 12.9, "4$\\times$ the cells: +7 %", ha="center",
             va="top", fontsize=5.9, color=INK2, linespacing=1.35)
     chrome(ax)
     ax.set_xticks(x)
@@ -262,7 +262,7 @@ def fig_nonlevers():
     ax.set_xlim(-0.62, 1.62)
     ax.set_ylim(0, 13.2)
     ax.set_ylabel("CSI $\\div$ all-wet")
-    ax.set_title("(b) resolution does nothing", color=INK, pad=3)
+    ax.set_title("(b) grid resolution", color=INK, pad=3)
 
     # (c) rainfall
     ax = axes[2]
@@ -278,7 +278,7 @@ def fig_nonlevers():
     ax.set_xticklabels(["real\nrain", "shuffled\nrain", "no rain\nat all"])
     ax.set_ylim(0, 0.40)
     ax.set_ylabel("ranking quality")
-    ax.set_title("(c) real rainfall is the worst\nof the three inputs", color=INK, pad=3)
+    ax.set_title("(c) rainfall input", color=INK, pad=3)
 
     fig.subplots_adjust(wspace=0.36)
     save(fig, "f_nonlevers.pdf")
@@ -307,7 +307,7 @@ def fig_planning():
     ax.set_yticklabels(names)
     ax.set_xlim(0, 104)
     ax.set_xlabel("street flooding removed (%)")
-    ax.set_title("(a) five strategies, one city,\nmeasured by re-simulation", color=INK, pad=3)
+    ax.set_title("(a) five strategies in Patna", color=INK, pad=3)
 
     # (b) cost per cubic metre actually removed -- density is cheaper, not dearer
     ax = axes[1]
@@ -325,7 +325,7 @@ def fig_planning():
     ax.set_yticks([0, 2500, 5000, 7500, 10000])
     ax.set_yticklabels(["0", "2.5 k", "5 k", "7.5 k", "10 k"])
     ax.set_ylabel("INR per m$^3$ removed")
-    ax.set_title("(b) the densest plan is also\nthe cheapest per m$^3$", color=INK, pad=3)
+    ax.set_title("(b) cost per m$^3$ of water removed", color=INK, pad=3)
 
     # (c) every built area
     ax = axes[2]
@@ -340,7 +340,7 @@ def fig_planning():
     for yi, d in zip(y, data):
         ax.text(d[1] + 1.2, yi, f"{d[1]:.1f}", va="center", ha="left", fontsize=5.8, color=INK)
     ax.axvspan(20.8, 25.7, color=MUTED, alpha=0.17, lw=0, zorder=2)
-    ax.annotate("sparse-canal band\n(21--26 %)", xy=(23.2, len(data) - 0.4),
+    ax.annotate("sparse-canal band\n(21 to 26 %)", xy=(23.2, len(data) - 0.4),
                 xytext=(40, len(data) + 0.35), ha="left", va="center", fontsize=5.8,
                 color=INK2, arrowprops=dict(arrowstyle="-", color=MUTED, lw=0.6,
                                             shrinkA=1, shrinkB=1))
@@ -350,7 +350,7 @@ def fig_planning():
     ax.set_ylim(-0.7, len(data) + 0.9)
     ax.set_xlim(0, 100)
     ax.set_xlabel("street flooding removed by the spiderweb (%)")
-    ax.set_title("(c) the same planner on all fourteen built areas", color=INK, pad=3)
+    ax.set_title("(c) drain network in all fourteen built areas", color=INK, pad=3)
     handles = [plt.Rectangle((0, 0), 1, 1, color=cmap[k]) for k in "PBMK"]
     ax.legend(handles, ["Patna family", "Bengaluru", "Mumbai tiles", "Karnataka towns"],
               frameon=False, loc="lower right", handlelength=1.0, borderpad=0.2,
@@ -384,16 +384,16 @@ def fig_recharge():
         ax.text(d[1] + 0.25, yi, f"{d[1]:.1f}", va="center", ha="left", fontsize=5.8, color=INK)
     # one hairline where the ground type changes -- plateau above, plain and coast below
     ax.axhline(y[6] + 0.5, color=MUTED, lw=0.6, ls=(0, (2.5, 2)), zorder=4)
-    ax.text(19.2, y[3], "aquifer mined,\nstorage is real", ha="right", va="center",
+    ax.text(19.2, y[3], "depleted aquifer,\nroom to store water", ha="right", va="center",
             fontsize=5.8, color=INK2, linespacing=1.35)
-    ax.text(19.2, y[11], "soil column already\nfull, nowhere to put it", ha="right",
+    ax.text(19.2, y[11], "shallow water table,\nsoil nearly full", ha="right",
             va="center", fontsize=5.8, color=INK2, linespacing=1.35)
     chrome(ax, axis="x")
     ax.set_yticks(y)
     ax.set_yticklabels(names)
     ax.set_xlim(0, 19.5)
     ax.set_xlabel("share of the storm's runoff banked underground (%)")
-    ax.set_title("(a) metered recharge, not assumed", color=INK, pad=3)
+    ax.set_title("(a) runoff sent to the aquifer", color=INK, pad=3)
     handles = [plt.Rectangle((0, 0), 1, 1, color=cmap[k]) for k in "KFBM"]
     ax.legend(handles, ["Karnataka plateau", "Gangetic flood plain", "Bengaluru", "Mumbai coast"],
               frameon=False, loc="lower right", handlelength=1.0, borderpad=0.2,
@@ -409,7 +409,7 @@ def fig_recharge():
     ax.set_yticklabels(names)
     ax.set_xlim(0, 104)
     ax.set_xlabel("street flooding removed by the same structures (%)")
-    ax.set_title("(b) no trade between flood control and water supply", color=INK, pad=3)
+    ax.set_title("(b) street flooding removed by the same structures", color=INK, pad=3)
 
     fig.subplots_adjust(wspace=0.44)
     save(fig, "f_recharge.pdf")
